@@ -37,11 +37,11 @@ body {
 }
 
 .banman-header-icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   vertical-align: middle;
-  image-rendering: pixelated;
+  border-radius: 5px;
 }
 
 .logo-title h2 {
