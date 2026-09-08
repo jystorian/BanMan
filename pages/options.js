@@ -239,11 +239,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             </select>
           </td>
           <td class="memo-cell">${escapeHtml(rule.memo || '-')}</td>
-          <td class="date-cell">${rule.createdAt || '-'}</td>
-          <td class="manage-col">
+          <td class="date-cell">${formatDateStacked(rule.createdAt)}</td>
+          <td class="col-manage">
             <div class="action-btns">
-              <button class="sm-btn edit-btn" data-key="${escapeHtml(key)}">${t('btn_edit', currentLang)}</button>
-              <button class="sm-btn delete delete-btn" data-key="${escapeHtml(key)}">${t('btn_delete', currentLang)}</button>
+              <button class="sm-btn edit-btn" data-key="${escapeHtml(key)}" title="${t('btn_edit', currentLang)}">${t('btn_edit', currentLang)}</button>
+              <button class="sm-btn icon-delete-btn delete-btn" data-key="${escapeHtml(key)}" title="${t('btn_delete', currentLang)}" aria-label="${t('btn_delete', currentLang)}">✕</button>
             </div>
           </td>
         `;
@@ -251,6 +251,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         rulesTableBody.appendChild(tr);
       });
     }
+  }
+
+  // 날짜/시간 2줄 분리 포맷 함수 (테이블 가로폭 절약)
+  function formatDateStacked(dateStr) {
+    if (!dateStr || dateStr === '-') return '-';
+    const parts = dateStr.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return `<div class="date-stacked"><span class="date-d">${escapeHtml(parts[0])}</span><span class="date-t">${escapeHtml(parts[1])}</span></div>`;
+    }
+    return escapeHtml(dateStr);
   }
 
   function escapeHtml(text) {
@@ -404,13 +414,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 8. 테이블 내 수정(모달 열기) 및 삭제 이벤트 위임
   rulesTableBody.addEventListener('click', async (e) => {
-    const target = e.target;
-    const key = target.getAttribute('data-key');
-    if (!key) return;
-
-    // 삭제
-    if (target.classList.contains('delete-btn')) {
-      if (confirm(t('confirm_delete', currentLang, { key }))) {
+    const delBtn = e.target.closest('.delete-btn');
+    if (delBtn) {
+      const key = delBtn.getAttribute('data-key');
+      if (key && confirm(t('confirm_delete', currentLang, { key }))) {
         delete currentRules[key];
         await chrome.storage.local.set({ blacklist_rules: currentRules });
         render();
@@ -418,9 +425,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 수정 (모달 열기 - 마우스 클릭으로 선택)
-    if (target.classList.contains('edit-btn')) {
-      openEditModal(key);
+    const editBtn = e.target.closest('.edit-btn');
+    if (editBtn) {
+      const key = editBtn.getAttribute('data-key');
+      if (key) {
+        openEditModal(key);
+      }
     }
   });
 
