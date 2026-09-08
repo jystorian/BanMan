@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Ban and Flag: 지뢰 사이트 차단 & 메모",
+  "name": "BanMan: Ban & Flag Bad URLs",
   "version": "1.0.0",
-  "description": "지뢰 사이트 사전 차단(Ban)과 검색 링크 경고 깃발(Flag) 및 메모를 부착하는 스마트 브라우저 수호자",
+  "description": "Ban and flag bad URLs for Chrome city - 원치 않는 사이트 사전 차단(Ban)과 링크 경고 깃발(Flag)로 크롬 시티를 지키는 다크나이트",
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
@@ -21,7 +21,7 @@
   },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Ban and Flag",
+    "default_title": "BanMan - Chrome City Protector",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",
