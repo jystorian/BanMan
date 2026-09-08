@@ -165,9 +165,7 @@ async function evaluateTab(tabId, url) {
     try {
       await chrome.tabs.update(tabId, { url: blockedPageUrl });
     } catch (e) {
-      if (!isTabClosedError(e)) {
-        console.error('차단 페이지 리디렉션 실패:', e);
-      }
+      // 탭이 사용자에 의해 닫혔거나 탐색이 취소된 경우 조용히 무시
     }
     return;
   }
@@ -188,9 +186,7 @@ async function evaluateTab(tabId, url) {
         priority: 2
       });
     } catch (e) {
-      if (!isTabClosedError(e)) {
-        console.error('배지/알림 설정 실패:', e);
-      }
+      // 탭이 닫히거나 알림 생성이 취소된 경우 조용히 무시
     }
     return;
   }
