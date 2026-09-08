@@ -36,17 +36,12 @@ body {
   margin-bottom: 24px;
 }
 
-.banman-hero-sprite {
-  height: 105px;
+.banman-cape-sprite {
+  height: 145px;
   object-fit: contain;
   image-rendering: pixelated;
   animation: hero-idle 3s ease-in-out infinite;
-}
-
-.banman-banner-sprite {
-  height: 105px;
-  object-fit: contain;
-  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.14));
 }
 
 @keyframes hero-idle {
