@@ -697,10 +697,13 @@ input[type="text"]:focus, select:focus {
 .modal-action-card .card-inner {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .modal-action-card .icon {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
   font-size: 22px;
   flex-shrink: 0;
   display: inline-flex;
@@ -708,16 +711,28 @@ input[type="text"]:focus, select:focus {
   justify-content: center;
 }
 
+.modal-action-card .text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 12px;
+}
+
 .modal-action-card .text strong {
-  display: block;
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 700;
   color: #2d3748;
+  white-space: nowrap;
 }
 
 .modal-action-card .text small {
-  display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: #718096;
+  white-space: nowrap;
+  margin-left: auto;
+  text-align: right;
 }
 
 .modal-action-card:hover {

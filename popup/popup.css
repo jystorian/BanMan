@@ -277,8 +277,8 @@ body {
 .card-content {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 12px;
+  padding: 9px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background-color: #ffffff;
@@ -304,7 +304,10 @@ body {
 }
 
 .act-icon {
-  font-size: 16px;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  font-size: 19px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -320,22 +323,26 @@ body {
 
 .act-info {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   min-width: 0;
+  gap: 12px;
 }
 
 .act-info strong {
-  display: block;
-  font-size: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
   color: #2d3748;
+  white-space: nowrap;
 }
 
 .act-info small {
-  display: block;
-  font-size: 10px;
+  font-size: 11.5px;
   color: #718096;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-left: auto;
+  text-align: right;
 }
 
 textarea {
