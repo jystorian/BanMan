@@ -82,8 +82,12 @@
 
     const toast = document.createElement('div');
     toast.className = 'cb-toast';
+    const cowlUrl = chrome.runtime.getURL('resources/cowl_front.png');
     toast.innerHTML = `
-      <div class="cb-toast-title">🚫 차단된 링크 접근 제한</div>
+      <div class="cb-toast-title">
+        <img src="${cowlUrl}" style="width:18px;height:18px;image-rendering:pixelated;vertical-align:middle;margin-right:6px;">
+        BanMan: 차단된 링크 접근 제한
+      </div>
       <div class="cb-toast-memo"><strong>사유:</strong> ${rule.memo || '사유 미기재'}</div>
       <div style="font-size: 11px; color: #888; margin-top: 4px;">대상: ${rule.target}</div>
     `;
@@ -121,13 +125,20 @@
           link.style.display = 'none';
         } else if (rule.action === 'warn') {
           link.classList.add('cb-link-warn');
-          const memoText = rule.memo ? `⚠️ [${rule.memo}]` : '⚠️ [주의 대상]';
-          link.title = `[주의 대상] ${rule.memo || ''}`;
+          const memoText = rule.memo ? ` [${rule.memo}]` : ' [주의 대상]';
+          link.title = `[BanMan 경고] ${rule.memo || ''}`;
 
           const badge = document.createElement('span');
           badge.className = 'cb-badge cb-badge-warn';
-          badge.textContent = memoText;
-          badge.title = `[등록 사유] ${rule.memo || '미기재'}`;
+          badge.title = `[BanMan 등록 사유] ${rule.memo || '미기재'}`;
+
+          const flagImg = document.createElement('img');
+          flagImg.src = chrome.runtime.getURL('resources/warning_flag.png');
+          flagImg.className = 'cb-flag-icon';
+          flagImg.alt = 'FLAG';
+
+          badge.appendChild(flagImg);
+          badge.appendChild(document.createTextNode(memoText));
 
           // 링크 바로 뒤에 배지 삽입
           if (link.nextSibling) {
@@ -137,7 +148,7 @@
           }
         } else if (rule.action === 'block') {
           link.classList.add('cb-link-block');
-          link.title = `[차단된 링크] ${rule.memo || ''}`;
+          link.title = `[BanMan 차단] ${rule.memo || ''}`;
 
           link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -147,8 +158,15 @@
 
           const badge = document.createElement('span');
           badge.className = 'cb-badge cb-badge-block';
-          badge.textContent = rule.memo ? `🚫 [차단: ${rule.memo}]` : '🚫 [차단]';
-          badge.title = `[차단 사유] ${rule.memo || '미기재'}`;
+          badge.title = `[BanMan 차단 사유] ${rule.memo || '미기재'}`;
+
+          const cowlImg = document.createElement('img');
+          cowlImg.src = chrome.runtime.getURL('resources/cowl_front.png');
+          cowlImg.className = 'cb-cowl-icon';
+          cowlImg.alt = 'BAN';
+
+          badge.appendChild(cowlImg);
+          badge.appendChild(document.createTextNode(rule.memo ? ` [차단: ${rule.memo}]` : ' [차단]'));
 
           if (link.nextSibling) {
             link.parentNode.insertBefore(badge, link.nextSibling);

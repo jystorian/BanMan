@@ -42,6 +42,13 @@ body {
   font-size: 32px;
 }
 
+.brand-avatar {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
 .brand h1 {
   font-size: 20px;
   font-weight: 700;
@@ -351,6 +358,14 @@ input[type="text"]:focus, select:focus {
 .empty-msg {
   text-align: center;
   padding: 40px 20px;
-  color: #a0aec0;
+  color: #718096;
   font-size: 14px;
+}
+
+.empty-van-img {
+  max-width: 220px;
+  height: auto;
+  image-rendering: pixelated;
+  margin-bottom: 12px;
+  opacity: 0.85;
 }

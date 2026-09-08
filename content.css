@@ -50,6 +50,15 @@
   border: 1px solid #ffcdd2 !important;
 }
 
+.cb-flag-icon, .cb-cowl-icon {
+  width: 14px !important;
+  height: 14px !important;
+  object-fit: contain !important;
+  vertical-align: middle !important;
+  image-rendering: pixelated !important;
+  margin-right: 3px !important;
+}
+
 /* 차단 링크 클릭 시 화면 우측 상단 토스트 알림 */
 .cb-toast-container {
   position: fixed !important;

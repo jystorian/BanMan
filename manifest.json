@@ -36,5 +36,16 @@
       "run_at": "document_idle"
     }
   ],
-  "options_page": "pages/options.html"
+  "options_page": "pages/options.html",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "resources/*.png",
+        "icons/*.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }

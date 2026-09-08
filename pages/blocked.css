@@ -28,20 +28,30 @@ body {
   border-top: 6px solid #e53e3e;
 }
 
-.icon-wrap {
-  margin-bottom: 20px;
+.banman-scene {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.shield-icon {
-  font-size: 56px;
-  display: inline-block;
-  animation: pulse-icon 2s infinite ease-in-out;
+.banman-hero-sprite {
+  height: 105px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation: hero-idle 3s ease-in-out infinite;
 }
 
-@keyframes pulse-icon {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+.banman-banner-sprite {
+  height: 105px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+@keyframes hero-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 h1 {
