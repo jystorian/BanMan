@@ -387,3 +387,237 @@ input[type="text"]:focus, select:focus {
 .lang-select:hover, .lang-select:focus {
   border-color: #3182ce;
 }
+
+/* 인라인 액션 셀렉터 스타일 */
+.inline-action-select {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.inline-action-select.block {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #ffcdd2;
+}
+
+.inline-action-select.warn {
+  background-color: #fff3e0;
+  color: #d97706;
+  border-color: #ffe0b2;
+}
+
+.inline-action-select.hide {
+  background-color: #edf2f7;
+  color: #4a5568;
+  border-color: #cbd5e0;
+}
+
+.inline-action-select:hover {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  filter: brightness(0.97);
+}
+
+/* 규칙 수정 모달 대화상자 스타일 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+  animation: modal-fade-in 0.15s ease-out;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 480px;
+  max-width: 92vw;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  animation: modal-slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #edf2f7;
+  background-color: #f8fafc;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.modal-close:hover {
+  color: #2d3748;
+  background-color: #edf2f7;
+}
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a5568;
+}
+
+.modal-target-box {
+  padding: 8px 12px;
+  background: #edf2f7;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3748;
+  word-break: break-all;
+  border: 1px solid #e2e8f0;
+}
+
+.modal-action-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-action-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background-color: #ffffff;
+  transition: all 0.15s ease;
+  display: block;
+}
+
+.modal-action-card input[type="radio"] {
+  display: none;
+}
+
+.modal-action-card .card-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-action-card .icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.modal-action-card .text strong {
+  display: block;
+  font-size: 13px;
+  color: #2d3748;
+}
+
+.modal-action-card .text small {
+  display: block;
+  font-size: 11px;
+  color: #718096;
+}
+
+.modal-action-card:hover {
+  border-color: #cbd5e0;
+  background-color: #f8fafc;
+}
+
+.modal-action-card.block:has(input:checked) {
+  border-color: #e53e3e;
+  background-color: #fff5f5;
+  box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.2);
+}
+
+.modal-action-card.block:has(input:checked) .text strong {
+  color: #c53030;
+}
+
+.modal-action-card.warn:has(input:checked) {
+  border-color: #dd6b20;
+  background-color: #fffaf0;
+  box-shadow: 0 0 0 2px rgba(221, 107, 32, 0.2);
+}
+
+.modal-action-card.warn:has(input:checked) .text strong {
+  color: #c05621;
+}
+
+.modal-action-card.hide:has(input:checked) {
+  border-color: #4a5568;
+  background-color: #edf2f7;
+  box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.2);
+}
+
+.modal-action-card.hide:has(input:checked) .text strong {
+  color: #1a202c;
+}
+
+.modal-input {
+  padding: 9px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #2d3748;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.modal-input:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid #edf2f7;
+  background-color: #f8fafc;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-slide-in {
+  from { transform: scale(0.96) translateY(-8px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}

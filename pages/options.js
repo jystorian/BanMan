@@ -139,7 +139,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </td>
           <td>
-            <span class="action-badge ${actionClass}">${actionLabel}</span>
+            <select class="inline-action-select ${actionClass}" data-key="${escapeHtml(key)}" title="${t('modal_action_label', currentLang)}">
+              <option value="block" ${rule.action === 'block' ? 'selected' : ''}>🚫 ${t('action_block', currentLang)}</option>
+              <option value="warn" ${rule.action === 'warn' ? 'selected' : ''}>⚠️ ${t('action_warn', currentLang)}</option>
+              <option value="hide" ${rule.action === 'hide' ? 'selected' : ''}>👁️ ${t('action_hide', currentLang)}</option>
+            </select>
           </td>
           <td class="memo-cell">${escapeHtml(rule.memo || '-')}</td>
           <td class="date-cell">${rule.createdAt || '-'}</td>
@@ -222,7 +226,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     render();
   });
 
-  // 6. 테이블 내 수정 및 삭제 이벤트 위임
+  // 6. 테이블 내 인라인 액션 변경 (원클릭 마우스 선택)
+  rulesTableBody.addEventListener('change', async (e) => {
+    if (e.target.classList.contains('inline-action-select')) {
+      const select = e.target;
+      const key = select.getAttribute('data-key');
+      const newAction = select.value;
+      if (key && currentRules[key]) {
+        currentRules[key].action = newAction;
+        await chrome.storage.local.set({ blacklist_rules: currentRules });
+        render();
+      }
+    }
+  });
+
+  // 7. 모달 대화상자 요소 및 함수
+  let editingKey = null;
+  const editModal = document.getElementById('editModal');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const modalCancelBtn = document.getElementById('modalCancelBtn');
+  const modalSaveBtn = document.getElementById('modalSaveBtn');
+  const modalTargetDisplay = document.getElementById('modalTargetDisplay');
+  const modalMemoInput = document.getElementById('modalMemoInput');
+
+  function openEditModal(key) {
+    const item = currentRules[key];
+    if (!item) return;
+
+    editingKey = key;
+    modalTargetDisplay.textContent = item.target || key;
+    modalMemoInput.value = item.memo || '';
+
+    const actionRadio = document.querySelector(`input[name="modalAction"][value="${item.action}"]`);
+    if (actionRadio) actionRadio.checked = true;
+
+    editModal.style.display = 'flex';
+    modalMemoInput.focus();
+  }
+
+  function closeEditModal() {
+    editModal.style.display = 'none';
+    editingKey = null;
+  }
+
+  modalCloseBtn.addEventListener('click', closeEditModal);
+  modalCancelBtn.addEventListener('click', closeEditModal);
+
+  editModal.addEventListener('click', (e) => {
+    if (e.target === editModal) closeEditModal();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && editModal.style.display === 'flex') {
+      closeEditModal();
+    }
+  });
+
+  modalSaveBtn.addEventListener('click', async () => {
+    if (!editingKey || !currentRules[editingKey]) return;
+
+    const selectedAction = document.querySelector('input[name="modalAction"]:checked')?.value || 'block';
+    const newMemo = modalMemoInput.value.trim();
+
+    currentRules[editingKey].action = selectedAction;
+    currentRules[editingKey].memo = newMemo;
+
+    await chrome.storage.local.set({ blacklist_rules: currentRules });
+    closeEditModal();
+    render();
+  });
+
+  // 8. 테이블 내 수정(모달 열기) 및 삭제 이벤트 위임
   rulesTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const key = target.getAttribute('data-key');
@@ -238,24 +312,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 수정 (메모 및 액션)
+    // 수정 (모달 열기 - 마우스 클릭으로 선택)
     if (target.classList.contains('edit-btn')) {
-      const item = currentRules[key];
-      if (!item) return;
-
-      const newActionVal = prompt(t('prompt_action', currentLang, { action: item.action }), item.action);
-      if (newActionVal === null) return;
-      if (['block', 'warn', 'hide'].includes(newActionVal.trim().toLowerCase())) {
-        item.action = newActionVal.trim().toLowerCase();
-      }
-
-      const newMemoVal = prompt(t('prompt_memo', currentLang), item.memo || '');
-      if (newMemoVal === null) return;
-      item.memo = newMemoVal.trim();
-
-      currentRules[key] = item;
-      await chrome.storage.local.set({ blacklist_rules: currentRules });
-      render();
+      openEditModal(key);
     }
   });
 

@@ -128,6 +128,67 @@
     </main>
   </div>
 
+  <!-- 규칙 수정 모달 (마우스 클릭으로 액션 및 메모 변경) -->
+  <div id="editModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="modal_edit_title">규칙 수정</h3>
+        <button id="modalCloseBtn" class="modal-close" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label" data-i18n="modal_target_label">대상</label>
+          <div id="modalTargetDisplay" class="modal-target-box"></div>
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label" data-i18n="modal_action_label">처리 액션 선택 (클릭)</label>
+          <div class="modal-action-grid">
+            <label class="modal-action-card block">
+              <input type="radio" name="modalAction" value="block">
+              <div class="card-inner">
+                <span class="icon">🚫</span>
+                <div class="text">
+                  <strong data-i18n="action_block_title">사전 차단</strong>
+                  <small data-i18n="action_block_desc">접속 시 즉시 차단 화면 표시</small>
+                </div>
+              </div>
+            </label>
+            <label class="modal-action-card warn">
+              <input type="radio" name="modalAction" value="warn">
+              <div class="card-inner">
+                <span class="icon">⚠️</span>
+                <div class="text">
+                  <strong data-i18n="action_warn_title">경고 & 메모</strong>
+                  <small data-i18n="action_warn_desc">배지 표시 및 취소선</small>
+                </div>
+              </div>
+            </label>
+            <label class="modal-action-card hide">
+              <input type="radio" name="modalAction" value="hide">
+              <div class="card-inner">
+                <span class="icon">👁️</span>
+                <div class="text">
+                  <strong data-i18n="action_hide_title">링크 숨김</strong>
+                  <small data-i18n="action_hide_desc">웹페이지 내 링크 숨김</small>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label" data-i18n="modal_memo_label">사유 메모</label>
+          <input type="text" id="modalMemoInput" class="modal-input" placeholder="차단 또는 주의 사유를 입력하세요">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modalCancelBtn" class="btn btn-outline" type="button" data-i18n="btn_cancel">취소</button>
+        <button id="modalSaveBtn" class="btn btn-primary" type="button" data-i18n="btn_save">저장</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../i18n.js"></script>
   <script src="options.js"></script>
 </body>
