@@ -195,8 +195,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 웹스토어의 경우 즉시 배지 반영
     if (type === 'webstore' && (action === 'warn' || action === 'block')) {
-      chrome.action.setBadgeText({ tabId: tab.id, text: 'BAD' });
-      chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#D32F2F' });
+      try {
+        if (tab && tab.id) {
+          await chrome.action.setBadgeText({ tabId: tab.id, text: 'BAD' });
+          await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#D32F2F' });
+        }
+      } catch (e) {}
     }
 
     statusMsg.style.color = '#2e7d32';

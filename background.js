@@ -114,12 +114,28 @@ async function isBypassed(tabId, url) {
   return false;
 }
 
+// 닫힌 탭 관련 에러 감지 (정상적인 탭 생명주기 이벤트)
+function isTabClosedError(err) {
+  if (!err) return false;
+  const msg = (err.message || String(err)).toLowerCase();
+  return msg.includes('no tab with id') || msg.includes('tab was closed') || msg.includes('cannot be queried');
+}
+
 // 탭 URL 검사 및 처리 (차단 리디렉션, 배지, 알림)
 async function evaluateTab(tabId, url) {
   if (!url) return;
 
   // 내부 URL 및 크롬 시스템 페이지 검사 제외
   if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('about:')) {
+    return;
+  }
+
+  // 탭이 여전히 유효하게 열려 있는지 사전 검증 (이미 닫힌 탭 에러 방지)
+  try {
+    const activeTab = await chrome.tabs.get(tabId);
+    if (!activeTab) return;
+  } catch (e) {
+    // 탭이 이미 닫혔거나 조기 종료된 경우 안전하게 리턴
     return;
   }
 
@@ -149,7 +165,9 @@ async function evaluateTab(tabId, url) {
     try {
       await chrome.tabs.update(tabId, { url: blockedPageUrl });
     } catch (e) {
-      console.error('차단 페이지 리디렉션 실패:', e);
+      if (!isTabClosedError(e)) {
+        console.error('차단 페이지 리디렉션 실패:', e);
+      }
     }
     return;
   }
@@ -170,7 +188,9 @@ async function evaluateTab(tabId, url) {
         priority: 2
       });
     } catch (e) {
-      console.error('배지/알림 설정 실패:', e);
+      if (!isTabClosedError(e)) {
+        console.error('배지/알림 설정 실패:', e);
+      }
     }
     return;
   }
