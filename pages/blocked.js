@@ -1,9 +1,12 @@
-// blocked.js - Logic for blocked page navigation & bypass
+// blocked.js - Logic for blocked page navigation & bypass with i18n
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const currentLang = await getAppLanguage();
+  applyTranslations(currentLang);
+
   const params = new URLSearchParams(window.location.search);
-  const target = params.get('target') || '알 수 없는 대상';
-  const memo = params.get('memo') || '기록된 사유가 없습니다.';
+  const target = params.get('target') || '-';
+  const memo = params.get('memo') || t('blocked_no_memo', currentLang);
   const origUrl = params.get('origUrl') || '';
 
   const targetDisplay = document.getElementById('targetDisplay');
@@ -31,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!origUrl) return;
 
     bypassBtn.disabled = true;
-    bypassBtn.textContent = '임시 허용 처리 중...';
+    bypassBtn.textContent = t('blocked_bypassing', currentLang);
 
     try {
       const currentTab = await chrome.tabs.getCurrent();
@@ -40,8 +43,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           type: 'ALLOW_ONCE',
           tabId: currentTab.id,
           origUrl: origUrl
-        }, (response) => {
-          // background에서 탭 URL을 갱신하므로 자동 이동됨
         });
       }
     } catch (e) {

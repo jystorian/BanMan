@@ -10,45 +10,58 @@
     <header class="header">
       <div class="logo-title">
         <img src="../icons/icon-48.png" class="banman-header-icon" alt="BanMan">
-        <h2>BanMan</h2>
+        <h2 data-i18n="app_name">BanMan (밴맨)</h2>
       </div>
-      <button id="openOptionsBtn" class="icon-btn" title="전체 목록 및 백업 관리">⚙️</button>
+      <div class="header-right">
+        <select id="langSelect" class="lang-select" title="Language / 언어">
+          <option value="ko">🇰🇷 한국어</option>
+          <option value="en">🇺🇸 English</option>
+          <option value="ja">🇯🇵 日本語</option>
+        </select>
+        <button id="openOptionsBtn" class="btn-dashboard" data-i18n-title="options_btn">
+          <span data-i18n="options_btn">목록 및 백업 관리 ⚙️</span>
+        </button>
+      </div>
     </header>
 
-    <div id="targetCard" class="target-card">
-      <div class="target-header">
-        <span id="targetTypeBadge" class="badge">감지 중...</span>
-        <span id="targetDomain" class="domain-text"></span>
+    <!-- 대상 URL 안내 영역 (소제목 추가) -->
+    <div class="form-group">
+      <label class="form-label" data-i18n="target_header">감지된 대상 URL / 사이트:</label>
+      <div id="targetCard" class="target-card">
+        <div class="target-header">
+          <span id="targetTypeBadge" class="badge" data-i18n="detecting">감지 중...</span>
+          <span id="targetDomain" class="domain-text"></span>
+        </div>
+        <div id="targetUrlText" class="url-text" data-i18n="checking_url">URL 확인 중...</div>
       </div>
-      <div id="targetUrlText" class="url-text">URL 확인 중...</div>
     </div>
 
-    <!-- 일반 웹페이지일 때 타겟 범위 선택 -->
+    <!-- 일반 웹페이지일 때 타겟 범위 선택 (기본값: 현재 URL만) -->
     <div id="scopeSelector" class="form-group" style="display: none;">
-      <label class="form-label">적용 대상 범위:</label>
+      <label class="form-label" data-i18n="target_scope">적용 대상 범위:</label>
       <div class="segmented-control">
         <label class="segment">
-          <input type="radio" name="targetScope" value="domain" checked>
-          <span>도메인 전체</span>
+          <input type="radio" name="targetScope" value="url" checked>
+          <span data-i18n="scope_url">현재 URL만</span>
         </label>
         <label class="segment">
-          <input type="radio" name="targetScope" value="url">
-          <span>현재 URL만</span>
+          <input type="radio" name="targetScope" value="domain">
+          <span data-i18n="scope_domain">도메인 전체</span>
         </label>
       </div>
     </div>
 
     <!-- 처리 방식 선택 -->
     <div class="form-group">
-      <label class="form-label">처리 방식 (액션):</label>
+      <label class="form-label" data-i18n="action_type">처리 방식 (액션):</label>
       <div class="action-grid">
         <label class="action-card">
           <input type="radio" name="actionType" value="block" checked>
           <div class="card-content block">
             <span class="act-icon">🚫</span>
             <div class="act-info">
-              <strong>사전 차단</strong>
-              <small>진입 시 차단 화면</small>
+              <strong data-i18n="action_block_title">사전 차단</strong>
+              <small data-i18n="action_block_desc">진입 시 차단 화면</small>
             </div>
           </div>
         </label>
@@ -58,8 +71,8 @@
           <div class="card-content warn">
             <span class="act-icon">⚠️</span>
             <div class="act-info">
-              <strong>경고 & 메모</strong>
-              <small>배지 / 취소선</small>
+              <strong data-i18n="action_warn_title">경고 & 메모</strong>
+              <small data-i18n="action_warn_desc">배지 / 취소선</small>
             </div>
           </div>
         </label>
@@ -69,8 +82,8 @@
           <div class="card-content hide">
             <span class="act-icon">👁️</span>
             <div class="act-info">
-              <strong>링크 숨김</strong>
-              <small>타 사이트서 은닉</small>
+              <strong data-i18n="action_hide_title">링크 숨김</strong>
+              <small data-i18n="action_hide_desc">타 사이트서 은닉</small>
             </div>
           </div>
         </label>
@@ -79,19 +92,20 @@
 
     <!-- 사유 메모 입력 -->
     <div class="form-group">
-      <label for="memoInput" class="form-label">차단 / 비추천 사유 메모:</label>
-      <textarea id="memoInput" placeholder="예: 낚시성 뉴스, 메모리 누수 버그, 광고 과다 등"></textarea>
+      <label for="memoInput" class="form-label" data-i18n="memo_label">차단 / 비추천 사유 메모:</label>
+      <textarea id="memoInput" data-i18n-placeholder="memo_placeholder" placeholder="예: 낚시성 뉴스, 메모리 누수 버그, 광고 과다 등"></textarea>
     </div>
 
     <!-- 액션 버튼 -->
     <div class="btn-group">
-      <button id="saveBtn" class="btn btn-primary">블랙리스트 등록</button>
-      <button id="deleteBtn" class="btn btn-secondary" style="display: none;">해제</button>
+      <button id="saveBtn" class="btn btn-primary" data-i18n="save_btn_add">블랙리스트 등록</button>
+      <button id="deleteBtn" class="btn btn-secondary" style="display: none;" data-i18n="delete_btn">해제</button>
     </div>
 
     <div id="statusMsg" class="status-msg"></div>
   </div>
 
+  <script src="../i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

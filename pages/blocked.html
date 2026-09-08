@@ -11,34 +11,35 @@
       <img src="../resources/ban_cape.png" class="banman-cape-sprite" alt="BanMan Prohibition Cape">
     </div>
     
-    <h1>접근이 차단된 웹페이지입니다</h1>
-    <p class="subtitle">BanMan의 크롬 시티 방어 규칙에 따라 접속이 사전에 차단되었습니다.</p>
+    <h1 data-i18n="blocked_title">접근이 차단된 웹페이지입니다</h1>
+    <p class="subtitle" data-i18n="blocked_subtitle">BanMan의 크롬 시티 방어 규칙에 따라 접속이 사전에 차단되었습니다.</p>
 
     <div class="info-box">
       <div class="info-row">
-        <span class="info-label">차단 대상</span>
+        <span class="info-label" data-i18n="blocked_target_label">차단 대상</span>
         <span id="targetDisplay" class="info-value"></span>
       </div>
       <div class="info-row memo-row">
-        <span class="info-label">기록된 사유</span>
-        <div id="memoDisplay" class="memo-value">사유가 기록되지 않았습니다.</div>
+        <span class="info-label" data-i18n="blocked_memo_label">기록된 사유</span>
+        <div id="memoDisplay" class="memo-value" data-i18n="blocked_no_memo">사유가 기록되지 않았습니다.</div>
       </div>
       <div class="info-row url-row">
-        <span class="info-label">요청 URL</span>
+        <span class="info-label" data-i18n="blocked_url_label">요청 URL</span>
         <span id="origUrlDisplay" class="info-value url-text"></span>
       </div>
     </div>
 
     <div class="actions">
-      <button id="goBackBtn" class="btn btn-primary">◀ 안전하게 이전 페이지로 돌아가기</button>
-      <button id="bypassBtn" class="btn btn-outline">이 탭에서 1회 임시 허용</button>
+      <button id="goBackBtn" class="btn btn-primary" data-i18n="blocked_go_back">◀ 안전하게 이전 페이지로 돌아가기</button>
+      <button id="bypassBtn" class="btn btn-outline" data-i18n="blocked_bypass">이 탭에서 1회 임시 허용</button>
     </div>
 
     <div class="footer-links">
-      <a href="#" id="manageRuleLink">규칙 수정 및 전체 목록 관리 ⚙️</a>
+      <a href="#" id="manageRuleLink" data-i18n="blocked_manage_link">규칙 수정 및 전체 목록 관리 ⚙️</a>
     </div>
   </div>
 
+  <script src="../i18n.js"></script>
   <script src="blocked.js"></script>
 </body>
 </html>

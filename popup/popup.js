@@ -1,4 +1,4 @@
-// popup.js - Active tab inspection and rule management
+// popup.js - Active tab inspection and rule management with multi-language support
 
 const WEBSTORE_REGEX = /chromewebstore\.google\.com\/detail\/(?:[^\/]+\/)?([a-p]{32})/i;
 
@@ -12,6 +12,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deleteBtn = document.getElementById('deleteBtn');
   const statusMsg = document.getElementById('statusMsg');
   const openOptionsBtn = document.getElementById('openOptionsBtn');
+  const langSelect = document.getElementById('langSelect');
+
+  // 다국어 초기화 및 이벤트 리스너
+  let currentLang = await getAppLanguage();
+  langSelect.value = currentLang;
+  applyTranslations(currentLang);
+
+  langSelect.addEventListener('change', async (e) => {
+    currentLang = e.target.value;
+    await setAppLanguage(currentLang);
+    applyTranslations(currentLang);
+    updateTargetBadge();
+    checkExistingRule();
+  });
 
   openOptionsBtn.addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
@@ -19,48 +33,61 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.url) {
-    targetUrlText.textContent = '활성화된 탭 정보를 가져올 수 없습니다.';
+    targetUrlText.textContent = t('tab_info_error', currentLang);
     saveBtn.disabled = true;
     return;
   }
 
   const currentUrl = tab.url;
   let parsedUrl = null;
-  let detectedType = 'domain'; // 'webstore' | 'domain' | 'url'
+  let detectedType = 'url'; // 'webstore' | 'domain' | 'url'
   let webstoreExtId = null;
   let domainHost = '';
 
   const webMatch = currentUrl.match(WEBSTORE_REGEX);
 
+  function updateTargetBadge() {
+    if (detectedType === 'webstore') {
+      targetTypeBadge.textContent = t('badge_webstore', currentLang);
+      targetTypeBadge.className = 'badge webstore';
+    } else if (detectedType === 'domain' || detectedType === 'url') {
+      targetTypeBadge.textContent = t('badge_web', currentLang);
+      targetTypeBadge.className = 'badge web';
+    } else {
+      targetTypeBadge.textContent = t('badge_system', currentLang);
+      targetTypeBadge.className = 'badge system';
+    }
+  }
+
   if (webMatch) {
     detectedType = 'webstore';
     webstoreExtId = webMatch[1].toLowerCase();
-    targetTypeBadge.textContent = '크롬 웹스토어 확장';
-    targetTypeBadge.className = 'badge webstore';
-    targetDomain.textContent = `확장 ID: ${webstoreExtId.substring(0, 12)}...`;
+    updateTargetBadge();
+    targetDomain.textContent = `ID: ${webstoreExtId.substring(0, 12)}...`;
     targetUrlText.textContent = currentUrl;
     scopeSelector.style.display = 'none';
   } else if (currentUrl.startsWith('http://') || currentUrl.startsWith('https://')) {
     try {
       parsedUrl = new URL(currentUrl);
       domainHost = parsedUrl.hostname.toLowerCase();
-      targetTypeBadge.textContent = '일반 웹사이트';
-      targetTypeBadge.className = 'badge web';
+      detectedType = 'url';
+      updateTargetBadge();
       targetDomain.textContent = domainHost;
       targetUrlText.textContent = currentUrl;
       scopeSelector.style.display = 'block';
     } catch (e) {
-      targetUrlText.textContent = 'URL 파싱 실패';
+      targetUrlText.textContent = t('url_parse_error', currentLang);
       saveBtn.disabled = true;
       return;
     }
   } else {
-    targetTypeBadge.textContent = '특수 페이지';
-    targetDomain.textContent = '제한된 시스템 URL';
+    detectedType = 'system';
+    updateTargetBadge();
+    targetDomain.textContent = currentUrl.split(':')[0] || 'internal';
     targetUrlText.textContent = currentUrl;
     memoInput.disabled = true;
     saveBtn.disabled = true;
-    statusMsg.textContent = '시스템/내부 페이지는 등록할 수 없습니다.';
+    statusMsg.textContent = t('status_system_page', currentLang);
     return;
   }
 
@@ -71,11 +98,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (detectedType === 'webstore') {
       return { target: webstoreExtId, type: 'webstore' };
     }
-    const scope = document.querySelector('input[name="targetScope"]:checked')?.value || 'domain';
+    // 기본값: 현재 URL만 (url)
+    const scope = document.querySelector('input[name="targetScope"]:checked')?.value || 'url';
     if (scope === 'domain') {
       return { target: domainHost, type: 'domain' };
     } else {
-      // 쿼리스트링/해시 포함 또는 정규화된 URL
       return { target: currentUrl, type: 'url' };
     }
   }
@@ -89,17 +116,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const actionRadio = document.querySelector(`input[name="actionType"][value="${existing.action}"]`);
       if (actionRadio) actionRadio.checked = true;
 
-      saveBtn.textContent = '메모 및 설정 수정';
+      saveBtn.textContent = t('save_btn_edit', currentLang);
       deleteBtn.style.display = 'block';
-      statusMsg.textContent = `[등록됨: ${existing.createdAt || '일자 미상'}]`;
+      statusMsg.textContent = t('status_registered', currentLang, { date: existing.createdAt || '-' });
     } else {
-      // 미등록인 경우 폼 기본화
-      if (memoInput.value === '') {
-        // 기존 텍스트 유지
-      }
-      saveBtn.textContent = '블랙리스트 등록';
+      saveBtn.textContent = t('save_btn_add', currentLang);
       deleteBtn.style.display = 'none';
-      statusMsg.textContent = '미등록 상태';
+      statusMsg.textContent = t('status_unregistered', currentLang);
     }
   }
 
@@ -138,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     statusMsg.style.color = '#2e7d32';
-    statusMsg.textContent = '성공적으로 저장되었습니다!';
+    statusMsg.textContent = t('status_saved', currentLang);
 
     setTimeout(() => {
       window.close();
@@ -158,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {}
 
     statusMsg.style.color = '#555';
-    statusMsg.textContent = '블랙리스트에서 삭제되었습니다.';
+    statusMsg.textContent = t('status_deleted', currentLang);
 
     setTimeout(() => {
       window.close();
