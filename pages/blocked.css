@@ -30,23 +30,100 @@ body {
 
 .banman-scene {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 22px;
 }
 
-.banman-cape-sprite {
-  height: 145px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  animation: hero-idle 3s ease-in-out infinite;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.14));
+.hero-emblem-container {
+  position: relative;
+  width: 154px;
+  height: 154px;
+  border-radius: 50%;
+  padding: 4px;
+  background: radial-gradient(circle, #2d3748 0%, #1a202c 100%);
+  border: 3.5px solid #d69e2e;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2), 0 0 0 5px rgba(214, 158, 46, 0.18);
+  animation: hero-hover 4s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
-@keyframes hero-idle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+.hero-emblem-container:hover {
+  transform: scale(1.04) translateY(-3px);
+  box-shadow: 0 14px 32px rgba(229, 62, 62, 0.3), 0 0 0 7px rgba(214, 158, 46, 0.25);
+}
+
+.hero-glow-ring {
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  width: 140%;
+  height: 140%;
+  background: radial-gradient(circle, rgba(237, 137, 54, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+  animation: ring-pulse 3s ease-in-out infinite alternate;
+}
+
+.banman-hero-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 12%;
+  filter: contrast(1.05) brightness(1.02);
+  animation: hero-breathe 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.hero-tag {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(17, 24, 39, 0.92);
+  color: #ecc94b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(236, 201, 75, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+@keyframes hero-hover {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes hero-breathe {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes ring-pulse {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
 }
 
 h1 {
