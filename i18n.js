@@ -2,7 +2,8 @@
 
 const I18N_DICTIONARY = {
   ko: {
-    app_name: 'BanMan (밴맨)',
+    app_name: 'BanMan',
+    app_slogan: 'Ban & Flag bad URLs for Chrome city',
     options_btn: '설정 및 목록 관리 ⚙️',
     detecting: '감지 중...',
     checking_url: 'URL 확인 중...',
@@ -97,6 +98,7 @@ const I18N_DICTIONARY = {
 
   en: {
     app_name: 'BanMan',
+    app_slogan: 'Ban & Flag bad URLs for Chrome city',
     options_btn: 'Settings & Rules ⚙️',
     detecting: 'Detecting...',
     checking_url: 'Checking URL...',
@@ -190,7 +192,8 @@ const I18N_DICTIONARY = {
   },
 
   ja: {
-    app_name: 'BanMan (バンマン)',
+    app_name: 'BanMan',
+    app_slogan: 'Ban & Flag bad URLs for Chrome city',
     options_btn: '設定・管理 ⚙️',
     detecting: '検出中...',
     checking_url: 'URL確認中...',

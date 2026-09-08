@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentLang = 'ko';
   let detectedType = 'url'; // 'webstore' | 'domain' | 'url' | 'system'
   let webstoreExtId = null;
+  let webstoreTitle = '';
   let domainHost = '';
   let currentUrl = '';
   let tab = null;
@@ -139,8 +140,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (webMatch) {
     detectedType = 'webstore';
     webstoreExtId = webMatch[1].toLowerCase();
+    // 탭 제목에서 웹스토어 확장 프로그램 이름 추출 (예: "확장 프로그램 이름 - Chrome 웹스토어")
+    if (tab.title) {
+      webstoreTitle = tab.title.replace(/\s*-\s*Chrome.*$/i, '').trim();
+    }
+    // 기존에 저장된 타이틀이 있다면 보존/우선
+    if (!webstoreTitle && blacklist_rules[webstoreExtId]?.title) {
+      webstoreTitle = blacklist_rules[webstoreExtId].title;
+    }
     updateTargetBadge();
-    targetDomain.textContent = `ID: ${webstoreExtId.substring(0, 12)}...`;
+    targetDomain.textContent = webstoreTitle ? `${webstoreTitle} (${webstoreExtId.substring(0, 8)}...)` : `ID: ${webstoreExtId.substring(0, 12)}...`;
     targetUrlText.textContent = currentUrl;
     scopeSelector.style.display = 'none';
   } else if (currentUrl.startsWith('http://') || currentUrl.startsWith('https://')) {
@@ -183,13 +192,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const now = new Date();
     const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    blacklist_rules[target] = {
+    const ruleObj = {
       target,
       type,
       action,
       memo,
       createdAt
     };
+
+    // 웹스토어 확장 프로그램 이름이 있는 경우 함께 저장
+    if (type === 'webstore') {
+      const titleToSave = webstoreTitle || (blacklist_rules[target]?.title) || '';
+      if (titleToSave) {
+        ruleObj.title = titleToSave;
+      }
+    }
+
+    blacklist_rules[target] = ruleObj;
 
     await chrome.storage.local.set({ blacklist_rules });
 

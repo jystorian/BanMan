@@ -281,12 +281,42 @@ input[type="text"]:focus, select:focus {
 .target-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+}
+
+.target-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .target-name {
   font-weight: 600;
   color: #1a202c;
+  word-break: break-all;
+}
+
+.webstore-ext-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  text-decoration: none;
+  opacity: 0.75;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  line-height: 1;
+}
+
+.webstore-ext-link:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.target-sub-id {
+  font-size: 11px;
+  color: #718096;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
   word-break: break-all;
 }
 

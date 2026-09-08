@@ -131,12 +131,34 @@ document.addEventListener('DOMContentLoaded', async () => {
           actionClass = 'hide';
         }
 
-        tr.innerHTML = `
-          <td>
+        // 웹스토어 확장인 경우 명칭 및 링크 처리
+        let targetHtml = '';
+        if (rule.type === 'webstore') {
+          const extId = (rule.target || key).toLowerCase();
+          const displayName = rule.title || extId;
+          const webstoreUrl = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
+          targetHtml = `
+            <div class="target-cell">
+              <div class="target-title-row">
+                <span class="target-name">${escapeHtml(displayName)}</span>
+                <a href="${webstoreUrl}" target="_blank" rel="noopener noreferrer" class="webstore-ext-link" title="크롬 웹스토어 열기">🔗</a>
+              </div>
+              <span class="target-sub-id">ID: ${escapeHtml(extId)}</span>
+              <span class="type-tag ${typeClass}">${typeLabel}</span>
+            </div>
+          `;
+        } else {
+          targetHtml = `
             <div class="target-cell">
               <span class="target-name">${escapeHtml(rule.target || key)}</span>
               <span class="type-tag ${typeClass}">${typeLabel}</span>
             </div>
+          `;
+        }
+
+        tr.innerHTML = `
+          <td>
+            ${targetHtml}
           </td>
           <td>
             <select class="inline-action-select ${actionClass}" data-key="${escapeHtml(key)}" title="${t('modal_action_label', currentLang)}">
@@ -254,7 +276,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!item) return;
 
     editingKey = key;
-    modalTargetDisplay.textContent = item.target || key;
+    if (item.type === 'webstore' && item.title) {
+      modalTargetDisplay.textContent = `${item.title} (${item.target || key})`;
+    } else {
+      modalTargetDisplay.textContent = item.target || key;
+    }
     modalMemoInput.value = item.memo || '';
 
     const actionRadio = document.querySelector(`input[name="modalAction"][value="${item.action}"]`);
