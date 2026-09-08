@@ -134,24 +134,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // 웹스토어 제목 비동기 조회 함수
+  async function fetchWebstoreTitle(extId) {
+    if (!extId) return null;
+    try {
+      const url = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const html = await res.text();
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+      if (titleMatch && titleMatch[1]) {
+        let title = titleMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
+        if (title && !title.toLowerCase().includes('chrome web store') && !title.toLowerCase().includes('chrome 웹스토어')) {
+          return title;
+        }
+      }
+      const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
+                      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+      if (ogMatch && ogMatch[1]) {
+        let title = ogMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
+        if (title) return title;
+      }
+    } catch (e) {
+      console.warn('Popup webstore fetch error:', e);
+    }
+    return null;
+  }
+
   currentUrl = tab.url;
-  const webMatch = currentUrl.match(WEBSTORE_REGEX);
+  // 슬러그와 32자리 ID를 모두 캡처하는 정규식
+  const webMatch = currentUrl.match(/chromewebstore\.google\.com\/detail\/(?:([^\/]+)\/)?([a-p]{32})/i);
 
   if (webMatch) {
     detectedType = 'webstore';
-    webstoreExtId = webMatch[1].toLowerCase();
-    // 탭 제목에서 웹스토어 확장 프로그램 이름 추출 (예: "확장 프로그램 이름 - Chrome 웹스토어")
+    const slug = webMatch[1] || '';
+    webstoreExtId = (webMatch[2] || webMatch[1]).toLowerCase();
+
+    // 1) 탭 제목에서 추출 시도
     if (tab.title) {
-      webstoreTitle = tab.title.replace(/\s*-\s*Chrome.*$/i, '').trim();
+      const cleaned = tab.title.replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
+      if (cleaned && !cleaned.toLowerCase().includes('chrome web store') && !cleaned.toLowerCase().includes('chrome 웹스토어')) {
+        webstoreTitle = cleaned;
+      }
     }
-    // 기존에 저장된 타이틀이 있다면 보존/우선
+
+    // 2) 기존 저장된 타이틀이 있다면 보존
     if (!webstoreTitle && blacklist_rules[webstoreExtId]?.title) {
       webstoreTitle = blacklist_rules[webstoreExtId].title;
     }
+
+    // 3) URL 슬러그가 의미 있는 텍스트인 경우 임시 제목으로 사용
+    if (!webstoreTitle && slug && !slug.match(/^[a-p]{32}$/i)) {
+      webstoreTitle = slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
     updateTargetBadge();
     targetDomain.textContent = webstoreTitle ? `${webstoreTitle} (${webstoreExtId.substring(0, 8)}...)` : `ID: ${webstoreExtId.substring(0, 12)}...`;
     targetUrlText.textContent = currentUrl;
     scopeSelector.style.display = 'none';
+
+    // 4) 아직 완벽한 타이틀을 못 얻었거나 슬러그뿐인 경우, 웹스토어 HTML에서 실시간 비동기 보정
+    if (!webstoreTitle || webstoreTitle.toLowerCase().includes('chrome')) {
+      fetchWebstoreTitle(webstoreExtId).then(title => {
+        if (title) {
+          webstoreTitle = title;
+          targetDomain.textContent = `${webstoreTitle} (${webstoreExtId.substring(0, 8)}...)`;
+          checkExistingRule();
+        }
+      });
+    }
   } else if (currentUrl.startsWith('http://') || currentUrl.startsWith('https://')) {
     try {
       const parsedUrl = new URL(currentUrl);

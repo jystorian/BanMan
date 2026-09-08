@@ -37,11 +37,85 @@ document.addEventListener('DOMContentLoaded', async () => {
     render();
   });
 
+  // 웹스토어 확장 프로그램 제목 캐시 및 비동기 조회
+  const webstoreTitleCache = {};
+
+  async function fetchWebstoreTitle(extId) {
+    if (!extId) return null;
+    extId = extId.toLowerCase().trim();
+    if (webstoreTitleCache[extId]) return webstoreTitleCache[extId];
+
+    try {
+      const url = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const html = await response.text();
+
+      // 1) <title> 태그 검색
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+      if (titleMatch && titleMatch[1]) {
+        let title = titleMatch[1]
+          .replace(/\s*-\s*Chrome.*$/i, '')
+          .replace(/\s*-\s*크롬.*$/i, '')
+          .trim();
+        if (title && !title.toLowerCase().includes('chrome web store') && !title.toLowerCase().includes('chrome 웹스토어')) {
+          webstoreTitleCache[extId] = title;
+          return title;
+        }
+      }
+
+      // 2) <meta property="og:title"> 검색
+      const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
+                      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+      if (ogMatch && ogMatch[1]) {
+        let title = ogMatch[1]
+          .replace(/\s*-\s*Chrome.*$/i, '')
+          .replace(/\s*-\s*크롬.*$/i, '')
+          .trim();
+        if (title) {
+          webstoreTitleCache[extId] = title;
+          return title;
+        }
+      }
+    } catch (err) {
+      console.warn(`Failed to fetch webstore title for ${extId}:`, err);
+    }
+    return null;
+  }
+
+  // 기존 등록된 웹스토어 규칙 중 제목이 없는 항목 자동 보정 (Self-healing)
+  async function enrichWebstoreTitles() {
+    let hasUpdates = false;
+    const webstoreEntries = Object.entries(currentRules).filter(([_, r]) => {
+      return r.type === 'webstore' && (!r.title || r.title === r.target);
+    });
+
+    for (const [key, rule] of webstoreEntries) {
+      const extId = (rule.target || key).toLowerCase();
+      const fetchedTitle = await fetchWebstoreTitle(extId);
+      if (fetchedTitle && fetchedTitle !== extId) {
+        currentRules[key].title = fetchedTitle;
+        hasUpdates = true;
+
+        // 테이블에 렌더링된 요소 즉시 갱신
+        const nameEl = document.querySelector(`.target-name[data-ext-id="${extId}"]`);
+        if (nameEl) {
+          nameEl.textContent = fetchedTitle;
+        }
+      }
+    }
+
+    if (hasUpdates) {
+      await chrome.storage.local.set({ blacklist_rules: currentRules });
+    }
+  }
+
   // 1. 규칙 로드 및 통계 갱신
   async function loadData() {
     const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
     currentRules = blacklist_rules;
     render();
+    enrichWebstoreTitles();
   }
 
   // 실시간 스토리지 변경 동기화
@@ -140,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           targetHtml = `
             <div class="target-cell">
               <div class="target-title-row">
-                <span class="target-name">${escapeHtml(displayName)}</span>
+                <span class="target-name" data-ext-id="${escapeHtml(extId)}">${escapeHtml(displayName)}</span>
                 <a href="${webstoreUrl}" target="_blank" rel="noopener noreferrer" class="webstore-ext-link" title="크롬 웹스토어 열기">🔗</a>
               </div>
               <span class="target-sub-id">ID: ${escapeHtml(extId)}</span>
@@ -217,6 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!target) return;
 
+    let webstoreTitle = '';
     if (type === 'domain') {
       try {
         if (target.includes('://')) {
@@ -228,18 +303,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (type === 'webstore') {
       const match = target.match(/([a-p]{32})/i);
       if (match) target = match[1].toLowerCase();
+      // 등록 시 즉시 웹스토어 제목 fetch 시도
+      webstoreTitle = await fetchWebstoreTitle(target) || '';
     }
 
     const now = new Date();
     const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    currentRules[target] = {
+    const ruleObj = {
       target,
       type,
       action,
       memo,
       createdAt
     };
+
+    if (type === 'webstore' && webstoreTitle) {
+      ruleObj.title = webstoreTitle;
+    }
+
+    currentRules[target] = ruleObj;
 
     await chrome.storage.local.set({ blacklist_rules: currentRules });
 
