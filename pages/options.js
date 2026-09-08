@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           actionClass = 'hide';
         }
 
-        // 웹스토어 확장인 경우 명칭 및 링크 처리
+        // 대상 명칭 및 링크 처리 (웹스토어 및 일반 웹페이지/도메인)
         let targetHtml = '';
         if (rule.type === 'webstore') {
           const extId = (rule.target || key).toLowerCase();
@@ -207,21 +207,32 @@ document.addEventListener('DOMContentLoaded', async () => {
           const subIdHtml = hasTitle
             ? `<span class="target-sub-id">ID: ${escapeHtml(extId)}</span>`
             : '';
+          const webstoreTitle = currentLang === 'ko' ? '크롬 웹스토어 열기' : (currentLang === 'ja' ? 'Chrome ウェブストアを開く' : 'Open Chrome Web Store');
 
           targetHtml = `
             <div class="target-cell">
               <div class="target-title-row">
                 <span class="target-name" data-ext-id="${escapeHtml(extId)}">${escapeHtml(displayName)}</span>
-                <a href="${webstoreUrl}" target="_blank" rel="noopener noreferrer" class="webstore-ext-link" title="크롬 웹스토어 열기">🔗</a>
+                <a href="${webstoreUrl}" target="_blank" rel="noopener noreferrer" class="target-ext-link webstore-ext-link" title="${webstoreTitle}">🔗</a>
               </div>
               ${subIdHtml}
               <span class="type-tag ${typeClass}">${typeLabel}</span>
             </div>
           `;
         } else {
+          const targetStr = (rule.target || key).trim();
+          let linkUrl = targetStr;
+          if (!linkUrl.startsWith('http://') && !linkUrl.startsWith('https://')) {
+            linkUrl = 'https://' + linkUrl;
+          }
+          const linkTitle = currentLang === 'ko' ? '새 탭에서 사이트 열기' : (currentLang === 'ja' ? '新しいタブで開く' : 'Open in new tab');
+
           targetHtml = `
             <div class="target-cell">
-              <span class="target-name">${escapeHtml(rule.target || key)}</span>
+              <div class="target-title-row">
+                <span class="target-name">${escapeHtml(targetStr)}</span>
+                <a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener noreferrer" class="target-ext-link" title="${linkTitle}">🔗</a>
+              </div>
               <span class="type-tag ${typeClass}">${typeLabel}</span>
             </div>
           `;

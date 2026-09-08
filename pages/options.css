@@ -301,6 +301,7 @@ input[type="text"]:focus, select:focus {
   word-break: break-all;
 }
 
+.target-ext-link,
 .webstore-ext-link {
   display: inline-flex;
   align-items: center;
@@ -310,8 +311,10 @@ input[type="text"]:focus, select:focus {
   opacity: 0.75;
   transition: opacity 0.15s ease, transform 0.15s ease;
   line-height: 1;
+  cursor: pointer;
 }
 
+.target-ext-link:hover,
 .webstore-ext-link:hover {
   opacity: 1;
   transform: scale(1.15);
