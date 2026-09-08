@@ -1,0 +1,77 @@
+// ==UserScript==
+// @name         Link Blocker & Annotator
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  URL 직접 차단, 링크 DOM 숨김, 메모/경고 배지 표시
+// @match        *://*/*
+// @run-at       document-end
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // [설정] 대상 도메인/키워드, 동작(block/hide/warn), 메모 내용
+    const rules = {
+        'example-malware.com': { action: 'block', memo: '보안 취약점 및 멀웨어 의심' },
+        'clickbait-site.net': { action: 'hide', memo: '불필요한 낚시성 뉴스 링크 숨김' },
+        'time-sink-forum.org': { action: 'warn', memo: '업무 시간 접속 주의 대상' }
+    };
+
+    const currentUrl = window.location.href;
+
+    // 1. 해당 URL에 직접 진입했을 때 즉각 차단
+    for (const [target, cfg] of Object.entries(rules)) {
+        if (currentUrl.includes(target) && (cfg.action === 'block' || cfg.action === 'hide')) {
+            window.stop();
+            document.documentElement.innerHTML = `
+                <div style="padding: 50px; font-family: sans-serif; text-align: center; color: #333;">
+                    <h2>🚫 접근이 차단된 페이지입니다</h2>
+                    <p><strong>대상:</strong> ${target}</p>
+                    <p><strong>기록된 메모:</strong> ${cfg.memo}</p>
+                </div>
+            `;
+            return;
+        }
+    }
+
+    // 2. 현재 웹페이지 내 링크(<a>) 검사 및 처리
+    function processLinks() {
+        const links = document.querySelectorAll('a[href]:not([data-annotated])');
+        links.forEach(link => {
+            link.setAttribute('data-annotated', 'true');
+            const href = link.href;
+
+            for (const [target, cfg] of Object.entries(rules)) {
+                if (href.includes(target)) {
+                    if (cfg.action === 'hide') {
+                        // 링크 요소 완전히 제거 또는 은닉
+                        link.style.display = 'none';
+                    } else if (cfg.action === 'warn') {
+                        // 링크를 흐리게 처리하고 인라인 메모 배지 부착
+                        link.style.opacity = '0.4';
+                        link.style.textDecoration = 'line-through';
+                        link.title = `[차단 메모] ${cfg.memo}`;
+
+                        const badge = document.createElement('span');
+                        badge.textContent = ` ⚠️[${cfg.memo}]`;
+                        badge.style.cssText = 'font-size: 11px; color: #d9534f; font-weight: bold; margin-left: 4px;';
+                        link.parentNode.insertBefore(badge, link.nextSibling);
+                    } else if (cfg.action === 'block') {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            alert(`차단된 대상입니다.\n메모: ${cfg.memo}`);
+                        });
+                        link.style.color = '#888';
+                        link.title = `[접속 차단] ${cfg.memo}`;
+                    }
+                    break;
+                }
+            }
+        });
+    }
+
+    processLinks();
+    // SPA 및 동적 DOM 렌더링 대응
+    const observer = new MutationObserver(processLinks);
+    observer.observe(document.body, { childList: true, subtree: true });
+})();
