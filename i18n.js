@@ -3,7 +3,7 @@
 const I18N_DICTIONARY = {
   ko: {
     app_name: 'BanMan (밴맨)',
-    options_btn: '목록 및 백업 관리 ⚙️',
+    options_btn: '설정 및 목록 관리 ⚙️',
     detecting: '감지 중...',
     checking_url: 'URL 확인 중...',
     target_header: '감지된 대상 URL / 사이트:',
@@ -42,7 +42,7 @@ const I18N_DICTIONARY = {
     blocked_go_back: '◀ 안전하게 이전 페이지로 돌아가기',
     blocked_bypass: '이 탭에서 1회 임시 허용',
     blocked_bypassing: '임시 허용 처리 중...',
-    blocked_manage_link: '규칙 수정 및 전체 목록 관리 ⚙️',
+    blocked_manage_link: '설정 및 전체 목록 관리 ⚙️',
 
     dashboard_title: 'BanMan 대시보드',
     dashboard_desc: 'Ban & Flag bad URLs for Chrome city - 크롬 시티 통합 방어 대시보드',
@@ -91,7 +91,7 @@ const I18N_DICTIONARY = {
 
   en: {
     app_name: 'BanMan',
-    options_btn: 'Dashboard & Rules ⚙️',
+    options_btn: 'Settings & Rules ⚙️',
     detecting: 'Detecting...',
     checking_url: 'Checking URL...',
     target_header: 'Detected Target URL / Site:',
@@ -130,7 +130,7 @@ const I18N_DICTIONARY = {
     blocked_go_back: '◀ Go back safely to previous page',
     blocked_bypass: 'Allow once in this tab',
     blocked_bypassing: 'Bypassing...',
-    blocked_manage_link: 'Edit rule & open dashboard ⚙️',
+    blocked_manage_link: 'Settings & open dashboard ⚙️',
 
     dashboard_title: 'BanMan Dashboard',
     dashboard_desc: 'Ban & Flag bad URLs for Chrome city - Security Defense Dashboard',
@@ -179,7 +179,7 @@ const I18N_DICTIONARY = {
 
   ja: {
     app_name: 'BanMan (バンマン)',
-    options_btn: 'リスト・バックアップ管理 ⚙️',
+    options_btn: '設定・管理 ⚙️',
     detecting: '検出中...',
     checking_url: 'URL確認中...',
     target_header: '検出された対象 URL / サイト:',
@@ -191,16 +191,16 @@ const I18N_DICTIONARY = {
     scope_domain: 'ドメイン全体',
     action_type: '処理方式 (アクション):',
     action_block_title: '事前ブロック',
-    action_block_desc: 'アクセス時に遮断画面',
+    action_block_desc: 'アクセス時に遮断画面を表示',
     action_warn_title: '警告 & メモ',
-    action_warn_desc: 'バッジ / 取り消し線',
+    action_warn_desc: 'バッジおよび取り消し線表示',
     action_hide_title: 'リンク非表示',
-    action_hide_desc: '他サイト上で隠蔽',
+    action_hide_desc: '他サイト上でリンクを隠蔽',
     memo_label: 'ブロック / 警告理由のメモ:',
     memo_placeholder: '例: 釣り記事、メモリリーク、過剰な広告など',
-    save_btn_add: 'ブラックリストに登録',
-    save_btn_edit: 'メモ・設定を更新',
-    delete_btn: '解除',
+    save_btn_add: 'ブラックリスト登録',
+    save_btn_edit: 'メモ・設定の更新',
+    delete_btn: '登録解除',
     status_unregistered: '未登録状態',
     status_registered: '[登録済: {date}]',
     status_saved: '正常に保存されました！',
@@ -218,7 +218,7 @@ const I18N_DICTIONARY = {
     blocked_go_back: '◀ 安全に前のページへ戻る',
     blocked_bypass: 'このタブで1回だけ一時許可',
     blocked_bypassing: '一時許可処理中...',
-    blocked_manage_link: 'ルール編集・ダッシュボード管理 ⚙️',
+    blocked_manage_link: '設定・ダッシュボード管理 ⚙️',
 
     dashboard_title: 'BanMan ダッシュボード',
     dashboard_desc: 'Ban & Flag bad URLs for Chrome city - クロームシティ統合防衛ダッシュボード',
@@ -262,7 +262,7 @@ const I18N_DICTIONARY = {
     import_invalid_json: '無効なJSONファイル形式です。',
     import_confirm: "既存ルールを上書きしますか？\n[OK]: 既存ルールを削除して上書き\n[キャンセル]: 既存ルールを維持してマージ",
     import_success: '合計 {count} 件のルールが正常に反映されました。',
-    import_error: 'JSONファイルの読み込み中にエラーが発生했습니다: {error}'
+    import_error: 'JSONファイルの読み込み中にエラーが発生しました: {error}'
   }
 };
 
