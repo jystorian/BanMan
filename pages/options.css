@@ -64,8 +64,6 @@ body {
   font-weight: 500;
   margin-top: 2px;
 }
-  color: #718096;
-}
 
 .header-actions {
   display: flex;
@@ -353,8 +351,8 @@ input[type="text"]:focus, select:focus {
 
 /* 테이블 컬럼 너비 분배 - 대상 및 유형 컬럼에 최대 폭 집중 할당 */
 .col-target {
-  width: 44%;
-  min-width: 260px;
+  width: 41%;
+  min-width: 250px;
 }
 
 .col-action {
@@ -363,24 +361,27 @@ input[type="text"]:focus, select:focus {
 }
 
 .col-memo {
-  width: 26%;
-  min-width: 140px;
+  width: 25%;
+  min-width: 130px;
 }
 
 .col-date {
-  width: 85px;
-  min-width: 80px;
+  width: 115px;
+  min-width: 110px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .col-manage {
-  width: 80px;
-  min-width: 75px;
+  width: 75px;
+  min-width: 70px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .rules-table th.col-date, .rules-table th.col-manage {
   text-align: center;
+  white-space: nowrap;
 }
 
 .memo-cell {
@@ -388,10 +389,11 @@ input[type="text"]:focus, select:focus {
   word-break: break-word;
 }
 
-/* 등록일 날짜/시간 2줄 스택 스타일 */
+/* 등록일 날짜/시간 2줄 스택 스타일 - 줄바꿈 없이 깔끔한 고정폭 */
 .date-cell {
   text-align: center;
-  padding: 8px 4px;
+  padding: 8px 6px;
+  white-space: nowrap;
 }
 
 .date-stacked {
@@ -400,20 +402,23 @@ input[type="text"]:focus, select:focus {
   align-items: center;
   gap: 2px;
   line-height: 1.15;
+  white-space: nowrap;
 }
 
 .date-d {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #4a5568;
   font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
 }
 
 .date-t {
-  font-size: 10px;
+  font-size: 10.5px;
   color: #a0aec0;
   font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  white-space: nowrap;
 }
 
 .action-btns {
