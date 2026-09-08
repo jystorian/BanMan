@@ -134,31 +134,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // 웹스토어 제목 비동기 조회 함수
+  // 웹스토어 제목 비동기 조회 함수 (Service Worker 경유로 CORS 완벽 우회)
   async function fetchWebstoreTitle(extId) {
     if (!extId) return null;
-    try {
-      const url = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      const html = await res.text();
-      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-      if (titleMatch && titleMatch[1]) {
-        let title = titleMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
-        if (title && !title.toLowerCase().includes('chrome web store') && !title.toLowerCase().includes('chrome 웹스토어')) {
-          return title;
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'FETCH_WEBSTORE_TITLE', extId }, (res) => {
+        if (chrome.runtime.lastError) {
+          console.warn('Popup webstore fetch error:', chrome.runtime.lastError);
+          resolve(null);
+          return;
         }
-      }
-      const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
-                      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
-      if (ogMatch && ogMatch[1]) {
-        let title = ogMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
-        if (title) return title;
-      }
-    } catch (e) {
-      console.warn('Popup webstore fetch error:', e);
-    }
-    return null;
+        resolve(res && res.title ? res.title : null);
+      });
+    });
   }
 
   currentUrl = tab.url;

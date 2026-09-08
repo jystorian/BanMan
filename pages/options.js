@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     render();
   });
 
-  // 웹스토어 확장 프로그램 제목 캐시 및 비동기 조회
+  // 웹스토어 확장 프로그램 제목 캐시 및 서비스 워커 경유 비동기 조회 (CORS 제약 없음)
   const webstoreTitleCache = {};
 
   async function fetchWebstoreTitle(extId) {
@@ -45,42 +45,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     extId = extId.toLowerCase().trim();
     if (webstoreTitleCache[extId]) return webstoreTitleCache[extId];
 
-    try {
-      const url = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
-      const response = await fetch(url);
-      if (!response.ok) return null;
-      const html = await response.text();
-
-      // 1) <title> 태그 검색
-      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-      if (titleMatch && titleMatch[1]) {
-        let title = titleMatch[1]
-          .replace(/\s*-\s*Chrome.*$/i, '')
-          .replace(/\s*-\s*크롬.*$/i, '')
-          .trim();
-        if (title && !title.toLowerCase().includes('chrome web store') && !title.toLowerCase().includes('chrome 웹스토어')) {
-          webstoreTitleCache[extId] = title;
-          return title;
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'FETCH_WEBSTORE_TITLE', extId }, (res) => {
+        if (chrome.runtime.lastError) {
+          console.warn('FETCH_WEBSTORE_TITLE sendMessage error:', chrome.runtime.lastError);
+          resolve(null);
+          return;
         }
-      }
-
-      // 2) <meta property="og:title"> 검색
-      const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
-                      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
-      if (ogMatch && ogMatch[1]) {
-        let title = ogMatch[1]
-          .replace(/\s*-\s*Chrome.*$/i, '')
-          .replace(/\s*-\s*크롬.*$/i, '')
-          .trim();
-        if (title) {
-          webstoreTitleCache[extId] = title;
-          return title;
+        if (res && res.title) {
+          webstoreTitleCache[extId] = res.title;
+          resolve(res.title);
+        } else {
+          resolve(null);
         }
-      }
-    } catch (err) {
-      console.warn(`Failed to fetch webstore title for ${extId}:`, err);
-    }
-    return null;
+      });
+    });
   }
 
   // 기존 등록된 웹스토어 규칙 중 제목이 없는 항목 자동 보정 (Self-healing)
@@ -101,6 +80,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nameEl = document.querySelector(`.target-name[data-ext-id="${extId}"]`);
         if (nameEl) {
           nameEl.textContent = fetchedTitle;
+          const parentCell = nameEl.closest('.target-cell');
+          if (parentCell && !parentCell.querySelector('.target-sub-id')) {
+            const subSpan = document.createElement('span');
+            subSpan.className = 'target-sub-id';
+            subSpan.textContent = `ID: ${extId}`;
+            const typeTag = parentCell.querySelector('.type-tag');
+            if (typeTag) {
+              parentCell.insertBefore(subSpan, typeTag);
+            } else {
+              parentCell.appendChild(subSpan);
+            }
+          }
         }
       }
     }
@@ -209,15 +200,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         let targetHtml = '';
         if (rule.type === 'webstore') {
           const extId = (rule.target || key).toLowerCase();
-          const displayName = rule.title || extId;
+          const hasTitle = rule.title && rule.title !== extId;
+          const displayName = hasTitle ? rule.title : extId;
           const webstoreUrl = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
+          // 제목이 있는 경우에만 하단에 ID를 보조로 표시하여, 제목 부재 시 위아래 ID 중복 방지
+          const subIdHtml = hasTitle
+            ? `<span class="target-sub-id">ID: ${escapeHtml(extId)}</span>`
+            : '';
+
           targetHtml = `
             <div class="target-cell">
               <div class="target-title-row">
                 <span class="target-name" data-ext-id="${escapeHtml(extId)}">${escapeHtml(displayName)}</span>
                 <a href="${webstoreUrl}" target="_blank" rel="noopener noreferrer" class="webstore-ext-link" title="크롬 웹스토어 열기">🔗</a>
               </div>
-              <span class="target-sub-id">ID: ${escapeHtml(extId)}</span>
+              ${subIdHtml}
               <span class="type-tag ${typeClass}">${typeLabel}</span>
             </div>
           `;

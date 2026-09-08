@@ -46,7 +46,7 @@ const I18N_DICTIONARY = {
     blocked_manage_link: '설정 및 전체 목록 관리 ⚙️',
 
     dashboard_title: 'BanMan 대시보드',
-    dashboard_desc: 'Ban & Flag bad URLs for Chrome city - 크롬 시티 통합 방어 대시보드',
+    dashboard_desc: 'Ban & Flag bad URLs for Chrome city',
     export_json: '📥 JSON 내보내기',
     import_json: '📤 JSON 가져오기',
     stat_total: '전체 등록 규칙',
@@ -141,7 +141,7 @@ const I18N_DICTIONARY = {
     blocked_manage_link: 'Settings & open dashboard ⚙️',
 
     dashboard_title: 'BanMan Dashboard',
-    dashboard_desc: 'Ban & Flag bad URLs for Chrome city - Security Defense Dashboard',
+    dashboard_desc: 'Ban & Flag bad URLs for Chrome city',
     export_json: '📥 Export JSON',
     import_json: '📤 Import JSON',
     stat_total: 'Total Rules',
@@ -236,7 +236,7 @@ const I18N_DICTIONARY = {
     blocked_manage_link: '設定・ダッシュボード管理 ⚙️',
 
     dashboard_title: 'BanMan ダッシュボード',
-    dashboard_desc: 'Ban & Flag bad URLs for Chrome city - クロームシティ統合防衛ダッシュボード',
+    dashboard_desc: 'Ban & Flag bad URLs for Chrome city',
     export_json: '📥 JSON エクスポート',
     import_json: '📤 JSON インポート',
     stat_total: '全登録ルール',
