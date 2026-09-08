@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>블랙리스트 & 메모 관리</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo-title">
+        <span class="icon">🛡️</span>
+        <h2>블랙리스트 & 메모</h2>
+      </div>
+      <button id="openOptionsBtn" class="icon-btn" title="전체 목록 및 백업 관리">⚙️</button>
+    </header>
+
+    <div id="targetCard" class="target-card">
+      <div class="target-header">
+        <span id="targetTypeBadge" class="badge">감지 중...</span>
+        <span id="targetDomain" class="domain-text"></span>
+      </div>
+      <div id="targetUrlText" class="url-text">URL 확인 중...</div>
+    </div>
+
+    <!-- 일반 웹페이지일 때 타겟 범위 선택 -->
+    <div id="scopeSelector" class="form-group" style="display: none;">
+      <label class="form-label">적용 대상 범위:</label>
+      <div class="segmented-control">
+        <label class="segment">
+          <input type="radio" name="targetScope" value="domain" checked>
+          <span>도메인 전체</span>
+        </label>
+        <label class="segment">
+          <input type="radio" name="targetScope" value="url">
+          <span>현재 URL만</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 처리 방식 선택 -->
+    <div class="form-group">
+      <label class="form-label">처리 방식 (액션):</label>
+      <div class="action-grid">
+        <label class="action-card">
+          <input type="radio" name="actionType" value="block" checked>
+          <div class="card-content block">
+            <span class="act-icon">🚫</span>
+            <div class="act-info">
+              <strong>사전 차단</strong>
+              <small>진입 시 차단 화면</small>
+            </div>
+          </div>
+        </label>
+
+        <label class="action-card">
+          <input type="radio" name="actionType" value="warn">
+          <div class="card-content warn">
+            <span class="act-icon">⚠️</span>
+            <div class="act-info">
+              <strong>경고 & 메모</strong>
+              <small>배지 / 취소선</small>
+            </div>
+          </div>
+        </label>
+
+        <label class="action-card">
+          <input type="radio" name="actionType" value="hide">
+          <div class="card-content hide">
+            <span class="act-icon">👁️</span>
+            <div class="act-info">
+              <strong>링크 숨김</strong>
+              <small>타 사이트서 은닉</small>
+            </div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 사유 메모 입력 -->
+    <div class="form-group">
+      <label for="memoInput" class="form-label">차단 / 비추천 사유 메모:</label>
+      <textarea id="memoInput" placeholder="예: 낚시성 뉴스, 메모리 누수 버그, 광고 과다 등"></textarea>
+    </div>
+
+    <!-- 액션 버튼 -->
+    <div class="btn-group">
+      <button id="saveBtn" class="btn btn-primary">블랙리스트 등록</button>
+      <button id="deleteBtn" class="btn btn-secondary" style="display: none;">해제</button>
+    </div>
+
+    <div id="statusMsg" class="status-msg"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
