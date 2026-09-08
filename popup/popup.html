@@ -17,7 +17,7 @@
       </div>
       <div class="header-right">
         <button id="openOptionsBtn" class="btn-dashboard" data-i18n-title="options_btn">
-          <span data-i18n="options_btn">설정 및 목록 관리 ⚙️</span>
+          <span data-i18n="options_btn">설정 및 목록 ⚙️</span>
         </button>
         <select id="langSelect" class="lang-select" title="Language / 언어">
           <option value="ko">🇰🇷 한국어</option>
@@ -74,7 +74,7 @@
           <div class="card-content warn">
             <span class="act-icon">⚠️</span>
             <div class="act-info">
-              <strong data-i18n="action_warn_title">경고 & 메모</strong>
+              <strong data-i18n="action_warn_title">주의</strong>
               <small data-i18n="action_warn_desc">배지 / 취소선</small>
             </div>
           </div>
@@ -83,7 +83,15 @@
         <label class="action-card">
           <input type="radio" name="actionType" value="hide">
           <div class="card-content hide">
-            <span class="act-icon">👁️</span>
+            <span class="act-icon">
+              <svg class="icon-closed-eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 10s4 6 10 6 10-6 10-6"/>
+                <path d="m5 14-1.8 2.3"/>
+                <path d="m9 16.5-0.8 2.8"/>
+                <path d="m15 16.5 0.8 2.8"/>
+                <path d="m19 14 1.8 2.3"/>
+              </svg>
+            </span>
             <div class="act-info">
               <strong data-i18n="action_hide_title">링크 숨김</strong>
               <small data-i18n="action_hide_desc">타 사이트서 은닉</small>

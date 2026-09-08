@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <select class="inline-action-select ${actionClass}" data-key="${escapeHtml(key)}" title="${t('modal_action_label', currentLang)}">
               <option value="block" ${rule.action === 'block' ? 'selected' : ''}>🚫 ${t('action_block', currentLang)}</option>
               <option value="warn" ${rule.action === 'warn' ? 'selected' : ''}>⚠️ ${t('action_warn', currentLang)}</option>
-              <option value="hide" ${rule.action === 'hide' ? 'selected' : ''}>👁️ ${t('action_hide', currentLang)}</option>
+              <option value="hide" ${rule.action === 'hide' ? 'selected' : ''}>🙈 ${t('action_hide', currentLang)}</option>
             </select>
           </td>
           <td class="memo-cell">${escapeHtml(rule.memo || '-')}</td>

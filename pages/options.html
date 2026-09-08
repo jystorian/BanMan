@@ -40,15 +40,15 @@
         </div>
         <div class="stat-card block">
           <span class="stat-num" id="blockCount">0</span>
-          <span class="stat-label" data-i18n="stat_block">🚫 사전 차단</span>
+          <span class="stat-label"><span class="stat-icon">🚫</span> <span data-i18n="stat_block">사전 차단</span></span>
         </div>
         <div class="stat-card warn">
           <span class="stat-num" id="warnCount">0</span>
-          <span class="stat-label" data-i18n="stat_warn">⚠️ 경고 & 메모</span>
+          <span class="stat-label"><span class="stat-icon">⚠️</span> <span data-i18n="stat_warn">주의</span></span>
         </div>
         <div class="stat-card hide">
           <span class="stat-num" id="hideCount">0</span>
-          <span class="stat-label" data-i18n="stat_hide">👁️ 링크 숨김</span>
+          <span class="stat-label"><span class="stat-icon"><svg class="icon-closed-eye stat-icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10s4 6 10 6 10-6 10-6"/><path d="m5 14-1.8 2.3"/><path d="m9 16.5-0.8 2.8"/><path d="m15 16.5 0.8 2.8"/><path d="m19 14 1.8 2.3"/></svg></span> <span data-i18n="stat_hide">링크 숨김</span></span>
         </div>
       </section>
 
@@ -72,9 +72,9 @@
             <div class="form-col">
               <label data-i18n="add_action_label">처리 액션</label>
               <select id="newAction">
-                <option value="block" data-i18n="action_block">🚫 사전 차단</option>
-                <option value="warn" data-i18n="action_warn">⚠️ 경고 & 메모</option>
-                <option value="hide" data-i18n="action_hide">👁️ 링크 숨김</option>
+                <option value="block" data-i18n="action_block">사전 차단</option>
+                <option value="warn" data-i18n="action_warn">주의</option>
+                <option value="hide" data-i18n="action_hide">링크 숨김</option>
               </select>
             </div>
           </div>
@@ -99,7 +99,7 @@
             <div class="filter-tabs">
               <button class="tab-btn active" data-filter="all" data-i18n="filter_all">전체</button>
               <button class="tab-btn" data-filter="block" data-i18n="filter_block">차단</button>
-              <button class="tab-btn" data-filter="warn" data-i18n="filter_warn">경고</button>
+              <button class="tab-btn" data-filter="warn" data-i18n="filter_warn">주의</button>
               <button class="tab-btn" data-filter="hide" data-i18n="filter_hide">숨김</button>
             </div>
           </div>
@@ -160,7 +160,7 @@
               <div class="card-inner">
                 <span class="icon">⚠️</span>
                 <div class="text">
-                  <strong data-i18n="action_warn_title">경고 & 메모</strong>
+                  <strong data-i18n="action_warn_title">주의</strong>
                   <small data-i18n="action_warn_desc">배지 표시 및 취소선</small>
                 </div>
               </div>
@@ -168,7 +168,15 @@
             <label class="modal-action-card hide">
               <input type="radio" name="modalAction" value="hide">
               <div class="card-inner">
-                <span class="icon">👁️</span>
+                <span class="icon">
+                  <svg class="icon-closed-eye" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 10s4 6 10 6 10-6 10-6"/>
+                    <path d="m5 14-1.8 2.3"/>
+                    <path d="m9 16.5-0.8 2.8"/>
+                    <path d="m15 16.5 0.8 2.8"/>
+                    <path d="m19 14 1.8 2.3"/>
+                  </svg>
+                </span>
                 <div class="text">
                   <strong data-i18n="action_hide_title">링크 숨김</strong>
                   <small data-i18n="action_hide_desc">웹페이지 내 링크 숨김</small>

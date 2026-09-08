@@ -126,7 +126,7 @@
         } else if (rule.action === 'warn') {
           link.classList.add('cb-link-warn');
           const memoText = rule.memo ? ` [${rule.memo}]` : ' [주의 대상]';
-          link.title = `[BanMan 경고] ${rule.memo || ''}`;
+          link.title = `[BanMan 주의] ${rule.memo || ''}`;
 
           const badge = document.createElement('span');
           badge.className = 'cb-badge cb-badge-warn';
