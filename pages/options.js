@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           </td>
           <td class="memo-cell">${escapeHtml(rule.memo || '-')}</td>
           <td class="date-cell">${rule.createdAt || '-'}</td>
-          <td style="text-align: center;">
+          <td class="manage-col">
             <div class="action-btns">
               <button class="sm-btn edit-btn" data-key="${escapeHtml(key)}">${t('btn_edit', currentLang)}</button>
               <button class="sm-btn delete delete-btn" data-key="${escapeHtml(key)}">${t('btn_delete', currentLang)}</button>
