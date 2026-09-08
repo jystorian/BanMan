@@ -14,38 +14,48 @@ document.addEventListener('DOMContentLoaded', async () => {
   const openOptionsBtn = document.getElementById('openOptionsBtn');
   const langSelect = document.getElementById('langSelect');
 
-  // 다국어 초기화 및 이벤트 리스너
-  let currentLang = await getAppLanguage();
+  // 상태 변수 선언 (TDZ 방지 및 안전한 스코프 유지)
+  let blacklist_rules = {};
+  let currentLang = 'ko';
+  let detectedType = 'url'; // 'webstore' | 'domain' | 'url' | 'system'
+  let webstoreExtId = null;
+  let domainHost = '';
+  let currentUrl = '';
+  let tab = null;
+
+  // 1. 다국어 및 블랙리스트 규칙 초기 로드
+  try {
+    const [lang, stored] = await Promise.all([
+      getAppLanguage(),
+      chrome.storage.local.get('blacklist_rules')
+    ]);
+    currentLang = lang;
+    blacklist_rules = stored.blacklist_rules || {};
+  } catch (err) {
+    console.error('BanMan init error:', err);
+  }
+
   langSelect.value = currentLang;
   applyTranslations(currentLang);
 
-  langSelect.addEventListener('change', async (e) => {
-    currentLang = e.target.value;
-    await setAppLanguage(currentLang);
-    applyTranslations(currentLang);
-    updateTargetBadge();
-    checkExistingRule();
-  });
-
-  openOptionsBtn.addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
-  });
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !tab.url) {
-    targetUrlText.textContent = t('tab_info_error', currentLang);
-    saveBtn.disabled = true;
-    return;
+  // 대상 판별 함수
+  function getSelectedTarget() {
+    if (detectedType === 'webstore') {
+      return { target: webstoreExtId, type: 'webstore' };
+    }
+    if (detectedType === 'system') {
+      return { target: null, type: 'system' };
+    }
+    // 기본값: 현재 URL만 (url)
+    const scope = document.querySelector('input[name="targetScope"]:checked')?.value || 'url';
+    if (scope === 'domain') {
+      return { target: domainHost, type: 'domain' };
+    } else {
+      return { target: currentUrl, type: 'url' };
+    }
   }
 
-  const currentUrl = tab.url;
-  let parsedUrl = null;
-  let detectedType = 'url'; // 'webstore' | 'domain' | 'url'
-  let webstoreExtId = null;
-  let domainHost = '';
-
-  const webMatch = currentUrl.match(WEBSTORE_REGEX);
-
+  // 배지 업데이트 함수
   function updateTargetBadge() {
     if (detectedType === 'webstore') {
       targetTypeBadge.textContent = t('badge_webstore', currentLang);
@@ -59,6 +69,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // 기존 등록 여부 확인 및 UI 반영
+  function checkExistingRule() {
+    if (detectedType === 'system') return;
+    const { target } = getSelectedTarget();
+    if (!target) return;
+
+    const existing = blacklist_rules[target];
+
+    if (existing) {
+      memoInput.value = existing.memo || '';
+      const actionRadio = document.querySelector(`input[name="actionType"][value="${existing.action}"]`);
+      if (actionRadio) actionRadio.checked = true;
+
+      saveBtn.textContent = t('save_btn_edit', currentLang);
+      deleteBtn.style.display = 'block';
+      statusMsg.textContent = t('status_registered', currentLang, { date: existing.createdAt || '-' });
+    } else {
+      saveBtn.textContent = t('save_btn_add', currentLang);
+      deleteBtn.style.display = 'none';
+      statusMsg.textContent = t('status_unregistered', currentLang);
+    }
+  }
+
+  // 언어 선택 변경 이벤트
+  langSelect.addEventListener('change', async (e) => {
+    currentLang = e.target.value;
+    await setAppLanguage(currentLang);
+    applyTranslations(currentLang);
+    updateTargetBadge();
+    checkExistingRule();
+  });
+
+  // 옵션 페이지 열기
+  openOptionsBtn.addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
+
+  // 스코프 라디오 변경 시 기존 데이터 재확인
+  document.querySelectorAll('input[name="targetScope"]').forEach(radio => {
+    radio.addEventListener('change', checkExistingRule);
+  });
+
+  // 스토리지 변경 시 실시간 동기화
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.blacklist_rules) {
+      blacklist_rules = changes.blacklist_rules.newValue || {};
+      checkExistingRule();
+    }
+  });
+
+  // 2. 현재 활성 탭 분석
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    tab = tabs && tabs[0];
+  } catch (e) {
+    console.error('Failed to query tab:', e);
+  }
+
+  if (!tab || !tab.url) {
+    targetUrlText.textContent = t('tab_info_error', currentLang);
+    saveBtn.disabled = true;
+    return;
+  }
+
+  currentUrl = tab.url;
+  const webMatch = currentUrl.match(WEBSTORE_REGEX);
+
   if (webMatch) {
     detectedType = 'webstore';
     webstoreExtId = webMatch[1].toLowerCase();
@@ -68,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     scopeSelector.style.display = 'none';
   } else if (currentUrl.startsWith('http://') || currentUrl.startsWith('https://')) {
     try {
-      parsedUrl = new URL(currentUrl);
+      const parsedUrl = new URL(currentUrl);
       domainHost = parsedUrl.hostname.toLowerCase();
       detectedType = 'url';
       updateTargetBadge();
@@ -91,53 +168,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // 기존 등록 여부 확인
-  const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
-
-  function getSelectedTarget() {
-    if (detectedType === 'webstore') {
-      return { target: webstoreExtId, type: 'webstore' };
-    }
-    // 기본값: 현재 URL만 (url)
-    const scope = document.querySelector('input[name="targetScope"]:checked')?.value || 'url';
-    if (scope === 'domain') {
-      return { target: domainHost, type: 'domain' };
-    } else {
-      return { target: currentUrl, type: 'url' };
-    }
-  }
-
-  function checkExistingRule() {
-    const { target } = getSelectedTarget();
-    const existing = blacklist_rules[target];
-
-    if (existing) {
-      memoInput.value = existing.memo || '';
-      const actionRadio = document.querySelector(`input[name="actionType"][value="${existing.action}"]`);
-      if (actionRadio) actionRadio.checked = true;
-
-      saveBtn.textContent = t('save_btn_edit', currentLang);
-      deleteBtn.style.display = 'block';
-      statusMsg.textContent = t('status_registered', currentLang, { date: existing.createdAt || '-' });
-    } else {
-      saveBtn.textContent = t('save_btn_add', currentLang);
-      deleteBtn.style.display = 'none';
-      statusMsg.textContent = t('status_unregistered', currentLang);
-    }
-  }
-
-  // 스코프 라디오 변경 시 기존 데이터 재확인
-  document.querySelectorAll('input[name="targetScope"]').forEach(radio => {
-    radio.addEventListener('change', checkExistingRule);
-  });
-
   // 초기 상태 로드
   checkExistingRule();
 
-  // 저장 버튼
+  // 저장 버튼 이벤트
   saveBtn.addEventListener('click', async () => {
     saveBtn.disabled = true;
     const { target, type } = getSelectedTarget();
+    if (!target) return;
+
     const action = document.querySelector('input[name="actionType"]:checked')?.value || 'block';
     const memo = memoInput.value.trim();
 
@@ -168,10 +207,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 450);
   });
 
-  // 삭제 버튼
+  // 삭제 버튼 이벤트
   deleteBtn.addEventListener('click', async () => {
     deleteBtn.disabled = true;
     const { target } = getSelectedTarget();
+    if (!target) return;
 
     delete blacklist_rules[target];
     await chrome.storage.local.set({ blacklist_rules });
