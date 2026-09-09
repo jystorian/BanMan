@@ -122,7 +122,21 @@ const I18N_DICTIONARY = {
     err_invalid_pass: '비밀번호가 올바르지 않거나 데이터가 손상되었습니다.',
     pagination_prev: '◀ 이전',
     pagination_next: '다음 ▶',
-    pagination_page_info: '{current} / {total} 페이지 (총 {count}건)'
+    pagination_page_info: '{current} / {total} 페이지 (총 {count}건)',
+
+    // OAuth Client ID 설정 가이드
+    oauth_config_btn: '⚙️ OAuth 설정',
+    oauth_config_title: 'Google OAuth 2.0 클라이언트 ID 설정',
+    oauth_config_desc: 'Google Drive API 연동을 위해 Google Cloud Console에서 무료로 발급받은 OAuth 2.0 클라이언트 ID를 등록합니다.',
+    oauth_step1_label: '1단계: 내 확장 프로그램 ID (복사 가능)',
+    oauth_step2_label: '2단계: 승인된 리디렉션 URI (웹 애플리케이션 유형용)',
+    oauth_step3_label: '3단계: Google Cloud Console에서 클라이언트 ID 발급',
+    oauth_gcp_link_text: '🔗 Google Cloud Console [사용자 인증 정보] 열기',
+    oauth_gcp_guide_text: '• GCP 프로젝트 생성 후 [사용자 인증 정보 만들기] -> [OAuth 클라이언트 ID] 선택\n• 애플리케이션 유형: [웹 애플리케이션] 선택 후 위의 리디렉션 URI 등록 (또는 [Chrome 앱] 선택 후 확장 프로그램 ID 등록)',
+    oauth_client_id_label: '발급받은 클라이언트 ID 입력 (.apps.googleusercontent.com)',
+    oauth_client_id_placeholder: '예: 1234567890-xxxxxxxxxx.apps.googleusercontent.com',
+    oauth_copied: '클립보드에 복사되었습니다!',
+    oauth_saved: '클라이언트 ID가 성공적으로 저장되었습니다. 이제 [Google 계정 연동]을 시도해 보세요!'
   },
 
   en: {
@@ -246,7 +260,21 @@ const I18N_DICTIONARY = {
     err_invalid_pass: 'Invalid passphrase or corrupted data.',
     pagination_prev: '◀ Prev',
     pagination_next: 'Next ▶',
-    pagination_page_info: 'Page {current} of {total} ({count} total)'
+    pagination_page_info: 'Page {current} of {total} ({count} total)',
+
+    // OAuth Client ID Config Guide
+    oauth_config_btn: '⚙️ OAuth Config',
+    oauth_config_title: 'Google OAuth 2.0 Client ID Configuration',
+    oauth_config_desc: 'To connect to Google Drive API, configure your free OAuth 2.0 Client ID from Google Cloud Console.',
+    oauth_step1_label: 'Step 1: Current Extension ID (Copy)',
+    oauth_step2_label: 'Step 2: Authorized Redirect URI (for Web App type)',
+    oauth_step3_label: 'Step 3: Create OAuth Client ID in Google Cloud Console',
+    oauth_gcp_link_text: '🔗 Open Google Cloud Console [Credentials]',
+    oauth_gcp_guide_text: '• Create a GCP project -> Click [Create Credentials] -> [OAuth client ID]\n• Application type: Select [Web application] and add the Redirect URI above (or select [Chrome app] with Extension ID)',
+    oauth_client_id_label: 'Enter your Client ID (.apps.googleusercontent.com)',
+    oauth_client_id_placeholder: 'e.g. 1234567890-xxxxxxxxxx.apps.googleusercontent.com',
+    oauth_copied: 'Copied to clipboard!',
+    oauth_saved: 'Client ID saved successfully. You can now click [Connect Google Account]!'
   },
 
   ja: {
@@ -370,7 +398,21 @@ const I18N_DICTIONARY = {
     err_invalid_pass: 'パスワードが正しくないか、データが破損しています。',
     pagination_prev: '◀ 前へ',
     pagination_next: '次へ ▶',
-    pagination_page_info: '{current} / {total} ページ (全 {count}件)'
+    pagination_page_info: '{current} / {total} ページ (全 {count}件)',
+
+    // OAuth Client ID 設定ガイド
+    oauth_config_btn: '⚙️ OAuth 設定',
+    oauth_config_title: 'Google OAuth 2.0 クライアントID設定',
+    oauth_config_desc: 'Google Drive APIと連携するには、Google Cloud Consoleで発行された無料のOAuth 2.0クライアントIDを登録します。',
+    oauth_step1_label: 'ステップ1: 拡張機能ID (コピー可能)',
+    oauth_step2_label: 'ステップ2: 承認済みのリダイレクトURI (ウェブアプリ用)',
+    oauth_step3_label: 'ステップ3: Google Cloud ConsoleでクライアントIDを発行',
+    oauth_gcp_link_text: '🔗 Google Cloud Console [認証情報] を開く',
+    oauth_gcp_guide_text: '• GCPプロジェクト作成後、[認証情報を作成] -> [OAuth クライアント ID] を選択\n• アプリケーションの種類: [ウェブ アプリケーション] を選択し、上記のリダイレクトURIを登録 (または [Chrome アプリ] で拡張機能IDを登録)',
+    oauth_client_id_label: '発行されたクライアントIDを入力 (.apps.googleusercontent.com)',
+    oauth_client_id_placeholder: '例: 1234567890-xxxxxxxxxx.apps.googleusercontent.com',
+    oauth_copied: 'クリップボードにコピーしました！',
+    oauth_saved: 'クライアントIDが正常に保存されました。 [Google アカウント連携] をお試しください！'
   }
 };
 
