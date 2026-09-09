@@ -2,16 +2,49 @@
 
 const WEBSTORE_REGEX = /chromewebstore\.google\.com\/detail\/(?:[^\/]+\/)?([a-p]{32})/i;
 
-// Helper: URL 매칭 검사
+// O(1) 고속 조회를 위한 인메모리 인덱스 캐시 (10,000개 이상 대용량 대응)
+let ruleIndex = null;
+let lastRulesRef = null;
+
+function buildRuleIndex(rules = {}) {
+  const domainMap = new Map();
+  const webstoreMap = new Map();
+  const urlRules = [];
+
+  for (const [key, rule] of Object.entries(rules)) {
+    const target = (rule.target || key).toLowerCase().trim();
+    if (!target) continue;
+
+    if (rule.type === 'webstore') {
+      webstoreMap.set(target, rule);
+    } else if (rule.type === 'domain') {
+      domainMap.set(target, rule);
+    } else {
+      urlRules.push({ target, rule });
+    }
+  }
+
+  return { domainMap, webstoreMap, urlRules };
+}
+
+// Helper: URL 매칭 검사 (O(1) 고속 매칭)
 function findMatchingRule(urlStr, rules = {}) {
   if (!urlStr || urlStr.startsWith('chrome://') || urlStr.startsWith('chrome-extension://') || urlStr.startsWith('about:')) {
     return null;
   }
 
-  // 1. 크롬 웹스토어 확장 ID 매칭
+  if (lastRulesRef !== rules || !ruleIndex) {
+    ruleIndex = buildRuleIndex(rules);
+    lastRulesRef = rules;
+  }
+
+  // 1. 크롬 웹스토어 확장 ID 매칭 (O(1))
   const webstoreMatch = urlStr.match(WEBSTORE_REGEX);
   if (webstoreMatch) {
     const extId = webstoreMatch[1].toLowerCase();
+    if (ruleIndex.webstoreMap.has(extId)) {
+      return ruleIndex.webstoreMap.get(extId);
+    }
     if (rules[extId]) {
       return rules[extId];
     }
@@ -26,25 +59,24 @@ function findMatchingRule(urlStr, rules = {}) {
 
   const hostname = parsedUrl.hostname.toLowerCase();
 
-  // 2. 도메인 및 URL 매칭
-  for (const [key, rule] of Object.entries(rules)) {
-    const target = (rule.target || key).toLowerCase().trim();
-    if (!target) continue;
-
-    if (rule.type === 'webstore') {
-      // 이미 웹스토어 매칭에서 확인됨
-      continue;
+  // 2. 도메인 매칭 (O(1) 정확 매칭 및 서브도메인 계층 검사)
+  // 예: a.b.example.com -> b.example.com -> example.com
+  let currentHost = hostname;
+  while (currentHost) {
+    if (ruleIndex.domainMap.has(currentHost)) {
+      return ruleIndex.domainMap.get(currentHost);
     }
+    const dotIndex = currentHost.indexOf('.');
+    if (dotIndex === -1) break;
+    currentHost = currentHost.slice(dotIndex + 1);
+  }
 
-    if (rule.type === 'domain') {
-      // 정확한 호스트명이거나 서브도메인인 경우 (예: blog.example.com -> example.com)
-      if (hostname === target || hostname.endsWith('.' + target)) {
-        return rule;
-      }
-    } else {
-      // URL 접두사 또는 포함 매칭
-      if (urlStr.toLowerCase().includes(target)) {
-        return rule;
+  // 3. URL 접두사 또는 포함 매칭 (경로가 포함된 특수 규칙만 순회)
+  if (ruleIndex.urlRules.length > 0) {
+    const lowerUrl = urlStr.toLowerCase();
+    for (let i = 0; i < ruleIndex.urlRules.length; i++) {
+      if (lowerUrl.includes(ruleIndex.urlRules[i].target)) {
+        return ruleIndex.urlRules[i].rule;
       }
     }
   }

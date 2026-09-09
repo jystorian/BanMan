@@ -93,7 +93,36 @@ const I18N_DICTIONARY = {
     import_invalid_json: '올바르지 않은 JSON 파일 형식입니다.',
     import_confirm: "기존 규칙에 덮어쓰시겠습니까?\n[확인]: 기존 목록 삭제 후 덮어쓰기\n[취소]: 기존 목록 유지하며 병합(Merge)",
     import_success: '총 {count}개의 규칙이 성공적으로 반영되었습니다.',
-    import_error: 'JSON 파일을 읽는 도중 오류가 발생했습니다: {error}'
+    import_error: 'JSON 파일을 읽는 도중 오류가 발생했습니다: {error}',
+
+    // 구글 드라이브 동기화 및 E2EE 암호화
+    drive_card_title: '☁️ Google Drive 동기화 (선택)',
+    drive_card_desc: '새 PC에서도 안전하게 차단 규칙을 동기화합니다 (appDataFolder 백업)',
+    drive_status_disconnected: 'Google 계정이 연동되지 않았습니다.',
+    drive_status_connected: '연동된 계정: {email}',
+    drive_connect_btn: 'Google 계정 연동',
+    drive_disconnect_btn: '연동 해제',
+    drive_encrypt_label: '구글 드라이브 저장 시 마스터 비밀번호로 암호화 (E2EE, AES-256)',
+    drive_pass_set_btn: '암호화 비밀번호 설정/변경',
+    drive_sync_merge_btn: '🔄 스마트 병합 동기화',
+    drive_sync_upload_btn: '⬆️ 드라이브로 백업',
+    drive_sync_download_btn: '⬇️ 드라이브에서 복원',
+    drive_last_synced: '마지막 동기화: {time}',
+    drive_sync_never: '동기화 이력 없음',
+    drive_sync_success: '동기화 완료! (신규 {added}건, 갱신 {updated}건, 전체 {total}건)',
+    drive_upload_success: '구글 드라이브에 백업이 저장되었습니다. (총 {count}건)',
+    drive_download_success: '구글 드라이브에서 {count}건의 규칙을 불러왔습니다.',
+    drive_no_backup: '구글 드라이브에 저장된 BanMan 백업 파일이 없습니다.',
+    drive_error: '드라이브 작업 중 오류가 발생했습니다: {error}',
+    modal_pass_title: '마스터 암호화 비밀번호 설정',
+    modal_pass_desc: '비밀번호를 설정하면 Web Crypto(AES-256-GCM)로 암호화되어 구글 서버에도 내용이 노출되지 않습니다. 분실 시 복구할 수 없으니 안전하게 보관하세요.',
+    modal_pass_input_placeholder: '마스터 비밀번호 입력 (최소 4자 이상)',
+    modal_pass_decrypt_title: '암호화된 백업 복호화',
+    modal_pass_decrypt_desc: '구글 드라이브의 백업 파일이 암호화되어 있습니다. 마스터 비밀번호를 입력하세요.',
+    err_invalid_pass: '비밀번호가 올바르지 않거나 데이터가 손상되었습니다.',
+    pagination_prev: '◀ 이전',
+    pagination_next: '다음 ▶',
+    pagination_page_info: '{current} / {total} 페이지 (총 {count}건)'
   },
 
   en: {
@@ -188,7 +217,36 @@ const I18N_DICTIONARY = {
     import_invalid_json: 'Invalid JSON file format.',
     import_confirm: "Overwrite existing rules?\n[OK]: Clear and overwrite\n[Cancel]: Merge with existing rules",
     import_success: 'Successfully imported {count} rules.',
-    import_error: 'Error reading JSON file: {error}'
+    import_error: 'Error reading JSON file: {error}',
+
+    // Google Drive Sync & E2EE
+    drive_card_title: '☁️ Google Drive Sync (Optional)',
+    drive_card_desc: 'Safely sync your ban & flag rules across your PCs (via appDataFolder)',
+    drive_status_disconnected: 'Google account is not connected.',
+    drive_status_connected: 'Connected: {email}',
+    drive_connect_btn: 'Connect Google Account',
+    drive_disconnect_btn: 'Disconnect',
+    drive_encrypt_label: 'Encrypt data with master passphrase on Drive (E2EE, AES-256)',
+    drive_pass_set_btn: 'Set/Change Passphrase',
+    drive_sync_merge_btn: '🔄 Smart Merge Sync',
+    drive_sync_upload_btn: '⬆️ Backup to Drive',
+    drive_sync_download_btn: '⬇️ Restore from Drive',
+    drive_last_synced: 'Last synced: {time}',
+    drive_sync_never: 'Never synced',
+    drive_sync_success: 'Sync completed! ({added} added, {updated} updated, {total} total)',
+    drive_upload_success: 'Backup saved to Google Drive. ({count} rules)',
+    drive_download_success: 'Restored {count} rules from Google Drive.',
+    drive_no_backup: 'No BanMan backup file found in Google Drive.',
+    drive_error: 'Google Drive error: {error}',
+    modal_pass_title: 'Master Encryption Passphrase',
+    modal_pass_desc: 'Your data will be encrypted using Web Crypto (AES-256-GCM) so not even Google can read it. It cannot be recovered if forgotten.',
+    modal_pass_input_placeholder: 'Enter master passphrase (min 4 chars)',
+    modal_pass_decrypt_title: 'Decrypt Backup',
+    modal_pass_decrypt_desc: 'The backup file on Google Drive is encrypted. Enter your master passphrase to decrypt.',
+    err_invalid_pass: 'Invalid passphrase or corrupted data.',
+    pagination_prev: '◀ Prev',
+    pagination_next: 'Next ▶',
+    pagination_page_info: 'Page {current} of {total} ({count} total)'
   },
 
   ja: {
@@ -283,7 +341,36 @@ const I18N_DICTIONARY = {
     import_invalid_json: '無効なJSONファイル形式です。',
     import_confirm: "既存ルールを上書きしますか？\n[OK]: 既存ルールを削除して上書き\n[キャンセル]: 既存ルールを維持してマージ",
     import_success: '合計 {count} 件のルールが正常に反映されました。',
-    import_error: 'JSONファイルの読み込み中にエラーが発生しました: {error}'
+    import_error: 'JSONファイルの読み込み中にエラーが発生しました: {error}',
+
+    // Google ドライブ同期 & E2EE
+    drive_card_title: '☁️ Google ドライブ同期 (オプション)',
+    drive_card_desc: '新しいPCでも安全にルールを同期できます (appDataFolderバックアップ)',
+    drive_status_disconnected: 'Google アカウントが接続されていません。',
+    drive_status_connected: '接続中: {email}',
+    drive_connect_btn: 'Google アカウント連携',
+    drive_disconnect_btn: '連携解除',
+    drive_encrypt_label: 'ドライブ保存時にマスターパスワードで暗号化 (E2EE, AES-256)',
+    drive_pass_set_btn: 'パスワード設定/変更',
+    drive_sync_merge_btn: '🔄 スマートマージ同期',
+    drive_sync_upload_btn: '⬆️ ドライブへバックアップ',
+    drive_sync_download_btn: '⬇️ ドライブから復元',
+    drive_last_synced: '最終同期: {time}',
+    drive_sync_never: '同期履歴なし',
+    drive_sync_success: '同期完了！ ({added}件追加, {updated}件更新, 計 {total}件)',
+    drive_upload_success: 'Google ドライブにバックアップが保存されました。 (全 {count}件)',
+    drive_download_success: 'Google ドライブから {count}件のルールを復元しました。',
+    drive_no_backup: 'Google ドライブに保存されたバックアップが見つかりません。',
+    drive_error: 'Google ドライブの処理中にエラーが発生しました: {error}',
+    modal_pass_title: 'マスター暗号化パスワード設定',
+    modal_pass_desc: 'パスワードを設定すると Web Crypto (AES-256-GCM) により暗号化され、Googleサーバーにも内容は公開されません。紛失時の復元はできませんのでご注意ください。',
+    modal_pass_input_placeholder: 'マスターパスワードを入力 (4文字以上)',
+    modal_pass_decrypt_title: '暗号化バックアップの復号',
+    modal_pass_decrypt_desc: 'Google ドライブのバックアップは暗号化されています。マスターパスワードを入力してください。',
+    err_invalid_pass: 'パスワードが正しくないか、データが破損しています。',
+    pagination_prev: '◀ 前へ',
+    pagination_next: '次へ ▶',
+    pagination_page_info: '{current} / {total} ページ (全 {count}件)'
   }
 };
 

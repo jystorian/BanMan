@@ -803,3 +803,131 @@ input[type="text"]:focus, select:focus {
   from { transform: scale(0.96) translateY(-8px); opacity: 0; }
   to { transform: scale(1) translateY(0); opacity: 1; }
 }
+
+/* Google Drive Sync Card Styles */
+.drive-card {
+  border-left: 4px solid #4285f4;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: #718096;
+  margin: 4px 0 0 0;
+}
+
+.drive-account-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drive-status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.drive-status-badge.disconnected {
+  background-color: #edf2f7;
+  color: #718096;
+}
+
+.drive-status-badge.connected {
+  background-color: #e6fffa;
+  color: #234e52;
+  border: 1px solid #b2f5ea;
+}
+
+.drive-controls {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.drive-options-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3748;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.drive-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.drive-info-row {
+  font-size: 11px;
+  color: #a0aec0;
+}
+
+/* Pagination Bar */
+.pagination-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #edf2f7;
+}
+
+.page-info {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
+/* Modal Enhancements */
+.modal-desc {
+  font-size: 12px;
+  color: #718096;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.modal-error-msg {
+  font-size: 12px;
+  color: #e53e3e;
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-top: 8px;
+}
