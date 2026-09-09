@@ -49,6 +49,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const decryptPassInput = document.getElementById('decryptPassInput');
   const decryptErrorMsg = document.getElementById('decryptErrorMsg');
 
+  // Google OAuth 클라이언트 ID 설정 모달 DOM 요소
+  const oauthConfigBtn = document.getElementById('oauthConfigBtn');
+  const oauthModal = document.getElementById('oauthModal');
+  const oauthModalCloseBtn = document.getElementById('oauthModalCloseBtn');
+  const oauthModalCancelBtn = document.getElementById('oauthModalCancelBtn');
+  const oauthModalSaveBtn = document.getElementById('oauthModalSaveBtn');
+  const oauthExtIdInput = document.getElementById('oauthExtIdInput');
+  const copyExtIdBtn = document.getElementById('copyExtIdBtn');
+  const oauthRedirectUriInput = document.getElementById('oauthRedirectUriInput');
+  const copyRedirectUriBtn = document.getElementById('copyRedirectUriBtn');
+  const oauthClientIdInput = document.getElementById('oauthClientIdInput');
+  const oauthErrorMsg = document.getElementById('oauthErrorMsg');
+  const oauthSuccessMsg = document.getElementById('oauthSuccessMsg');
+
   // 대용량 페이지네이션 DOM 요소 및 상태
   const paginationBar = document.getElementById('paginationBar');
   const prevPageBtn = document.getElementById('prevPageBtn');
@@ -643,10 +657,77 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
           await loadDriveState();
         } catch (err) {
-          alert(t('drive_error', currentLang, { error: err.message }));
+          if (err.code === 'CLIENT_ID_REQUIRED' || err.code === 'CLIENT_ID_INVALID' || (err.message && err.message.includes('bad client id'))) {
+            openOAuthModal();
+          } else {
+            alert(t('drive_error', currentLang, { error: err.message }));
+          }
         } finally {
           driveAuthBtn.disabled = false;
         }
+      }
+    });
+  }
+
+  // Google OAuth 클라이언트 ID 모달 제어
+  async function openOAuthModal() {
+    if (!oauthModal) return;
+    const extId = (typeof chrome !== 'undefined' && chrome.runtime?.id) ? chrome.runtime.id : '';
+    const redirectUri = (typeof chrome !== 'undefined' && chrome.identity?.getRedirectURL) ? chrome.identity.getRedirectURL() : `https://${extId}.chromiumapp.org/`;
+
+    if (oauthExtIdInput) oauthExtIdInput.value = extId;
+    if (oauthRedirectUriInput) oauthRedirectUriInput.value = redirectUri;
+
+    const { custom_client_id = '' } = await chrome.storage.local.get('custom_client_id');
+    if (oauthClientIdInput) oauthClientIdInput.value = custom_client_id;
+    if (oauthErrorMsg) oauthErrorMsg.style.display = 'none';
+    if (oauthSuccessMsg) oauthSuccessMsg.style.display = 'none';
+    oauthModal.style.display = 'flex';
+  }
+
+  function closeOAuthModal() {
+    if (oauthModal) oauthModal.style.display = 'none';
+  }
+
+  if (oauthConfigBtn) oauthConfigBtn.addEventListener('click', openOAuthModal);
+  if (oauthModalCloseBtn) oauthModalCloseBtn.addEventListener('click', closeOAuthModal);
+  if (oauthModalCancelBtn) oauthModalCancelBtn.addEventListener('click', closeOAuthModal);
+
+  if (copyExtIdBtn && oauthExtIdInput) {
+    copyExtIdBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(oauthExtIdInput.value);
+        copyExtIdBtn.textContent = '✓ ' + t('oauth_copied', currentLang);
+        setTimeout(() => { copyExtIdBtn.textContent = '복사'; }, 1800);
+      } catch (e) {}
+    });
+  }
+
+  if (copyRedirectUriBtn && oauthRedirectUriInput) {
+    copyRedirectUriBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(oauthRedirectUriInput.value);
+        copyRedirectUriBtn.textContent = '✓ ' + t('oauth_copied', currentLang);
+        setTimeout(() => { copyRedirectUriBtn.textContent = '복사'; }, 1800);
+      } catch (e) {}
+    });
+  }
+
+  if (oauthModalSaveBtn && oauthClientIdInput) {
+    oauthModalSaveBtn.addEventListener('click', async () => {
+      const val = oauthClientIdInput.value.trim();
+      if (!val) {
+        oauthErrorMsg.textContent = currentLang === 'ko'
+          ? '클라이언트 ID를 입력해 주세요.'
+          : (currentLang === 'ja' ? 'クライアントIDを入力してください。' : 'Please enter your Client ID.');
+        oauthErrorMsg.style.display = 'block';
+        return;
+      }
+      await chrome.storage.local.set({ custom_client_id: val });
+      closeOAuthModal();
+      // 저장 후 바로 구글 계정 연동 시작
+      if (driveAuthBtn) {
+        driveAuthBtn.click();
       }
     });
   }

@@ -11,23 +11,98 @@
 
   /**
    * Google OAuth2 액세스 토큰 획득
+   * 1) chrome.storage.local의 custom_client_id가 있으면 launchWebAuthFlow(Web OAuth) 우선 사용
+   * 2) 없으면 manifest.json의 oauth2.client_id 검사
+   * 3) manifest의 client_id가 placeholder(YOUR_GOOGLE_CLIENT_ID)인 경우 CLIENT_ID_REQUIRED 에러 반환
+   * 4) 정상 client_id이면 chrome.identity.getAuthToken 호출
    * @param {boolean} interactive 사용자 로그인 팝업 표시 여부
    * @returns {Promise<string>} Access Token
    */
   async function getAuthToken(interactive = true) {
-    if (!chrome?.identity?.getAuthToken) {
-      throw new Error('chrome.identity.getAuthToken API를 사용할 수 없습니다.');
+    // 1. manifest.json의 oauth2.client_id 확인 (네이티브 원클릭 로그인 우선)
+    const manifest = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest) ? chrome.runtime.getManifest() : null;
+    const manifestClientId = manifest?.oauth2?.client_id || '';
+
+    if (manifestClientId && !manifestClientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
+      if (!chrome?.identity?.getAuthToken) {
+        throw new Error('chrome.identity.getAuthToken API를 사용할 수 없습니다.');
+      }
+
+      return new Promise((resolve, reject) => {
+        chrome.identity.getAuthToken({ interactive }, (token) => {
+          if (chrome.runtime.lastError) {
+            const msg = chrome.runtime.lastError.message || '';
+            if (msg.includes('bad client id')) {
+              const err = new Error('CLIENT_ID_INVALID');
+              err.code = 'CLIENT_ID_INVALID';
+              return reject(err);
+            }
+            return reject(new Error(msg));
+          }
+          if (!token) {
+            return reject(new Error('토큰 획득에 실패했습니다.'));
+          }
+          resolve(token);
+        });
+      });
     }
 
+    // 2. manifest에 없을 경우: 사용자가 옵션 페이지에서 직접 입력한 Custom Client ID (fallback)
+    let customClientId = '';
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+        const res = await chrome.storage.local.get('custom_client_id');
+        customClientId = (res && res.custom_client_id ? res.custom_client_id.trim() : '');
+      }
+    } catch (e) {}
+
+    if (customClientId) {
+      return await getAuthTokenViaWebFlow(customClientId, interactive);
+    }
+
+    const err = new Error('CLIENT_ID_REQUIRED');
+    err.code = 'CLIENT_ID_REQUIRED';
+    throw err;
+  }
+
+  /**
+   * launchWebAuthFlow 기반 웹 OAuth2 토큰 획득
+   * @param {string} clientId Google OAuth Web Client ID
+   * @param {boolean} interactive 사용자 로그인 팝업 여부
+   * @returns {Promise<string>} Access Token
+   */
+  async function getAuthTokenViaWebFlow(clientId, interactive = true) {
+    if (!chrome?.identity?.launchWebAuthFlow) {
+      throw new Error('chrome.identity.launchWebAuthFlow API를 사용할 수 없습니다.');
+    }
+
+    const redirectUri = chrome.identity.getRedirectURL();
+    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    authUrl.searchParams.set('client_id', clientId);
+    authUrl.searchParams.set('response_type', 'token');
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('scope', 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email');
+
     return new Promise((resolve, reject) => {
-      chrome.identity.getAuthToken({ interactive }, (token) => {
+      chrome.identity.launchWebAuthFlow({ url: authUrl.toString(), interactive }, (redirectResponse) => {
         if (chrome.runtime.lastError) {
           return reject(new Error(chrome.runtime.lastError.message));
         }
-        if (!token) {
-          return reject(new Error('토큰 획득에 실패했습니다.'));
+        if (!redirectResponse) {
+          return reject(new Error('인증이 취소되었거나 응답이 없습니다.'));
         }
-        resolve(token);
+        try {
+          const responseUrl = new URL(redirectResponse);
+          const hashParams = new URLSearchParams(responseUrl.hash.startsWith('#') ? responseUrl.hash.slice(1) : responseUrl.hash);
+          const token = hashParams.get('access_token');
+          if (!token) {
+            const error = hashParams.get('error') || '토큰 획득에 실패했습니다.';
+            return reject(new Error(error));
+          }
+          resolve(token);
+        } catch (e) {
+          reject(new Error('인증 응답 파싱 실패: ' + e.message));
+        }
       });
     });
   }
@@ -59,17 +134,49 @@
 
   /**
    * 연동된 구글 계정 사용자 정보 조회
+   * 1) Drive API의 about 엔드포인트(drive.appdata 권한으로 호출 가능) 우선 시도
+   * 2) oauth2 userinfo API 시도
+   * 3) 실패 시에도 연동을 방해하지 않고 기본 객체로 안전하게 반환
    * @param {string} token 
    * @returns {Promise<{ email: string, name: string, picture: string }>}
    */
   async function getUserInfo(token) {
-    const res = await fetch(USER_INFO_API, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!res.ok) {
-      throw new Error(`사용자 정보 조회 실패 (${res.status}): ${await res.text()}`);
+    // 1. Google Drive API about 엔드포인트 (drive.appdata 스코프로 바로 조회 가능)
+    try {
+      const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.user) {
+          return {
+            email: data.user.emailAddress || 'Google Account',
+            name: data.user.displayName || '',
+            picture: data.user.photoLink || ''
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Drive about endpoint lookup failed:', e);
     }
-    return res.json();
+
+    // 2. oauth2 userinfo API fallback
+    try {
+      const res2 = await fetch(USER_INFO_API, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res2.ok) {
+        const info = await res2.json();
+        return {
+          email: info.email || 'Google Account',
+          name: info.name || '',
+          picture: info.picture || ''
+        };
+      }
+    } catch (e) {}
+
+    // 3. 사용자 프로필 조회가 실패하더라도 토큰 인증 자체는 성공했으므로 연동 정상 유지
+    return { email: 'Google Account', name: '', picture: '' };
   }
 
   /**
@@ -219,6 +326,7 @@
   const DriveSync = {
     BACKUP_FILENAME,
     getAuthToken,
+    getAuthTokenViaWebFlow,
     revokeToken,
     getUserInfo,
     findBackupFile,
