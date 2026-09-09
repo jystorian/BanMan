@@ -19,7 +19,35 @@
    * @returns {Promise<string>} Access Token
    */
   async function getAuthToken(interactive = true) {
-    // 1. 사용자가 옵션 페이지에서 직접 입력한 Custom Client ID 확인
+    // 1. manifest.json의 oauth2.client_id 확인 (네이티브 원클릭 로그인 우선)
+    const manifest = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest) ? chrome.runtime.getManifest() : null;
+    const manifestClientId = manifest?.oauth2?.client_id || '';
+
+    if (manifestClientId && !manifestClientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
+      if (!chrome?.identity?.getAuthToken) {
+        throw new Error('chrome.identity.getAuthToken API를 사용할 수 없습니다.');
+      }
+
+      return new Promise((resolve, reject) => {
+        chrome.identity.getAuthToken({ interactive }, (token) => {
+          if (chrome.runtime.lastError) {
+            const msg = chrome.runtime.lastError.message || '';
+            if (msg.includes('bad client id')) {
+              const err = new Error('CLIENT_ID_INVALID');
+              err.code = 'CLIENT_ID_INVALID';
+              return reject(err);
+            }
+            return reject(new Error(msg));
+          }
+          if (!token) {
+            return reject(new Error('토큰 획득에 실패했습니다.'));
+          }
+          resolve(token);
+        });
+      });
+    }
+
+    // 2. manifest에 없을 경우: 사용자가 옵션 페이지에서 직접 입력한 Custom Client ID (fallback)
     let customClientId = '';
     try {
       if (typeof chrome !== 'undefined' && chrome.storage?.local) {
@@ -32,37 +60,9 @@
       return await getAuthTokenViaWebFlow(customClientId, interactive);
     }
 
-    // 2. manifest.json의 oauth2.client_id 검사
-    const manifest = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest) ? chrome.runtime.getManifest() : null;
-    const manifestClientId = manifest?.oauth2?.client_id || '';
-
-    if (!manifestClientId || manifestClientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
-      const err = new Error('CLIENT_ID_REQUIRED');
-      err.code = 'CLIENT_ID_REQUIRED';
-      throw err;
-    }
-
-    if (!chrome?.identity?.getAuthToken) {
-      throw new Error('chrome.identity.getAuthToken API를 사용할 수 없습니다.');
-    }
-
-    return new Promise((resolve, reject) => {
-      chrome.identity.getAuthToken({ interactive }, (token) => {
-        if (chrome.runtime.lastError) {
-          const msg = chrome.runtime.lastError.message || '';
-          if (msg.includes('bad client id')) {
-            const err = new Error('CLIENT_ID_INVALID');
-            err.code = 'CLIENT_ID_INVALID';
-            return reject(err);
-          }
-          return reject(new Error(msg));
-        }
-        if (!token) {
-          return reject(new Error('토큰 획득에 실패했습니다.'));
-        }
-        resolve(token);
-      });
-    });
+    const err = new Error('CLIENT_ID_REQUIRED');
+    err.code = 'CLIENT_ID_REQUIRED';
+    throw err;
   }
 
   /**
