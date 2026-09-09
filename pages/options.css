@@ -931,3 +931,45 @@ input[type="text"]:focus, select:focus {
   padding: 6px 10px;
   margin-top: 8px;
 }
+
+.modal-success-msg {
+  font-size: 12px;
+  color: #276749;
+  background-color: #f0fff4;
+  border: 1px solid #c6f6d5;
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-top: 8px;
+}
+
+.modal-card.modal-lg {
+  max-width: 580px;
+  width: 90%;
+}
+
+.copy-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.copy-input-group .flex-1 {
+  flex: 1;
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.oauth-guide-box {
+  font-family: inherit;
+  font-size: 12px;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 6px 0 0 0;
+}
