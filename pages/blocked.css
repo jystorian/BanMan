@@ -38,7 +38,6 @@ body {
 .banman-cape-sprite {
   height: 165px;
   object-fit: contain;
-  image-rendering: pixelated;
   animation: hero-idle 3s ease-in-out infinite;
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.22));
 }

@@ -251,12 +251,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await chrome.storage.local.set({ blacklist_rules });
 
-    // 웹스토어의 경우 즉시 배지 반영
-    if (type === 'webstore' && (action === 'warn' || action === 'block')) {
+    // 현재 탭 배지 즉시 반영
+    if (tab && tab.id) {
       try {
-        if (tab && tab.id) {
+        if (action === 'block') {
+          await chrome.action.setBadgeText({ tabId: tab.id, text: 'BAN' });
+          await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#DC2626' });
+        } else if (action === 'warn') {
           await chrome.action.setBadgeText({ tabId: tab.id, text: 'BAD' });
-          await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#D32F2F' });
+          await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#EA580C' });
+        } else if (action === 'hide') {
+          await chrome.action.setBadgeText({ tabId: tab.id, text: 'HIDE' });
+          await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#64748B' });
         }
       } catch (e) {}
     }

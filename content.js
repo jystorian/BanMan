@@ -82,10 +82,10 @@
 
     const toast = document.createElement('div');
     toast.className = 'cb-toast';
-    const cowlUrl = chrome.runtime.getURL('resources/cowl_front.png');
+    const iconUrl = chrome.runtime.getURL('icons/face-b-badge-48.png');
     toast.innerHTML = `
       <div class="cb-toast-title">
-        <img src="${cowlUrl}" style="width:18px;height:18px;image-rendering:pixelated;vertical-align:middle;margin-right:6px;">
+        <img src="${iconUrl}" style="width:18px;height:18px;image-rendering:pixelated;vertical-align:middle;margin-right:6px;">
         BanMan: 차단된 링크 접근 제한
       </div>
       <div class="cb-toast-memo"><strong>사유:</strong> ${rule.memo || '사유 미기재'}</div>
@@ -126,18 +126,17 @@
         } else if (rule.action === 'warn') {
           link.classList.add('cb-link-warn');
           const memoText = rule.memo ? ` [${rule.memo}]` : ' [주의 대상]';
-          link.title = `[BanMan 경고] ${rule.memo || ''}`;
+          link.title = `[BanMan 주의] ${rule.memo || ''}`;
 
           const badge = document.createElement('span');
           badge.className = 'cb-badge cb-badge-warn';
           badge.title = `[BanMan 등록 사유] ${rule.memo || '미기재'}`;
 
-          const flagImg = document.createElement('img');
-          flagImg.src = chrome.runtime.getURL('resources/warning_flag.png');
-          flagImg.className = 'cb-flag-icon';
-          flagImg.alt = 'FLAG';
+          const flagIcon = document.createElement('span');
+          flagIcon.className = 'cb-flag-icon';
+          flagIcon.textContent = '🚩';
 
-          badge.appendChild(flagImg);
+          badge.appendChild(flagIcon);
           badge.appendChild(document.createTextNode(memoText));
 
           // 링크 바로 뒤에 배지 삽입
@@ -161,7 +160,7 @@
           badge.title = `[BanMan 차단 사유] ${rule.memo || '미기재'}`;
 
           const cowlImg = document.createElement('img');
-          cowlImg.src = chrome.runtime.getURL('resources/cowl_front.png');
+          cowlImg.src = chrome.runtime.getURL('icons/icon-16.png');
           cowlImg.className = 'cb-cowl-icon';
           cowlImg.alt = 'BAN';
 

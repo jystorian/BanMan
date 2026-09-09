@@ -5,6 +5,7 @@
   "description": "Ban and flag bad URLs for Chrome city - 원치 않는 사이트 사전 차단(Ban)과 링크 경고 깃발(Flag)로 크롬 시티를 지키는 다크나이트",
   "icons": {
     "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
@@ -24,6 +25,7 @@
     "default_title": "BanMan - Chrome City Protector",
     "default_icon": {
       "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png"
     }

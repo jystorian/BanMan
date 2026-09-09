@@ -20,6 +20,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   memoDisplay.textContent = memo;
   origUrlDisplay.textContent = origUrl || '-';
 
+  // 차단 페이지 진입 시 탭 배지 확실하게 BAN(적색) 설정
+  try {
+    let tabId = null;
+    try {
+      const currentTab = await chrome.tabs.getCurrent();
+      tabId = currentTab?.id;
+    } catch (e) {}
+
+    if (!tabId) {
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      tabId = activeTab?.id;
+    }
+
+    if (tabId) {
+      await chrome.action.setBadgeText({ tabId, text: 'BAN' });
+      await chrome.action.setBadgeBackgroundColor({ tabId, color: '#DC2626' });
+    }
+  } catch (e) {}
+
   // 안전 폴백 함수 (새 탭으로 안전하게 이동 또는 닫기)
   async function navigateToSafeFallback() {
     try {

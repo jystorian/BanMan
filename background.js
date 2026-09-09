@@ -163,6 +163,8 @@ async function evaluateTab(tabId, url) {
       `&origUrl=${encodeURIComponent(url)}`;
 
     try {
+      await chrome.action.setBadgeText({ tabId, text: 'BAN' });
+      await chrome.action.setBadgeBackgroundColor({ tabId, color: '#DC2626' });
       await chrome.tabs.update(tabId, { url: blockedPageUrl });
     } catch (e) {
       // 탭이 사용자에 의해 닫혔거나 탐색이 취소된 경우 조용히 무시
@@ -170,11 +172,11 @@ async function evaluateTab(tabId, url) {
     return;
   }
 
-  // 2. 경고 (Warn) 또는 웹스토어 비추천
+  // 2. 주의 (Warn) 또는 웹스토어 비추천
   if (matchedRule.action === 'warn') {
     try {
       await chrome.action.setBadgeText({ tabId, text: 'BAD' });
-      await chrome.action.setBadgeBackgroundColor({ tabId, color: '#D32F2F' });
+      await chrome.action.setBadgeBackgroundColor({ tabId, color: '#EA580C' });
 
       // 시스템 데스크톱 알림 생성
       const notifId = `warn_${matchedRule.target}_${Date.now()}`;
@@ -195,7 +197,7 @@ async function evaluateTab(tabId, url) {
   if (matchedRule.action === 'hide') {
     try {
       await chrome.action.setBadgeText({ tabId, text: 'HIDE' });
-      await chrome.action.setBadgeBackgroundColor({ tabId, color: '#757575' });
+      await chrome.action.setBadgeBackgroundColor({ tabId, color: '#64748B' });
     } catch (e) {}
   }
 }
