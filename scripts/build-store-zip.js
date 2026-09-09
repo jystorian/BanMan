@@ -40,7 +40,13 @@ function copyRecursive(src, dest) {
 for (const f of filesToInclude) {
   const srcPath = path.join(rootDir, f);
   if (fs.existsSync(srcPath)) {
-    copyRecursive(srcPath, path.join(tempDir, f));
+    if (f === 'manifest.json') {
+      const manifestData = JSON.parse(fs.readFileSync(srcPath, 'utf8'));
+      delete manifestData.key; // 웹스토어 업로드 시에는 구글이 키를 자동 서명하므로 key 필드 제외 필수
+      fs.writeFileSync(path.join(tempDir, f), JSON.stringify(manifestData, null, 2), 'utf8');
+    } else {
+      copyRecursive(srcPath, path.join(tempDir, f));
+    }
   }
 }
 
