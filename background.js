@@ -1,4 +1,4 @@
-// background.js - Service Worker for Web Blacklist & Annotator
+// background.js - Service Worker for BanMan (Chrome City Protector)
 
 const WEBSTORE_REGEX = /chromewebstore\.google\.com\/detail\/(?:[^\/]+\/)?([a-p]{32})/i;
 
