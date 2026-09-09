@@ -21,7 +21,7 @@ BanMan은 악성 사이트, 피싱, 광고성 찌라시 사이트의 직접 접�
 
 1. 저장소를 클론하거나 ZIP 파일로 다운로드합니다:
    ```bash
-   git clone https://github.com/jystorm/BanMan.git
+   git clone https://github.com/jystorian/BanMan.git
    ```
 2. 크롬 브라우저를 열고 주소창에 `chrome://extensions` 를 입력합니다.
 3. 우측 상단의 **개발자 모드(Developer mode)** 스위치를 켭니다.
