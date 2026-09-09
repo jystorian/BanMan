@@ -18,7 +18,7 @@ BanMan: Ban & Flag Bad URLs
 
 ### 상세 설명 (Detailed Description)
 ```text
-🛡️ BanMan: Ban & Flag Bad URLs — Chrome City Protector
+🛡️ BanMan: Ban & Flag Bad URLs — Smart Browsing Guard
 
 BanMan은 피싱을 자동으로 탐지하는 무거운 보안 백신이 아닙니다. 
 웹 서핑 중 직접 겪어보고 불쾌했던 사이트(광고 폭탄, 과도한 쿠키 요구, 낚시성 어그로 글)나, 쇼핑몰·앱스토어에서 써보고 실망했던 '지뢰 제품/링크'를 내가 직접 블랙리스트로 등록하고 관리하는 나만의 스마트 브라우징 가드입니다.
