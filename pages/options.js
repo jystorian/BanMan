@@ -37,11 +37,76 @@ document.addEventListener('DOMContentLoaded', async () => {
     render();
   });
 
+  // 웹스토어 확장 프로그램 제목 캐시 및 서비스 워커 경유 비동기 조회 (CORS 제약 없음)
+  const webstoreTitleCache = {};
+
+  async function fetchWebstoreTitle(extId) {
+    if (!extId) return null;
+    extId = extId.toLowerCase().trim();
+    if (webstoreTitleCache[extId]) return webstoreTitleCache[extId];
+
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'FETCH_WEBSTORE_TITLE', extId }, (res) => {
+        if (chrome.runtime.lastError) {
+          console.warn('FETCH_WEBSTORE_TITLE sendMessage error:', chrome.runtime.lastError);
+          resolve(null);
+          return;
+        }
+        if (res && res.title) {
+          webstoreTitleCache[extId] = res.title;
+          resolve(res.title);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  // 기존 등록된 웹스토어 규칙 중 제목이 없는 항목 자동 보정 (Self-healing)
+  async function enrichWebstoreTitles() {
+    let hasUpdates = false;
+    const webstoreEntries = Object.entries(currentRules).filter(([_, r]) => {
+      return r.type === 'webstore' && (!r.title || r.title === r.target);
+    });
+
+    for (const [key, rule] of webstoreEntries) {
+      const extId = (rule.target || key).toLowerCase();
+      const fetchedTitle = await fetchWebstoreTitle(extId);
+      if (fetchedTitle && fetchedTitle !== extId) {
+        currentRules[key].title = fetchedTitle;
+        hasUpdates = true;
+
+        // 테이블에 렌더링된 요소 즉시 갱신
+        const nameEl = document.querySelector(`.target-name[data-ext-id="${extId}"]`);
+        if (nameEl) {
+          nameEl.textContent = fetchedTitle;
+          const parentCell = nameEl.closest('.target-cell');
+          if (parentCell && !parentCell.querySelector('.target-sub-id')) {
+            const subSpan = document.createElement('span');
+            subSpan.className = 'target-sub-id';
+            subSpan.textContent = `ID: ${extId}`;
+            const typeTag = parentCell.querySelector('.type-tag');
+            if (typeTag) {
+              parentCell.insertBefore(subSpan, typeTag);
+            } else {
+              parentCell.appendChild(subSpan);
+            }
+          }
+        }
+      }
+    }
+
+    if (hasUpdates) {
+      await chrome.storage.local.set({ blacklist_rules: currentRules });
+    }
+  }
+
   // 1. 규칙 로드 및 통계 갱신
   async function loadData() {
     const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
     currentRules = blacklist_rules;
     render();
+    enrichWebstoreTitles();
   }
 
   // 실시간 스토리지 변경 동기화
@@ -131,12 +196,40 @@ document.addEventListener('DOMContentLoaded', async () => {
           actionClass = 'hide';
         }
 
-        tr.innerHTML = `
-          <td>
+        // 웹스토어 확장인 경우 명칭 및 링크 처리
+        let targetHtml = '';
+        if (rule.type === 'webstore') {
+          const extId = (rule.target || key).toLowerCase();
+          const hasTitle = rule.title && rule.title !== extId;
+          const displayName = hasTitle ? rule.title : extId;
+          const webstoreUrl = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
+          // 제목이 있는 경우에만 하단에 ID를 보조로 표시하여, 제목 부재 시 위아래 ID 중복 방지
+          const subIdHtml = hasTitle
+            ? `<span class="target-sub-id">ID: ${escapeHtml(extId)}</span>`
+            : '';
+
+          targetHtml = `
+            <div class="target-cell">
+              <div class="target-title-row">
+                <span class="target-name" data-ext-id="${escapeHtml(extId)}">${escapeHtml(displayName)}</span>
+                <a href="${webstoreUrl}" target="_blank" rel="noopener noreferrer" class="webstore-ext-link" title="크롬 웹스토어 열기">🔗</a>
+              </div>
+              ${subIdHtml}
+              <span class="type-tag ${typeClass}">${typeLabel}</span>
+            </div>
+          `;
+        } else {
+          targetHtml = `
             <div class="target-cell">
               <span class="target-name">${escapeHtml(rule.target || key)}</span>
               <span class="type-tag ${typeClass}">${typeLabel}</span>
             </div>
+          `;
+        }
+
+        tr.innerHTML = `
+          <td>
+            ${targetHtml}
           </td>
           <td>
             <select class="inline-action-select ${actionClass}" data-key="${escapeHtml(key)}" title="${t('modal_action_label', currentLang)}">
@@ -146,11 +239,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             </select>
           </td>
           <td class="memo-cell">${escapeHtml(rule.memo || '-')}</td>
-          <td class="date-cell">${rule.createdAt || '-'}</td>
-          <td class="manage-col">
+          <td class="date-cell">${formatDateStacked(rule.createdAt)}</td>
+          <td class="col-manage">
             <div class="action-btns">
-              <button class="sm-btn edit-btn" data-key="${escapeHtml(key)}">${t('btn_edit', currentLang)}</button>
-              <button class="sm-btn delete delete-btn" data-key="${escapeHtml(key)}">${t('btn_delete', currentLang)}</button>
+              <button class="sm-btn edit-btn" data-key="${escapeHtml(key)}" title="${t('btn_edit', currentLang)}">${t('btn_edit', currentLang)}</button>
+              <button class="sm-btn icon-delete-btn delete-btn" data-key="${escapeHtml(key)}" title="${t('btn_delete', currentLang)}" aria-label="${t('btn_delete', currentLang)}">✕</button>
             </div>
           </td>
         `;
@@ -158,6 +251,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         rulesTableBody.appendChild(tr);
       });
     }
+  }
+
+  // 날짜/시간 2줄 분리 포맷 함수 (테이블 가로폭 절약)
+  function formatDateStacked(dateStr) {
+    if (!dateStr || dateStr === '-') return '-';
+    const parts = dateStr.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return `<div class="date-stacked"><span class="date-d">${escapeHtml(parts[0])}</span><span class="date-t">${escapeHtml(parts[1])}</span></div>`;
+    }
+    return escapeHtml(dateStr);
   }
 
   function escapeHtml(text) {
@@ -195,6 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!target) return;
 
+    let webstoreTitle = '';
     if (type === 'domain') {
       try {
         if (target.includes('://')) {
@@ -206,18 +310,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (type === 'webstore') {
       const match = target.match(/([a-p]{32})/i);
       if (match) target = match[1].toLowerCase();
+      // 등록 시 즉시 웹스토어 제목 fetch 시도
+      webstoreTitle = await fetchWebstoreTitle(target) || '';
     }
 
     const now = new Date();
     const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    currentRules[target] = {
+    const ruleObj = {
       target,
       type,
       action,
       memo,
       createdAt
     };
+
+    if (type === 'webstore' && webstoreTitle) {
+      ruleObj.title = webstoreTitle;
+    }
+
+    currentRules[target] = ruleObj;
 
     await chrome.storage.local.set({ blacklist_rules: currentRules });
 
@@ -254,7 +366,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!item) return;
 
     editingKey = key;
-    modalTargetDisplay.textContent = item.target || key;
+    if (item.type === 'webstore' && item.title) {
+      modalTargetDisplay.textContent = `${item.title} (${item.target || key})`;
+    } else {
+      modalTargetDisplay.textContent = item.target || key;
+    }
     modalMemoInput.value = item.memo || '';
 
     const actionRadio = document.querySelector(`input[name="modalAction"][value="${item.action}"]`);
@@ -298,13 +414,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 8. 테이블 내 수정(모달 열기) 및 삭제 이벤트 위임
   rulesTableBody.addEventListener('click', async (e) => {
-    const target = e.target;
-    const key = target.getAttribute('data-key');
-    if (!key) return;
-
-    // 삭제
-    if (target.classList.contains('delete-btn')) {
-      if (confirm(t('confirm_delete', currentLang, { key }))) {
+    const delBtn = e.target.closest('.delete-btn');
+    if (delBtn) {
+      const key = delBtn.getAttribute('data-key');
+      if (key && confirm(t('confirm_delete', currentLang, { key }))) {
         delete currentRules[key];
         await chrome.storage.local.set({ blacklist_rules: currentRules });
         render();
@@ -312,9 +425,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 수정 (모달 열기 - 마우스 클릭으로 선택)
-    if (target.classList.contains('edit-btn')) {
-      openEditModal(key);
+    const editBtn = e.target.closest('.edit-btn');
+    if (editBtn) {
+      const key = editBtn.getAttribute('data-key');
+      if (key) {
+        openEditModal(key);
+      }
     }
   });
 

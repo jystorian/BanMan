@@ -227,6 +227,53 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // 비동기 응답 유지
   }
 
+  // 웹스토어 확장 프로그램 제목 조회 (Service Worker의 host_permissions로 CORS 없이 fetch)
+  if (message.type === 'FETCH_WEBSTORE_TITLE') {
+    (async () => {
+      const extId = (message.extId || '').toLowerCase().trim();
+      if (!extId) {
+        sendResponse({ title: null });
+        return;
+      }
+
+      try {
+        const url = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'ko,en;q=0.9' } });
+        if (!res.ok) {
+          sendResponse({ title: null });
+          return;
+        }
+        const html = await res.text();
+
+        // 1. <title> 태그 검색
+        const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+        if (titleMatch && titleMatch[1]) {
+          const title = titleMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
+          if (title && !title.toLowerCase().includes('chrome web store') && !title.toLowerCase().includes('chrome 웹스토어')) {
+            sendResponse({ title });
+            return;
+          }
+        }
+
+        // 2. <meta property="og:title"> 검색
+        const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
+                        html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+        if (ogMatch && ogMatch[1]) {
+          const title = ogMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
+          if (title) {
+            sendResponse({ title });
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('background fetch webstore title failed:', err);
+      }
+
+      sendResponse({ title: null });
+    })();
+    return true; // 비동기 응답 유지
+  }
+
   if (message.type === 'ALLOW_ONCE') {
     (async () => {
       const { tabId, origUrl, target } = message;

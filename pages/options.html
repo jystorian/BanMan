@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>BanMan 대시보드</title>
+  <link rel="icon" type="image/png" href="../icons/icon-16.png">
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
@@ -10,10 +11,10 @@
     <!-- 사이드바 / 헤더 -->
     <header class="top-nav">
       <div class="brand">
-        <img src="../icons/icon-128.png" class="brand-avatar" alt="BanMan">
+        <img src="../icons/face-b-badge-128.png" class="brand-avatar" alt="BanMan">
         <div>
           <h1 data-i18n="dashboard_title">BanMan 대시보드</h1>
-          <p data-i18n="dashboard_desc">Ban & Flag bad URLs for Chrome city - 크롬 시티 통합 방어 대시보드</p>
+          <p data-i18n="dashboard_desc">Ban & Flag bad URLs for Chrome city</p>
         </div>
       </div>
       <div class="header-actions">
@@ -108,11 +109,11 @@
           <table class="rules-table">
             <thead>
               <tr>
-                <th data-i18n="th_target">대상 및 유형</th>
-                <th data-i18n="th_action">액션</th>
-                <th data-i18n="th_memo">기록된 사유 메모</th>
-                <th data-i18n="th_date">등록일</th>
-                <th class="manage-col" data-i18n="th_manage">관리</th>
+                <th class="col-target" data-i18n="th_target">대상 및 유형</th>
+                <th class="col-action" data-i18n="th_action">액션</th>
+                <th class="col-memo" data-i18n="th_memo">기록된 사유 메모</th>
+                <th class="col-date" data-i18n="th_date">등록일</th>
+                <th class="col-manage" data-i18n="th_manage">관리</th>
               </tr>
             </thead>
             <tbody id="rulesTableBody">

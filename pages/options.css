@@ -35,7 +35,7 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .logo-icon {
@@ -43,22 +43,26 @@ body {
 }
 
 .brand-avatar {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .brand h1 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a202c;
+  font-size: 23px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .brand p {
-  font-size: 13px;
-  color: #718096;
+  font-size: 13.5px;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 .header-actions {
@@ -281,12 +285,42 @@ input[type="text"]:focus, select:focus {
 .target-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+}
+
+.target-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .target-name {
   font-weight: 600;
   color: #1a202c;
+  word-break: break-all;
+}
+
+.webstore-ext-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  text-decoration: none;
+  opacity: 0.75;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  line-height: 1;
+}
+
+.webstore-ext-link:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.target-sub-id {
+  font-size: 11px;
+  color: #718096;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
   word-break: break-all;
 }
 
@@ -315,37 +349,89 @@ input[type="text"]:focus, select:focus {
 .action-badge.warn { background: #fff3e0; color: #d97706; }
 .action-badge.hide { background: #edf2f7; color: #4a5568; }
 
-.memo-cell {
-  color: #4a5568;
-  max-width: 300px;
-  word-break: break-word;
+/* 테이블 컬럼 너비 분배 - 대상 및 유형 컬럼에 최대 폭 집중 할당 */
+.col-target {
+  width: 41%;
+  min-width: 250px;
 }
 
-.date-cell {
-  font-size: 11px;
-  color: #a0aec0;
+.col-action {
+  width: 110px;
+  min-width: 105px;
+}
+
+.col-memo {
+  width: 25%;
+  min-width: 130px;
+}
+
+.col-date {
+  width: 115px;
+  min-width: 110px;
+  text-align: center;
   white-space: nowrap;
 }
 
-.manage-col {
-  width: 140px;
-  min-width: 130px;
+.col-manage {
+  width: 75px;
+  min-width: 70px;
   text-align: center;
+  white-space: nowrap;
+}
+
+.rules-table th.col-date, .rules-table th.col-manage {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.memo-cell {
+  color: #4a5568;
+  word-break: break-word;
+}
+
+/* 등록일 날짜/시간 2줄 스택 스타일 - 줄바꿈 없이 깔끔한 고정폭 */
+.date-cell {
+  text-align: center;
+  padding: 8px 6px;
+  white-space: nowrap;
+}
+
+.date-stacked {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.date-d {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #4a5568;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.date-t {
+  font-size: 10.5px;
+  color: #a0aec0;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
   white-space: nowrap;
 }
 
 .action-btns {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
   align-items: center;
   white-space: nowrap;
-  flex-wrap: nowrap;
 }
 
 .sm-btn {
-  padding: 5px 12px;
-  font-size: 12px;
+  padding: 4px 9px;
+  font-size: 11.5px;
   font-weight: 600;
   border-radius: 5px;
   border: 1px solid #cbd5e0;
@@ -359,21 +445,43 @@ input[type="text"]:focus, select:focus {
   justify-content: center;
   line-height: 1.2;
   transition: all 0.15s ease;
-}
-
-.sm-btn.delete {
-  color: #e53e3e;
-  border-color: #feb2b2;
-}
-
-.sm-btn.delete:hover {
-  background-color: #ffebee;
-  border-color: #e53e3e;
+  height: 26px;
 }
 
 .sm-btn:hover {
   background-color: #edf2f7;
   border-color: #a0aec0;
+}
+
+/* 정방형 X 삭제 버튼 - 공간 절약 및 명확한 시각적 피드백 */
+.icon-delete-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #e53e3e;
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.icon-delete-btn:hover {
+  background-color: #e53e3e;
+  color: #ffffff;
+  border-color: #c53030;
+  box-shadow: 0 1px 4px rgba(229, 62, 62, 0.3);
+  transform: scale(1.05);
+}
+
+.icon-delete-btn:active {
+  transform: scale(0.95);
 }
 
 .empty-msg {

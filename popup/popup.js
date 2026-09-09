@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentLang = 'ko';
   let detectedType = 'url'; // 'webstore' | 'domain' | 'url' | 'system'
   let webstoreExtId = null;
+  let webstoreTitle = '';
   let domainHost = '';
   let currentUrl = '';
   let tab = null;
@@ -133,16 +134,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // 웹스토어 제목 비동기 조회 함수 (Service Worker 경유로 CORS 완벽 우회)
+  async function fetchWebstoreTitle(extId) {
+    if (!extId) return null;
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'FETCH_WEBSTORE_TITLE', extId }, (res) => {
+        if (chrome.runtime.lastError) {
+          console.warn('Popup webstore fetch error:', chrome.runtime.lastError);
+          resolve(null);
+          return;
+        }
+        resolve(res && res.title ? res.title : null);
+      });
+    });
+  }
+
   currentUrl = tab.url;
-  const webMatch = currentUrl.match(WEBSTORE_REGEX);
+  // 슬러그와 32자리 ID를 모두 캡처하는 정규식
+  const webMatch = currentUrl.match(/chromewebstore\.google\.com\/detail\/(?:([^\/]+)\/)?([a-p]{32})/i);
 
   if (webMatch) {
     detectedType = 'webstore';
-    webstoreExtId = webMatch[1].toLowerCase();
+    const slug = webMatch[1] || '';
+    webstoreExtId = (webMatch[2] || webMatch[1]).toLowerCase();
+
+    // 1) 탭 제목에서 추출 시도
+    if (tab.title) {
+      const cleaned = tab.title.replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
+      if (cleaned && !cleaned.toLowerCase().includes('chrome web store') && !cleaned.toLowerCase().includes('chrome 웹스토어')) {
+        webstoreTitle = cleaned;
+      }
+    }
+
+    // 2) 기존 저장된 타이틀이 있다면 보존
+    if (!webstoreTitle && blacklist_rules[webstoreExtId]?.title) {
+      webstoreTitle = blacklist_rules[webstoreExtId].title;
+    }
+
+    // 3) URL 슬러그가 의미 있는 텍스트인 경우 임시 제목으로 사용
+    if (!webstoreTitle && slug && !slug.match(/^[a-p]{32}$/i)) {
+      webstoreTitle = slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
     updateTargetBadge();
-    targetDomain.textContent = `ID: ${webstoreExtId.substring(0, 12)}...`;
+    targetDomain.textContent = webstoreTitle ? `${webstoreTitle} (${webstoreExtId.substring(0, 8)}...)` : `ID: ${webstoreExtId.substring(0, 12)}...`;
     targetUrlText.textContent = currentUrl;
     scopeSelector.style.display = 'none';
+
+    // 4) 아직 완벽한 타이틀을 못 얻었거나 슬러그뿐인 경우, 웹스토어 HTML에서 실시간 비동기 보정
+    if (!webstoreTitle || webstoreTitle.toLowerCase().includes('chrome')) {
+      fetchWebstoreTitle(webstoreExtId).then(title => {
+        if (title) {
+          webstoreTitle = title;
+          targetDomain.textContent = `${webstoreTitle} (${webstoreExtId.substring(0, 8)}...)`;
+          checkExistingRule();
+        }
+      });
+    }
   } else if (currentUrl.startsWith('http://') || currentUrl.startsWith('https://')) {
     try {
       const parsedUrl = new URL(currentUrl);
@@ -183,13 +231,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const now = new Date();
     const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    blacklist_rules[target] = {
+    const ruleObj = {
       target,
       type,
       action,
       memo,
       createdAt
     };
+
+    // 웹스토어 확장 프로그램 이름이 있는 경우 함께 저장
+    if (type === 'webstore') {
+      const titleToSave = webstoreTitle || (blacklist_rules[target]?.title) || '';
+      if (titleToSave) {
+        ruleObj.title = titleToSave;
+      }
+    }
+
+    blacklist_rules[target] = ruleObj;
 
     await chrome.storage.local.set({ blacklist_rules });
 
