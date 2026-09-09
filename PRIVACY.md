@@ -32,4 +32,4 @@ BanMan은 사용자의 개인정보를 어떠한 제3자에게도 제공하거�
 ### 4. 문의처
 본 개인정보처리방침에 대한 문의나 의견이 있으신 경우, GitHub 리포지토리의 이슈(Issues)를 통해 문의해 주시기 바랍니다.
 
-- **GitHub Repository**: [https://github.com/jystorm/BanMan](https://github.com/jystorm/BanMan)
+- **GitHub Repository**: [https://github.com/jystorian/BanMan](https://github.com/jystorian/BanMan)
