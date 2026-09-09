@@ -99,8 +99,7 @@
           </div>
           <div class="drive-account-status">
             <span id="driveStatusText" class="drive-status-badge disconnected" data-i18n="drive_status_disconnected">Google 계정이 연동되지 않았습니다.</span>
-            <button type="button" id="driveAuthBtn" class="btn btn-sm btn-outline" data-i18n="drive_connect_btn">Google 계정 연동</button>
-            <button type="button" id="oauthConfigBtn" class="btn btn-sm btn-outline" data-i18n="oauth_config_btn">⚙️ OAuth 설정</button>
+            <button type="button" id="driveAuthBtn" class="btn btn-sm btn-primary" data-i18n="drive_connect_btn">Google 계정 연동</button>
           </div>
         </div>
 
@@ -119,8 +118,9 @@
             <button type="button" id="driveSyncDownloadBtn" class="btn btn-outline" data-i18n="drive_sync_download_btn">⬇️ 드라이브에서 복원</button>
           </div>
 
-          <div class="drive-info-row">
+          <div class="drive-info-row" style="display: flex; justify-content: space-between; align-items: center;">
             <span id="driveLastSyncText" class="drive-last-sync">마지막 동기화: 없음</span>
+            <button type="button" id="oauthConfigBtn" class="btn-link" data-i18n="oauth_config_btn_subtle" style="font-size: 11px; background: none; border: none; color: #718096; text-decoration: underline; cursor: pointer; padding: 0;">⚙️ 클라이언트 키 재설정</button>
           </div>
         </div>
       </section>
@@ -329,7 +329,7 @@
       </div>
       <div class="modal-footer">
         <button id="oauthModalCancelBtn" class="btn btn-outline" type="button" data-i18n="btn_cancel">취소</button>
-        <button id="oauthModalSaveBtn" class="btn btn-primary" type="button" data-i18n="btn_save">저장</button>
+        <button id="oauthModalSaveBtn" class="btn btn-primary" type="button" data-i18n="oauth_save_and_connect">저장하고 바로 연동하기 🚀</button>
       </div>
     </div>
   </div>

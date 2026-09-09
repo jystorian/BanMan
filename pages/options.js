@@ -717,17 +717,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     oauthModalSaveBtn.addEventListener('click', async () => {
       const val = oauthClientIdInput.value.trim();
       if (!val) {
-        oauthErrorMsg.textContent = '클라이언트 ID를 입력해 주세요.';
+        oauthErrorMsg.textContent = currentLang === 'ko'
+          ? '클라이언트 ID를 입력해 주세요.'
+          : (currentLang === 'ja' ? 'クライアントIDを入力してください。' : 'Please enter your Client ID.');
         oauthErrorMsg.style.display = 'block';
         return;
       }
       await chrome.storage.local.set({ custom_client_id: val });
-      oauthSuccessMsg.textContent = t('oauth_saved', currentLang);
-      oauthSuccessMsg.style.display = 'block';
-      oauthErrorMsg.style.display = 'none';
-      setTimeout(() => {
-        closeOAuthModal();
-      }, 1500);
+      closeOAuthModal();
+      // 저장 후 바로 구글 계정 연동 시작
+      if (driveAuthBtn) {
+        driveAuthBtn.click();
+      }
     });
   }
 

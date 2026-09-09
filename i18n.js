@@ -136,7 +136,9 @@ const I18N_DICTIONARY = {
     oauth_client_id_label: '발급받은 클라이언트 ID 입력 (.apps.googleusercontent.com)',
     oauth_client_id_placeholder: '예: 1234567890-xxxxxxxxxx.apps.googleusercontent.com',
     oauth_copied: '클립보드에 복사되었습니다!',
-    oauth_saved: '클라이언트 ID가 성공적으로 저장되었습니다. 이제 [Google 계정 연동]을 시도해 보세요!'
+    oauth_saved: '클라이언트 ID가 성공적으로 저장되었습니다. 이제 [Google 계정 연동]을 시도해 보세요!',
+    oauth_save_and_connect: '저장하고 바로 연동하기 🚀',
+    oauth_config_btn_subtle: '⚙️ 클라이언트 키 재설정'
   },
 
   en: {
@@ -274,7 +276,9 @@ const I18N_DICTIONARY = {
     oauth_client_id_label: 'Enter your Client ID (.apps.googleusercontent.com)',
     oauth_client_id_placeholder: 'e.g. 1234567890-xxxxxxxxxx.apps.googleusercontent.com',
     oauth_copied: 'Copied to clipboard!',
-    oauth_saved: 'Client ID saved successfully. You can now click [Connect Google Account]!'
+    oauth_saved: 'Client ID saved successfully. You can now click [Connect Google Account]!',
+    oauth_save_and_connect: 'Save & Connect Now 🚀',
+    oauth_config_btn_subtle: '⚙️ Change Client ID'
   },
 
   ja: {
@@ -412,7 +416,9 @@ const I18N_DICTIONARY = {
     oauth_client_id_label: '発行されたクライアントIDを入力 (.apps.googleusercontent.com)',
     oauth_client_id_placeholder: '例: 1234567890-xxxxxxxxxx.apps.googleusercontent.com',
     oauth_copied: 'クリップボードにコピーしました！',
-    oauth_saved: 'クライアントIDが正常に保存されました。 [Google アカウント連携] をお試しください！'
+    oauth_saved: 'クライアントIDが正常に保存されました。 [Google アカウント連携] をお試しください！',
+    oauth_save_and_connect: '保存してすぐに連携する 🚀',
+    oauth_config_btn_subtle: '⚙️ クライアントID再設定'
   }
 };
 
