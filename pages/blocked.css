@@ -30,23 +30,26 @@ body {
 
 .banman-scene {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  gap: 16px;
   margin-bottom: 24px;
 }
 
 .banman-cape-sprite {
-  height: 145px;
+  height: 165px;
   object-fit: contain;
   image-rendering: pixelated;
   animation: hero-idle 3s ease-in-out infinite;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.14));
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.22));
 }
 
 @keyframes hero-idle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 h1 {

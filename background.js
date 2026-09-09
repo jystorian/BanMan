@@ -52,20 +52,96 @@ function findMatchingRule(urlStr, rules = {}) {
   return null;
 }
 
+// 탭별 1회 임시 허용(Bypass) 인메모리 관리 맵 (무한 리디렉션 루프 완벽 방지)
+const activeBypasses = new Map(); // tabId -> { target, origUrl, host, extId, expiresAt }
+
+async function isBypassed(tabId, url) {
+  if (!tabId || !url) return false;
+
+  // 1. 메모리 맵 확인
+  let bypass = activeBypasses.get(tabId);
+  if (bypass) {
+    if (Date.now() > bypass.expiresAt) {
+      activeBypasses.delete(tabId);
+      bypass = null;
+    }
+  }
+
+  // 2. 세션 스토리지 보조 확인 (서비스 워커 재시작 대비)
+  if (!bypass) {
+    try {
+      const bypassKey = `bypass_${tabId}`;
+      const sessionData = await chrome.storage.session.get(bypassKey);
+      if (sessionData[bypassKey]) {
+        const stored = sessionData[bypassKey];
+        if (Date.now() < stored.expiresAt) {
+          bypass = stored;
+          activeBypasses.set(tabId, stored);
+        } else {
+          await chrome.storage.session.remove(bypassKey);
+        }
+      }
+    } catch (e) {}
+  }
+
+  if (!bypass) return false;
+
+  // 검증: URL, 호스트, 확장ID 일치 여부 다각도 점검
+  if (url === bypass.origUrl || url.startsWith(bypass.origUrl) || bypass.origUrl.startsWith(url)) {
+    return true;
+  }
+
+  if (bypass.host) {
+    try {
+      const parsedHost = new URL(url).hostname.toLowerCase();
+      if (parsedHost === bypass.host || parsedHost.endsWith('.' + bypass.host)) {
+        return true;
+      }
+    } catch (e) {}
+  }
+
+  if (bypass.extId) {
+    const match = url.match(WEBSTORE_REGEX);
+    if (match && match[1].toLowerCase() === bypass.extId) {
+      return true;
+    }
+  }
+
+  if (bypass.target && (url.includes(bypass.target) || bypass.target === url)) {
+    return true;
+  }
+
+  return false;
+}
+
+// 닫힌 탭 관련 에러 감지 (정상적인 탭 생명주기 이벤트)
+function isTabClosedError(err) {
+  if (!err) return false;
+  const msg = (err.message || String(err)).toLowerCase();
+  return msg.includes('no tab with id') || msg.includes('tab was closed') || msg.includes('cannot be queried');
+}
+
 // 탭 URL 검사 및 처리 (차단 리디렉션, 배지, 알림)
 async function evaluateTab(tabId, url) {
   if (!url) return;
 
-  // 임시 허용 여부 세션 확인 (무한 루프 방지)
+  // 내부 URL 및 크롬 시스템 페이지 검사 제외
+  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('about:')) {
+    return;
+  }
+
+  // 탭이 여전히 유효하게 열려 있는지 사전 검증 (이미 닫힌 탭 에러 방지)
   try {
-    const bypassKey = `bypass_${tabId}`;
-    const sessionData = await chrome.storage.session.get(bypassKey);
-    if (sessionData[bypassKey] && url.startsWith(sessionData[bypassKey])) {
-      // 이번 1회는 통과
-      return;
-    }
+    const activeTab = await chrome.tabs.get(tabId);
+    if (!activeTab) return;
   } catch (e) {
-    // 세션 스토리지 미지원 또는 에러 무시
+    // 탭이 이미 닫혔거나 조기 종료된 경우 안전하게 리턴
+    return;
+  }
+
+  // 임시 허용 여부 확인
+  if (await isBypassed(tabId, url)) {
+    return;
   }
 
   const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
@@ -89,7 +165,7 @@ async function evaluateTab(tabId, url) {
     try {
       await chrome.tabs.update(tabId, { url: blockedPageUrl });
     } catch (e) {
-      console.error('차단 페이지 리디렉션 실패:', e);
+      // 탭이 사용자에 의해 닫혔거나 탐색이 취소된 경우 조용히 무시
     }
     return;
   }
@@ -110,7 +186,7 @@ async function evaluateTab(tabId, url) {
         priority: 2
       });
     } catch (e) {
-      console.error('배지/알림 설정 실패:', e);
+      // 탭이 닫히거나 알림 생성이 취소된 경우 조용히 무시
     }
     return;
   }
@@ -153,12 +229,57 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'ALLOW_ONCE') {
     (async () => {
-      const { tabId, origUrl } = message;
+      const { tabId, origUrl, target } = message;
       if (tabId && origUrl) {
-        const bypassKey = `bypass_${tabId}`;
-        await chrome.storage.session.set({ [bypassKey]: origUrl });
-        await chrome.tabs.update(tabId, { url: origUrl });
+        let host = '';
+        try {
+          host = new URL(origUrl).hostname.toLowerCase();
+        } catch (e) {}
+
+        const webMatch = origUrl.match(WEBSTORE_REGEX);
+        const extId = webMatch ? webMatch[1].toLowerCase() : null;
+
+        const bypassData = {
+          target: target || '',
+          origUrl: origUrl,
+          host: host,
+          extId: extId,
+          expiresAt: Date.now() + 180000 // 3분간 임시 허용 유지
+        };
+
+        // 1. 메모리 등록
+        activeBypasses.set(tabId, bypassData);
+
+        // 2. 세션 스토리지 보조 등록
+        try {
+          const bypassKey = `bypass_${tabId}`;
+          await chrome.storage.session.set({ [bypassKey]: bypassData });
+        } catch (e) {}
+
+        // 3. 탭 이동 수행
+        try {
+          await chrome.tabs.update(tabId, { url: origUrl });
+          sendResponse({ success: true });
+        } catch (e) {
+          sendResponse({ success: false, error: e.message });
+        }
+      } else {
+        sendResponse({ success: false, error: 'Missing tabId or origUrl' });
+      }
+    })();
+    return true;
+  }
+
+  if (message.type === 'SAFE_BACK') {
+    (async () => {
+      const { tabId } = message;
+      try {
+        if (tabId) {
+          await chrome.tabs.update(tabId, { url: 'chrome://newtab/' });
+        }
         sendResponse({ success: true });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
       }
     })();
     return true;

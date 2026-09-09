@@ -1,4 +1,4 @@
-// popup.js - Active tab inspection and rule management
+// popup.js - Active tab inspection and rule management with multi-language support
 
 const WEBSTORE_REGEX = /chromewebstore\.google\.com\/detail\/(?:[^\/]+\/)?([a-p]{32})/i;
 
@@ -12,76 +12,69 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deleteBtn = document.getElementById('deleteBtn');
   const statusMsg = document.getElementById('statusMsg');
   const openOptionsBtn = document.getElementById('openOptionsBtn');
+  const langSelect = document.getElementById('langSelect');
 
-  openOptionsBtn.addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
-  });
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !tab.url) {
-    targetUrlText.textContent = '활성화된 탭 정보를 가져올 수 없습니다.';
-    saveBtn.disabled = true;
-    return;
-  }
-
-  const currentUrl = tab.url;
-  let parsedUrl = null;
-  let detectedType = 'domain'; // 'webstore' | 'domain' | 'url'
+  // 상태 변수 선언 (TDZ 방지 및 안전한 스코프 유지)
+  let blacklist_rules = {};
+  let currentLang = 'ko';
+  let detectedType = 'url'; // 'webstore' | 'domain' | 'url' | 'system'
   let webstoreExtId = null;
   let domainHost = '';
+  let currentUrl = '';
+  let tab = null;
 
-  const webMatch = currentUrl.match(WEBSTORE_REGEX);
-
-  if (webMatch) {
-    detectedType = 'webstore';
-    webstoreExtId = webMatch[1].toLowerCase();
-    targetTypeBadge.textContent = '크롬 웹스토어 확장';
-    targetTypeBadge.className = 'badge webstore';
-    targetDomain.textContent = `확장 ID: ${webstoreExtId.substring(0, 12)}...`;
-    targetUrlText.textContent = currentUrl;
-    scopeSelector.style.display = 'none';
-  } else if (currentUrl.startsWith('http://') || currentUrl.startsWith('https://')) {
-    try {
-      parsedUrl = new URL(currentUrl);
-      domainHost = parsedUrl.hostname.toLowerCase();
-      targetTypeBadge.textContent = '일반 웹사이트';
-      targetTypeBadge.className = 'badge web';
-      targetDomain.textContent = domainHost;
-      targetUrlText.textContent = currentUrl;
-      scopeSelector.style.display = 'block';
-    } catch (e) {
-      targetUrlText.textContent = 'URL 파싱 실패';
-      saveBtn.disabled = true;
-      return;
-    }
-  } else {
-    targetTypeBadge.textContent = '특수 페이지';
-    targetDomain.textContent = '제한된 시스템 URL';
-    targetUrlText.textContent = currentUrl;
-    memoInput.disabled = true;
-    saveBtn.disabled = true;
-    statusMsg.textContent = '시스템/내부 페이지는 등록할 수 없습니다.';
-    return;
+  // 1. 다국어 및 블랙리스트 규칙 초기 로드
+  try {
+    const [lang, stored] = await Promise.all([
+      getAppLanguage(),
+      chrome.storage.local.get('blacklist_rules')
+    ]);
+    currentLang = lang;
+    blacklist_rules = stored.blacklist_rules || {};
+  } catch (err) {
+    console.error('BanMan init error:', err);
   }
 
-  // 기존 등록 여부 확인
-  const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
+  langSelect.value = currentLang;
+  applyTranslations(currentLang);
 
+  // 대상 판별 함수
   function getSelectedTarget() {
     if (detectedType === 'webstore') {
       return { target: webstoreExtId, type: 'webstore' };
     }
-    const scope = document.querySelector('input[name="targetScope"]:checked')?.value || 'domain';
+    if (detectedType === 'system') {
+      return { target: null, type: 'system' };
+    }
+    // 기본값: 현재 URL만 (url)
+    const scope = document.querySelector('input[name="targetScope"]:checked')?.value || 'url';
     if (scope === 'domain') {
       return { target: domainHost, type: 'domain' };
     } else {
-      // 쿼리스트링/해시 포함 또는 정규화된 URL
       return { target: currentUrl, type: 'url' };
     }
   }
 
+  // 배지 업데이트 함수
+  function updateTargetBadge() {
+    if (detectedType === 'webstore') {
+      targetTypeBadge.textContent = t('badge_webstore', currentLang);
+      targetTypeBadge.className = 'badge webstore';
+    } else if (detectedType === 'domain' || detectedType === 'url') {
+      targetTypeBadge.textContent = t('badge_web', currentLang);
+      targetTypeBadge.className = 'badge web';
+    } else {
+      targetTypeBadge.textContent = t('badge_system', currentLang);
+      targetTypeBadge.className = 'badge system';
+    }
+  }
+
+  // 기존 등록 여부 확인 및 UI 반영
   function checkExistingRule() {
+    if (detectedType === 'system') return;
     const { target } = getSelectedTarget();
+    if (!target) return;
+
     const existing = blacklist_rules[target];
 
     if (existing) {
@@ -89,32 +82,101 @@ document.addEventListener('DOMContentLoaded', async () => {
       const actionRadio = document.querySelector(`input[name="actionType"][value="${existing.action}"]`);
       if (actionRadio) actionRadio.checked = true;
 
-      saveBtn.textContent = '메모 및 설정 수정';
+      saveBtn.textContent = t('save_btn_edit', currentLang);
       deleteBtn.style.display = 'block';
-      statusMsg.textContent = `[등록됨: ${existing.createdAt || '일자 미상'}]`;
+      statusMsg.textContent = t('status_registered', currentLang, { date: existing.createdAt || '-' });
     } else {
-      // 미등록인 경우 폼 기본화
-      if (memoInput.value === '') {
-        // 기존 텍스트 유지
-      }
-      saveBtn.textContent = '블랙리스트 등록';
+      saveBtn.textContent = t('save_btn_add', currentLang);
       deleteBtn.style.display = 'none';
-      statusMsg.textContent = '미등록 상태';
+      statusMsg.textContent = t('status_unregistered', currentLang);
     }
   }
+
+  // 언어 선택 변경 이벤트
+  langSelect.addEventListener('change', async (e) => {
+    currentLang = e.target.value;
+    await setAppLanguage(currentLang);
+    applyTranslations(currentLang);
+    updateTargetBadge();
+    checkExistingRule();
+  });
+
+  // 옵션 페이지 열기
+  openOptionsBtn.addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
 
   // 스코프 라디오 변경 시 기존 데이터 재확인
   document.querySelectorAll('input[name="targetScope"]').forEach(radio => {
     radio.addEventListener('change', checkExistingRule);
   });
 
+  // 스토리지 변경 시 실시간 동기화
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.blacklist_rules) {
+      blacklist_rules = changes.blacklist_rules.newValue || {};
+      checkExistingRule();
+    }
+  });
+
+  // 2. 현재 활성 탭 분석
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    tab = tabs && tabs[0];
+  } catch (e) {
+    console.error('Failed to query tab:', e);
+  }
+
+  if (!tab || !tab.url) {
+    targetUrlText.textContent = t('tab_info_error', currentLang);
+    saveBtn.disabled = true;
+    return;
+  }
+
+  currentUrl = tab.url;
+  const webMatch = currentUrl.match(WEBSTORE_REGEX);
+
+  if (webMatch) {
+    detectedType = 'webstore';
+    webstoreExtId = webMatch[1].toLowerCase();
+    updateTargetBadge();
+    targetDomain.textContent = `ID: ${webstoreExtId.substring(0, 12)}...`;
+    targetUrlText.textContent = currentUrl;
+    scopeSelector.style.display = 'none';
+  } else if (currentUrl.startsWith('http://') || currentUrl.startsWith('https://')) {
+    try {
+      const parsedUrl = new URL(currentUrl);
+      domainHost = parsedUrl.hostname.toLowerCase();
+      detectedType = 'url';
+      updateTargetBadge();
+      targetDomain.textContent = domainHost;
+      targetUrlText.textContent = currentUrl;
+      scopeSelector.style.display = 'block';
+    } catch (e) {
+      targetUrlText.textContent = t('url_parse_error', currentLang);
+      saveBtn.disabled = true;
+      return;
+    }
+  } else {
+    detectedType = 'system';
+    updateTargetBadge();
+    targetDomain.textContent = currentUrl.split(':')[0] || 'internal';
+    targetUrlText.textContent = currentUrl;
+    memoInput.disabled = true;
+    saveBtn.disabled = true;
+    statusMsg.textContent = t('status_system_page', currentLang);
+    return;
+  }
+
   // 초기 상태 로드
   checkExistingRule();
 
-  // 저장 버튼
+  // 저장 버튼 이벤트
   saveBtn.addEventListener('click', async () => {
     saveBtn.disabled = true;
     const { target, type } = getSelectedTarget();
+    if (!target) return;
+
     const action = document.querySelector('input[name="actionType"]:checked')?.value || 'block';
     const memo = memoInput.value.trim();
 
@@ -133,22 +195,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 웹스토어의 경우 즉시 배지 반영
     if (type === 'webstore' && (action === 'warn' || action === 'block')) {
-      chrome.action.setBadgeText({ tabId: tab.id, text: 'BAD' });
-      chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#D32F2F' });
+      try {
+        if (tab && tab.id) {
+          await chrome.action.setBadgeText({ tabId: tab.id, text: 'BAD' });
+          await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#D32F2F' });
+        }
+      } catch (e) {}
     }
 
     statusMsg.style.color = '#2e7d32';
-    statusMsg.textContent = '성공적으로 저장되었습니다!';
+    statusMsg.textContent = t('status_saved', currentLang);
 
     setTimeout(() => {
       window.close();
     }, 450);
   });
 
-  // 삭제 버튼
+  // 삭제 버튼 이벤트
   deleteBtn.addEventListener('click', async () => {
     deleteBtn.disabled = true;
     const { target } = getSelectedTarget();
+    if (!target) return;
 
     delete blacklist_rules[target];
     await chrome.storage.local.set({ blacklist_rules });
@@ -158,7 +225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {}
 
     statusMsg.style.color = '#555';
-    statusMsg.textContent = '블랙리스트에서 삭제되었습니다.';
+    statusMsg.textContent = t('status_deleted', currentLang);
 
     setTimeout(() => {
       window.close();

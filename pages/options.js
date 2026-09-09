@@ -1,4 +1,4 @@
-// options.js - Dashboard management, search, edit, export/import
+// options.js - Dashboard management with i18n support
 
 document.addEventListener('DOMContentLoaded', async () => {
   const totalCountEl = document.getElementById('totalCount');
@@ -19,10 +19,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const exportBtn = document.getElementById('exportBtn');
   const importFileInput = document.getElementById('importFileInput');
+  const langSelect = document.getElementById('langSelect');
 
   let currentRules = {};
   let currentFilter = 'all';
   let searchQuery = '';
+
+  // 다국어 초기화
+  let currentLang = await getAppLanguage();
+  langSelect.value = currentLang;
+  applyTranslations(currentLang);
+
+  langSelect.addEventListener('change', async (e) => {
+    currentLang = e.target.value;
+    await setAppLanguage(currentLang);
+    applyTranslations(currentLang);
+    render();
+  });
 
   // 1. 규칙 로드 및 통계 갱신
   async function loadData() {
@@ -33,9 +46,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 실시간 스토리지 변경 동기화
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.blacklist_rules) {
-      currentRules = changes.blacklist_rules.newValue || {};
-      render();
+    if (areaName === 'local') {
+      if (changes.blacklist_rules) {
+        currentRules = changes.blacklist_rules.newValue || {};
+        render();
+      }
+      if (changes.app_lang) {
+        currentLang = changes.app_lang.newValue || 'ko';
+        langSelect.value = currentLang;
+        applyTranslations(currentLang);
+        render();
+      }
     }
   });
 
@@ -89,24 +110,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tr = document.createElement('tr');
 
         // 타입 라벨 및 스타일
-        let typeLabel = '도메인';
+        let typeLabel = t('type_domain', currentLang);
         let typeClass = 'domain';
         if (rule.type === 'url') {
-          typeLabel = 'URL';
+          typeLabel = t('type_url', currentLang);
           typeClass = 'url';
         } else if (rule.type === 'webstore') {
-          typeLabel = '크롬 웹스토어';
+          typeLabel = t('type_webstore', currentLang);
           typeClass = 'webstore';
         }
 
         // 액션 라벨
-        let actionLabel = '차단';
+        let actionLabel = t('action_block', currentLang);
         let actionClass = 'block';
         if (rule.action === 'warn') {
-          actionLabel = '경고 & 메모';
+          actionLabel = t('action_warn', currentLang);
           actionClass = 'warn';
         } else if (rule.action === 'hide') {
-          actionLabel = '링크 숨김';
+          actionLabel = t('action_hide', currentLang);
           actionClass = 'hide';
         }
 
@@ -118,14 +139,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </td>
           <td>
-            <span class="action-badge ${actionClass}">${actionLabel}</span>
+            <select class="inline-action-select ${actionClass}" data-key="${escapeHtml(key)}" title="${t('modal_action_label', currentLang)}">
+              <option value="block" ${rule.action === 'block' ? 'selected' : ''}>🚫 ${t('action_block', currentLang)}</option>
+              <option value="warn" ${rule.action === 'warn' ? 'selected' : ''}>⚠️ ${t('action_warn', currentLang)}</option>
+              <option value="hide" ${rule.action === 'hide' ? 'selected' : ''}>👁️ ${t('action_hide', currentLang)}</option>
+            </select>
           </td>
-          <td class="memo-cell">${escapeHtml(rule.memo || '(사유 미기재)')}</td>
+          <td class="memo-cell">${escapeHtml(rule.memo || '-')}</td>
           <td class="date-cell">${rule.createdAt || '-'}</td>
-          <td style="text-align: center;">
+          <td class="manage-col">
             <div class="action-btns">
-              <button class="sm-btn edit-btn" data-key="${escapeHtml(key)}">수정</button>
-              <button class="sm-btn delete delete-btn" data-key="${escapeHtml(key)}">삭제</button>
+              <button class="sm-btn edit-btn" data-key="${escapeHtml(key)}">${t('btn_edit', currentLang)}</button>
+              <button class="sm-btn delete delete-btn" data-key="${escapeHtml(key)}">${t('btn_delete', currentLang)}</button>
             </div>
           </td>
         `;
@@ -170,7 +195,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!target) return;
 
-    // 도메인 타입인 경우 http:// 및 https://, 후행 슬래시 정규화
     if (type === 'domain') {
       try {
         if (target.includes('://')) {
@@ -180,7 +204,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (err) {}
     } else if (type === 'webstore') {
-      // 32자리 ID만 추출
       const match = target.match(/([a-p]{32})/i);
       if (match) target = match[1].toLowerCase();
     }
@@ -203,7 +226,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     render();
   });
 
-  // 6. 테이블 내 수정 및 삭제 이벤트 위임
+  // 6. 테이블 내 인라인 액션 변경 (원클릭 마우스 선택)
+  rulesTableBody.addEventListener('change', async (e) => {
+    if (e.target.classList.contains('inline-action-select')) {
+      const select = e.target;
+      const key = select.getAttribute('data-key');
+      const newAction = select.value;
+      if (key && currentRules[key]) {
+        currentRules[key].action = newAction;
+        await chrome.storage.local.set({ blacklist_rules: currentRules });
+        render();
+      }
+    }
+  });
+
+  // 7. 모달 대화상자 요소 및 함수
+  let editingKey = null;
+  const editModal = document.getElementById('editModal');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const modalCancelBtn = document.getElementById('modalCancelBtn');
+  const modalSaveBtn = document.getElementById('modalSaveBtn');
+  const modalTargetDisplay = document.getElementById('modalTargetDisplay');
+  const modalMemoInput = document.getElementById('modalMemoInput');
+
+  function openEditModal(key) {
+    const item = currentRules[key];
+    if (!item) return;
+
+    editingKey = key;
+    modalTargetDisplay.textContent = item.target || key;
+    modalMemoInput.value = item.memo || '';
+
+    const actionRadio = document.querySelector(`input[name="modalAction"][value="${item.action}"]`);
+    if (actionRadio) actionRadio.checked = true;
+
+    editModal.style.display = 'flex';
+    modalMemoInput.focus();
+  }
+
+  function closeEditModal() {
+    editModal.style.display = 'none';
+    editingKey = null;
+  }
+
+  modalCloseBtn.addEventListener('click', closeEditModal);
+  modalCancelBtn.addEventListener('click', closeEditModal);
+
+  editModal.addEventListener('click', (e) => {
+    if (e.target === editModal) closeEditModal();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && editModal.style.display === 'flex') {
+      closeEditModal();
+    }
+  });
+
+  modalSaveBtn.addEventListener('click', async () => {
+    if (!editingKey || !currentRules[editingKey]) return;
+
+    const selectedAction = document.querySelector('input[name="modalAction"]:checked')?.value || 'block';
+    const newMemo = modalMemoInput.value.trim();
+
+    currentRules[editingKey].action = selectedAction;
+    currentRules[editingKey].memo = newMemo;
+
+    await chrome.storage.local.set({ blacklist_rules: currentRules });
+    closeEditModal();
+    render();
+  });
+
+  // 8. 테이블 내 수정(모달 열기) 및 삭제 이벤트 위임
   rulesTableBody.addEventListener('click', async (e) => {
     const target = e.target;
     const key = target.getAttribute('data-key');
@@ -211,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 삭제
     if (target.classList.contains('delete-btn')) {
-      if (confirm(`'${key}' 규칙을 삭제하시겠습니까?`)) {
+      if (confirm(t('confirm_delete', currentLang, { key }))) {
         delete currentRules[key];
         await chrome.storage.local.set({ blacklist_rules: currentRules });
         render();
@@ -219,24 +312,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 수정 (메모 및 액션)
+    // 수정 (모달 열기 - 마우스 클릭으로 선택)
     if (target.classList.contains('edit-btn')) {
-      const item = currentRules[key];
-      if (!item) return;
-
-      const newActionVal = prompt(`처리 액션을 선택하세요 (block / warn / hide):\n현재: ${item.action}`, item.action);
-      if (newActionVal === null) return;
-      if (['block', 'warn', 'hide'].includes(newActionVal.trim().toLowerCase())) {
-        item.action = newActionVal.trim().toLowerCase();
-      }
-
-      const newMemoVal = prompt(`사유 메모를 수정하세요:`, item.memo || '');
-      if (newMemoVal === null) return;
-      item.memo = newMemoVal.trim();
-
-      currentRules[key] = item;
-      await chrome.storage.local.set({ blacklist_rules: currentRules });
-      render();
+      openEditModal(key);
     }
   });
 
@@ -246,7 +324,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const downloadAnchor = document.createElement('a');
     const today = new Date().toISOString().slice(0, 10);
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `chrome-blacklist-backup-${today}.json`);
+    downloadAnchor.setAttribute("download", `banman-rules-backup-${today}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -262,11 +340,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const importedData = JSON.parse(event.target.result);
         if (typeof importedData !== 'object' || importedData === null) {
-          alert('올바르지 않은 JSON 파일 형식입니다.');
+          alert(t('import_invalid_json', currentLang));
           return;
         }
 
-        const isOverwrite = confirm('기존 규칙에 덮어쓰시겠습니까?\n[확인]: 기존 목록 삭제 후 덮어쓰기\n[취소]: 기존 목록 유지하며 병합(Merge)');
+        const isOverwrite = confirm(t('import_confirm', currentLang));
 
         if (isOverwrite) {
           currentRules = importedData;
@@ -275,10 +353,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         await chrome.storage.local.set({ blacklist_rules: currentRules });
-        alert(`총 ${Object.keys(currentRules).length}개의 규칙이 성공적으로 반영되었습니다.`);
+        alert(t('import_success', currentLang, { count: Object.keys(currentRules).length }));
         render();
       } catch (err) {
-        alert('JSON 파일을 읽는 도중 오류가 발생했습니다: ' + err.message);
+        alert(t('import_error', currentLang, { error: err.message }));
       } finally {
         importFileInput.value = '';
       }
