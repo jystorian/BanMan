@@ -21,6 +21,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   const importFileInput = document.getElementById('importFileInput');
   const langSelect = document.getElementById('langSelect');
 
+  // 구글 드라이브 동기화 및 암호화 관련 DOM 요소
+  const driveStatusText = document.getElementById('driveStatusText');
+  const driveAuthBtn = document.getElementById('driveAuthBtn');
+  const driveControls = document.getElementById('driveControls');
+  const driveEncryptToggle = document.getElementById('driveEncryptToggle');
+  const drivePassBtn = document.getElementById('drivePassBtn');
+  const driveSyncMergeBtn = document.getElementById('driveSyncMergeBtn');
+  const driveSyncUploadBtn = document.getElementById('driveSyncUploadBtn');
+  const driveSyncDownloadBtn = document.getElementById('driveSyncDownloadBtn');
+  const driveLastSyncText = document.getElementById('driveLastSyncText');
+
+  // 암호화 설정 모달 DOM 요소
+  const passModal = document.getElementById('passModal');
+  const passModalCloseBtn = document.getElementById('passModalCloseBtn');
+  const passModalCancelBtn = document.getElementById('passModalCancelBtn');
+  const passModalSaveBtn = document.getElementById('passModalSaveBtn');
+  const passInput = document.getElementById('passInput');
+  const passConfirmInput = document.getElementById('passConfirmInput');
+  const passErrorMsg = document.getElementById('passErrorMsg');
+
+  // 복호화 확인 모달 DOM 요소
+  const decryptModal = document.getElementById('decryptModal');
+  const decryptModalCloseBtn = document.getElementById('decryptModalCloseBtn');
+  const decryptModalCancelBtn = document.getElementById('decryptModalCancelBtn');
+  const decryptModalSubmitBtn = document.getElementById('decryptModalSubmitBtn');
+  const decryptPassInput = document.getElementById('decryptPassInput');
+  const decryptErrorMsg = document.getElementById('decryptErrorMsg');
+
+  // 대용량 페이지네이션 DOM 요소 및 상태
+  const paginationBar = document.getElementById('paginationBar');
+  const prevPageBtn = document.getElementById('prevPageBtn');
+  const nextPageBtn = document.getElementById('nextPageBtn');
+  const pageInfoText = document.getElementById('pageInfoText');
+  const PAGE_SIZE = 50;
+  let currentPage = 1;
+
   let currentRules = {};
   let currentFilter = 'all';
   let searchQuery = '';
@@ -34,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentLang = e.target.value;
     await setAppLanguage(currentLang);
     applyTranslations(currentLang);
+    await loadDriveState();
     render();
   });
 
@@ -163,6 +200,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       return dateB.localeCompare(dateA);
     });
 
+    // 대용량 페이지네이션 계산 (50개 단위 페이징)
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+
+    if (filtered.length > PAGE_SIZE) {
+      paginationBar.style.display = 'flex';
+      pageInfoText.textContent = t('pagination_page_info', currentLang, {
+        current: currentPage,
+        total: totalPages,
+        count: filtered.length
+      });
+      prevPageBtn.disabled = currentPage <= 1;
+      nextPageBtn.disabled = currentPage >= totalPages;
+    } else {
+      paginationBar.style.display = 'none';
+    }
+
     // 테이블 렌더링
     rulesTableBody.innerHTML = '';
 
@@ -171,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       emptyMsg.style.display = 'none';
 
-      filtered.forEach(([key, rule]) => {
+      pageItems.forEach(([key, rule]) => {
         const tr = document.createElement('tr');
 
         // 타입 라벨 및 스타일
@@ -288,6 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       filterTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       currentFilter = tab.getAttribute('data-filter');
+      currentPage = 1;
       render();
     });
   });
@@ -295,8 +354,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 4. 검색창 이벤트
   searchInput.addEventListener('input', (e) => {
     searchQuery = e.target.value.trim();
+    currentPage = 1;
     render();
   });
+
+  // 4-1. 페이지네이션 버튼 이벤트
+  if (prevPageBtn && nextPageBtn) {
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        render();
+      }
+    });
+
+    nextPageBtn.addEventListener('click', () => {
+      currentPage++;
+      render();
+    });
+  }
 
   // 5. 새 규칙 수동 추가
   addRuleForm.addEventListener('submit', async (e) => {
@@ -491,6 +566,348 @@ document.addEventListener('DOMContentLoaded', async () => {
     reader.readAsText(file);
   });
 
+  // ==========================================
+  // 9. 구글 드라이브 동기화 및 암호화 관리 로직
+  // ==========================================
+
+  async function loadDriveState() {
+    if (!driveStatusText || !driveAuthBtn) return;
+
+    const config = await chrome.storage.local.get([
+      'drive_connected',
+      'drive_user_email',
+      'drive_encrypted',
+      'drive_passphrase',
+      'drive_last_sync'
+    ]);
+
+    const isConnected = !!config.drive_connected;
+    if (driveControls) {
+      driveControls.style.display = isConnected ? 'flex' : 'none';
+    }
+
+    if (isConnected) {
+      driveStatusText.textContent = t('drive_status_connected', currentLang, { email: config.drive_user_email || 'Google User' });
+      driveStatusText.className = 'drive-status-badge connected';
+      driveAuthBtn.textContent = t('drive_disconnect_btn', currentLang);
+    } else {
+      driveStatusText.textContent = t('drive_status_disconnected', currentLang);
+      driveStatusText.className = 'drive-status-badge disconnected';
+      driveAuthBtn.textContent = t('drive_connect_btn', currentLang);
+    }
+
+    if (driveEncryptToggle) {
+      driveEncryptToggle.checked = !!config.drive_encrypted;
+    }
+    if (drivePassBtn) {
+      drivePassBtn.style.display = config.drive_encrypted ? 'inline-block' : 'none';
+    }
+
+    if (driveLastSyncText) {
+      if (config.drive_last_sync) {
+        try {
+          const syncDate = new Date(config.drive_last_sync).toLocaleString(
+            currentLang === 'ko' ? 'ko-KR' : (currentLang === 'ja' ? 'ja-JP' : 'en-US')
+          );
+          driveLastSyncText.textContent = t('drive_last_synced', currentLang, { time: syncDate });
+        } catch (e) {
+          driveLastSyncText.textContent = t('drive_last_synced', currentLang, { time: config.drive_last_sync });
+        }
+      } else {
+        driveLastSyncText.textContent = t('drive_last_synced', currentLang, { time: t('drive_sync_never', currentLang) });
+      }
+    }
+  }
+
+  // Google 계정 연동 / 해제
+  if (driveAuthBtn) {
+    driveAuthBtn.addEventListener('click', async () => {
+      const config = await chrome.storage.local.get('drive_connected');
+      if (config.drive_connected) {
+        // 연동 해제
+        try {
+          const token = await DriveSync.getAuthToken(false).catch(() => null);
+          if (token) await DriveSync.revokeToken(token);
+        } catch (e) {}
+        await chrome.storage.local.set({ drive_connected: false, drive_user_email: '' });
+        await loadDriveState();
+      } else {
+        // 계정 연동
+        try {
+          driveAuthBtn.disabled = true;
+          const token = await DriveSync.getAuthToken(true);
+          const userInfo = await DriveSync.getUserInfo(token);
+          await chrome.storage.local.set({
+            drive_connected: true,
+            drive_user_email: userInfo.email || 'Google Account'
+          });
+          await loadDriveState();
+        } catch (err) {
+          alert(t('drive_error', currentLang, { error: err.message }));
+        } finally {
+          driveAuthBtn.disabled = false;
+        }
+      }
+    });
+  }
+
+  // 암호화 토글 이벤트
+  if (driveEncryptToggle) {
+    driveEncryptToggle.addEventListener('change', async () => {
+      const isEncrypted = driveEncryptToggle.checked;
+      await chrome.storage.local.set({ drive_encrypted: isEncrypted });
+      if (drivePassBtn) {
+        drivePassBtn.style.display = isEncrypted ? 'inline-block' : 'none';
+      }
+      if (isEncrypted) {
+        const { drive_passphrase } = await chrome.storage.local.get('drive_passphrase');
+        if (!drive_passphrase) {
+          openPassModal();
+        }
+      }
+    });
+  }
+
+  // 마스터 비밀번호 설정 모달 함수
+  function openPassModal() {
+    if (!passModal) return;
+    passModal.style.display = 'flex';
+    passInput.value = '';
+    passConfirmInput.value = '';
+    passErrorMsg.style.display = 'none';
+    passInput.focus();
+  }
+
+  function closePassModal() {
+    if (!passModal) return;
+    passModal.style.display = 'none';
+  }
+
+  if (passModalCloseBtn) passModalCloseBtn.addEventListener('click', closePassModal);
+  if (passModalCancelBtn) passModalCancelBtn.addEventListener('click', closePassModal);
+  if (drivePassBtn) drivePassBtn.addEventListener('click', openPassModal);
+
+  if (passModalSaveBtn) {
+    passModalSaveBtn.addEventListener('click', async () => {
+      const p1 = passInput.value;
+      const p2 = passConfirmInput.value;
+
+      if (!p1 || p1.length < 4) {
+        passErrorMsg.textContent = currentLang === 'ko'
+          ? '비밀번호는 최소 4자 이상이어야 합니다.'
+          : (currentLang === 'ja' ? 'パスワードは4文字以上で入力してください。' : 'Passphrase must be at least 4 characters.');
+        passErrorMsg.style.display = 'block';
+        return;
+      }
+
+      if (p1 !== p2) {
+        passErrorMsg.textContent = currentLang === 'ko'
+          ? '비밀번호 확인이 일치하지 않습니다.'
+          : (currentLang === 'ja' ? 'パスワードが一致しません。' : 'Passphrases do not match.');
+        passErrorMsg.style.display = 'block';
+        return;
+      }
+
+      await chrome.storage.local.set({ drive_passphrase: p1, drive_encrypted: true });
+      if (driveEncryptToggle) driveEncryptToggle.checked = true;
+      if (drivePassBtn) drivePassBtn.style.display = 'inline-block';
+      closePassModal();
+    });
+  }
+
+  // 복호화 비밀번호 모달 프롬프트 헬퍼
+  let pendingDecryptResolver = null;
+  function requestDecryptionPassphrase(encryptedPackage) {
+    return new Promise((resolve, reject) => {
+      if (!decryptModal) {
+        return reject(new Error('Decrypt modal not available'));
+      }
+      decryptModal.style.display = 'flex';
+      decryptPassInput.value = '';
+      decryptErrorMsg.style.display = 'none';
+      decryptPassInput.focus();
+      pendingDecryptResolver = { resolve, reject, encryptedPackage };
+    });
+  }
+
+  if (decryptModalSubmitBtn) {
+    decryptModalSubmitBtn.addEventListener('click', async () => {
+      if (!pendingDecryptResolver) return;
+      const pass = decryptPassInput.value;
+      if (!pass) {
+        decryptErrorMsg.textContent = t('modal_pass_input_placeholder', currentLang);
+        decryptErrorMsg.style.display = 'block';
+        return;
+      }
+
+      try {
+        const decrypted = await CryptoHelper.decryptData(pendingDecryptResolver.encryptedPackage, pass);
+        // 복호화 성공 시 로컬에도 저장하여 편의성 증대
+        await chrome.storage.local.set({ drive_passphrase: pass });
+        decryptModal.style.display = 'none';
+        pendingDecryptResolver.resolve(decrypted.rules || decrypted);
+        pendingDecryptResolver = null;
+      } catch (e) {
+        decryptErrorMsg.textContent = t('err_invalid_pass', currentLang);
+        decryptErrorMsg.style.display = 'block';
+      }
+    });
+  }
+
+  function closeDecryptModal() {
+    if (decryptModal) decryptModal.style.display = 'none';
+    if (pendingDecryptResolver) {
+      pendingDecryptResolver.reject(new Error('USER_CANCELLED'));
+      pendingDecryptResolver = null;
+    }
+  }
+
+  if (decryptModalCloseBtn) decryptModalCloseBtn.addEventListener('click', closeDecryptModal);
+  if (decryptModalCancelBtn) decryptModalCancelBtn.addEventListener('click', closeDecryptModal);
+
+  // 데이터 전송 준비 (암호화 여부에 따른 페이로드 생성)
+  async function preparePayload(rules) {
+    const { drive_encrypted, drive_passphrase } = await chrome.storage.local.get(['drive_encrypted', 'drive_passphrase']);
+    const rawData = {
+      version: 1,
+      rules: rules,
+      exportedAt: new Date().toISOString()
+    };
+
+    if (drive_encrypted) {
+      if (!drive_passphrase) {
+        throw new Error('ENCRYPTION_PASSPHRASE_NOT_SET');
+      }
+      return await CryptoHelper.encryptData(rawData, drive_passphrase);
+    } else {
+      return {
+        version: 1,
+        encrypted: false,
+        rules: rules,
+        updatedAt: new Date().toISOString()
+      };
+    }
+  }
+
+  // 원격 데이터 수신 및 복호화 해석
+  async function resolveRemoteRules(rawRemote) {
+    if (rawRemote.encrypted) {
+      const { drive_passphrase } = await chrome.storage.local.get('drive_passphrase');
+      if (drive_passphrase) {
+        try {
+          const decrypted = await CryptoHelper.decryptData(rawRemote, drive_passphrase);
+          return decrypted.rules || decrypted;
+        } catch (e) {
+          // 비밀번호 불일치 시 모달로 재입력 요청
+        }
+      }
+      return await requestDecryptionPassphrase(rawRemote);
+    }
+    return rawRemote.rules || rawRemote;
+  }
+
+  // ⬆️ 드라이브로 백업
+  if (driveSyncUploadBtn) {
+    driveSyncUploadBtn.addEventListener('click', async () => {
+      try {
+        driveSyncUploadBtn.disabled = true;
+        const token = await DriveSync.getAuthToken(true);
+        const payload = await preparePayload(currentRules);
+        await DriveSync.uploadBackup(token, payload);
+        const syncTime = new Date().toISOString();
+        await chrome.storage.local.set({ drive_last_sync: syncTime });
+        await loadDriveState();
+        alert(t('drive_upload_success', currentLang, { count: Object.keys(currentRules).length }));
+      } catch (err) {
+        if (err.message === 'ENCRYPTION_PASSPHRASE_NOT_SET') {
+          openPassModal();
+        } else {
+          alert(t('drive_error', currentLang, { error: err.message }));
+        }
+      } finally {
+        driveSyncUploadBtn.disabled = false;
+      }
+    });
+  }
+
+  // ⬇️ 드라이브에서 복원
+  if (driveSyncDownloadBtn) {
+    driveSyncDownloadBtn.addEventListener('click', async () => {
+      try {
+        driveSyncDownloadBtn.disabled = true;
+        const token = await DriveSync.getAuthToken(true);
+        const backupFile = await DriveSync.findBackupFile(token);
+        if (!backupFile) {
+          alert(t('drive_no_backup', currentLang));
+          return;
+        }
+        const remoteData = await DriveSync.downloadBackup(token, backupFile.id);
+        const remoteRules = await resolveRemoteRules(remoteData);
+
+        const isOverwrite = confirm(t('import_confirm', currentLang));
+        if (isOverwrite) {
+          currentRules = remoteRules;
+        } else {
+          const merged = DriveSync.smartMergeRules(currentRules, remoteRules);
+          currentRules = merged.mergedRules;
+        }
+
+        await chrome.storage.local.set({
+          blacklist_rules: currentRules,
+          drive_last_sync: new Date().toISOString()
+        });
+        await loadDriveState();
+        render();
+        alert(t('drive_download_success', currentLang, { count: Object.keys(currentRules).length }));
+      } catch (err) {
+        if (err.message !== 'USER_CANCELLED') {
+          alert(t('drive_error', currentLang, { error: err.message }));
+        }
+      } finally {
+        driveSyncDownloadBtn.disabled = false;
+      }
+    });
+  }
+
+  // 🔄 스마트 병합 동기화
+  if (driveSyncMergeBtn) {
+    driveSyncMergeBtn.addEventListener('click', async () => {
+      try {
+        driveSyncMergeBtn.disabled = true;
+        const token = await DriveSync.getAuthToken(true);
+        const backupFile = await DriveSync.findBackupFile(token);
+        let remoteRules = {};
+        if (backupFile) {
+          const remoteData = await DriveSync.downloadBackup(token, backupFile.id);
+          remoteRules = await resolveRemoteRules(remoteData);
+        }
+
+        const { mergedRules, addedCount, updatedCount, totalCount } = DriveSync.smartMergeRules(currentRules, remoteRules);
+        currentRules = mergedRules;
+        await chrome.storage.local.set({ blacklist_rules: currentRules });
+
+        // 최신 병합 결과 드라이브에 다시 업로드
+        const payload = await preparePayload(currentRules);
+        await DriveSync.uploadBackup(token, payload);
+
+        const syncTime = new Date().toISOString();
+        await chrome.storage.local.set({ drive_last_sync: syncTime });
+        await loadDriveState();
+        render();
+        alert(t('drive_sync_success', currentLang, { added: addedCount, updated: updatedCount, total: totalCount }));
+      } catch (err) {
+        if (err.message === 'ENCRYPTION_PASSPHRASE_NOT_SET') {
+          openPassModal();
+        } else if (err.message !== 'USER_CANCELLED') {
+          alert(t('drive_error', currentLang, { error: err.message }));
+        }
+      } finally {
+        driveSyncMergeBtn.disabled = false;
+      }
+    });
+  }
+
   // 초기 로드
+  await loadDriveState();
   loadData();
 });

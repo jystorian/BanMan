@@ -90,6 +90,40 @@
         </form>
       </section>
 
+      <!-- 구글 드라이브 클라우드 동기화 카드 (선택) -->
+      <section class="card drive-card">
+        <div class="card-header-row">
+          <div>
+            <h2 data-i18n="drive_card_title">☁️ Google Drive 동기화 (선택)</h2>
+            <p class="card-subtitle" data-i18n="drive_card_desc">새 PC에서도 안전하게 차단 규칙을 동기화합니다 (appDataFolder 백업)</p>
+          </div>
+          <div class="drive-account-status">
+            <span id="driveStatusText" class="drive-status-badge disconnected" data-i18n="drive_status_disconnected">Google 계정이 연동되지 않았습니다.</span>
+            <button type="button" id="driveAuthBtn" class="btn btn-sm btn-outline" data-i18n="drive_connect_btn">Google 계정 연동</button>
+          </div>
+        </div>
+
+        <div id="driveControls" class="drive-controls" style="display: none;">
+          <div class="drive-options-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="driveEncryptToggle">
+              <span data-i18n="drive_encrypt_label">구글 드라이브 저장 시 마스터 비밀번호로 암호화 (E2EE, AES-256)</span>
+            </label>
+            <button type="button" id="drivePassBtn" class="btn btn-sm btn-outline" data-i18n="drive_pass_set_btn" style="display: none;">비밀번호 설정/변경</button>
+          </div>
+
+          <div class="drive-action-buttons">
+            <button type="button" id="driveSyncMergeBtn" class="btn btn-primary" data-i18n="drive_sync_merge_btn">🔄 스마트 병합 동기화</button>
+            <button type="button" id="driveSyncUploadBtn" class="btn btn-outline" data-i18n="drive_sync_upload_btn">⬆️ 드라이브로 백업</button>
+            <button type="button" id="driveSyncDownloadBtn" class="btn btn-outline" data-i18n="drive_sync_download_btn">⬇️ 드라이브에서 복원</button>
+          </div>
+
+          <div class="drive-info-row">
+            <span id="driveLastSyncText" class="drive-last-sync">마지막 동기화: 없음</span>
+          </div>
+        </div>
+      </section>
+
       <!-- 목록 관리 카드 -->
       <section class="card list-card">
         <div class="list-header">
@@ -124,6 +158,13 @@
             <img src="../resources/ban_mobile.png" class="empty-van-img" alt="Ban-Mobile">
             <p data-i18n="empty_rules">크롬 시티가 평화롭습니다. 등록된 지뢰 사이트 규칙이 없습니다.</p>
           </div>
+        </div>
+
+        <!-- 대용량 페이지네이션 바 -->
+        <div id="paginationBar" class="pagination-bar" style="display: none;">
+          <button type="button" id="prevPageBtn" class="btn btn-sm btn-outline" data-i18n="pagination_prev">◀ 이전</button>
+          <span id="pageInfoText" class="page-info" data-i18n="pagination_page_info">1 / 1 페이지</span>
+          <button type="button" id="nextPageBtn" class="btn btn-sm btn-outline" data-i18n="pagination_next">다음 ▶</button>
         </div>
       </section>
     </main>
@@ -198,7 +239,54 @@
     </div>
   </div>
 
+  <!-- 마스터 암호화 비밀번호 설정 모달 -->
+  <div id="passModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="modal_pass_title">마스터 암호화 비밀번호 설정</h3>
+        <button id="passModalCloseBtn" class="modal-close" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc" data-i18n="modal_pass_desc">비밀번호를 설정하면 Web Crypto(AES-256-GCM)로 암호화되어 구글 서버에도 내용이 노출되지 않습니다. 분실 시 복구할 수 없으니 안전하게 보관하세요.</p>
+        <div class="modal-field">
+          <input type="password" id="passInput" class="modal-input" placeholder="마스터 비밀번호 입력 (최소 4자 이상)" autocomplete="new-password">
+        </div>
+        <div class="modal-field">
+          <input type="password" id="passConfirmInput" class="modal-input" placeholder="비밀번호 확인" autocomplete="new-password">
+        </div>
+        <div id="passErrorMsg" class="modal-error-msg" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="passModalCancelBtn" class="btn btn-outline" type="button" data-i18n="btn_cancel">취소</button>
+        <button id="passModalSaveBtn" class="btn btn-primary" type="button" data-i18n="btn_save">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 복호화 비밀번호 입력 모달 -->
+  <div id="decryptModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 data-i18n="modal_pass_decrypt_title">암호화된 백업 복호화</h3>
+        <button id="decryptModalCloseBtn" class="modal-close" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc" data-i18n="modal_pass_decrypt_desc">구글 드라이브의 백업 파일이 암호화되어 있습니다. 마스터 비밀번호를 입력하세요.</p>
+        <div class="modal-field">
+          <input type="password" id="decryptPassInput" class="modal-input" placeholder="마스터 비밀번호 입력" autocomplete="current-password">
+        </div>
+        <div id="decryptErrorMsg" class="modal-error-msg" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="decryptModalCancelBtn" class="btn btn-outline" type="button" data-i18n="btn_cancel">취소</button>
+        <button id="decryptModalSubmitBtn" class="btn btn-primary" type="button">복호화 및 복원</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../i18n.js"></script>
+  <script src="../crypto-helper.js"></script>
+  <script src="../drive-sync.js"></script>
   <script src="options.js"></script>
 </body>
 </html>
