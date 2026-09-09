@@ -134,17 +134,49 @@
 
   /**
    * 연동된 구글 계정 사용자 정보 조회
+   * 1) Drive API의 about 엔드포인트(drive.appdata 권한으로 호출 가능) 우선 시도
+   * 2) oauth2 userinfo API 시도
+   * 3) 실패 시에도 연동을 방해하지 않고 기본 객체로 안전하게 반환
    * @param {string} token 
    * @returns {Promise<{ email: string, name: string, picture: string }>}
    */
   async function getUserInfo(token) {
-    const res = await fetch(USER_INFO_API, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!res.ok) {
-      throw new Error(`사용자 정보 조회 실패 (${res.status}): ${await res.text()}`);
+    // 1. Google Drive API about 엔드포인트 (drive.appdata 스코프로 바로 조회 가능)
+    try {
+      const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.user) {
+          return {
+            email: data.user.emailAddress || 'Google Account',
+            name: data.user.displayName || '',
+            picture: data.user.photoLink || ''
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Drive about endpoint lookup failed:', e);
     }
-    return res.json();
+
+    // 2. oauth2 userinfo API fallback
+    try {
+      const res2 = await fetch(USER_INFO_API, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res2.ok) {
+        const info = await res2.json();
+        return {
+          email: info.email || 'Google Account',
+          name: info.name || '',
+          picture: info.picture || ''
+        };
+      }
+    } catch (e) {}
+
+    // 3. 사용자 프로필 조회가 실패하더라도 토큰 인증 자체는 성공했으므로 연동 정상 유지
+    return { email: 'Google Account', name: '', picture: '' };
   }
 
   /**
