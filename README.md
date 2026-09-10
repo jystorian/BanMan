@@ -1,11 +1,43 @@
-# 🛡️ BanMan: Ban & Flag Bad URLs
+<p align="center">
+  <img src="icons/face-b-badge-128.png" width="96" height="96" alt="BanMan Logo">
+</p>
 
-> **Smart Browsing Guard** — 광고 폭탄, 쿠키 강요 사이트 차단 & 쇼핑몰 지뢰 제품/링크에 깃발을 꽂아주는 스마트 브라우징 가드
+<h1 align="center">BanMan: Ban & Flag Bad URLs</h1>
+
+<p align="center">
+  <strong>Smart Browsing Guard</strong> — 광고 폭탄, 쿠키 강요 사이트 차단 & 쇼핑몰 지뢰 제품/링크에 깃발을 꽂아주는 스마트 브라우징 도구
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Manifest-V3-success.svg?style=flat-square" alt="Manifest V3">
+  <img src="https://img.shields.io/badge/Chrome-Extension-4285F4.svg?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Extension">
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
+  <a href="https://github.com/jystorian/BanMan/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/Release-v1.0.0-orange.svg?style=flat-square" alt="Release v1.0.0"></a>
+</p>
+
+---
 
 BanMan은 복잡한 백신 프로그램이 아닙니다.  
 웹 서핑 중 직접 겪어보고 불쾌했던 사이트(광고 폭탄, 과도한 쿠키 요구)나, 쇼핑몰·앱스토어에서 써보고 실망했던 '지뢰 제품/링크'를 내가 직접 블랙리스트로 등록하고 관리하는 나만의 스마트 브라우징 도구입니다.
 
 내가 한 번 거른 사이트나 상품은 다음번에 검색 결과나 웹서핑 중 마주쳐도 눈에 띄는 '경고 깃발(Flag)'이 꽂히거나 아예 숨겨지므로, 귀중한 시간 낭비와 불필요한 재방문·재구매 실수를 완벽하게 방지해 줍니다.
+
+---
+
+## 📸 주요 화면 (Screenshots)
+
+| 1. 간편한 블랙리스트 등록 (Popup UI) | 2. 웹페이지/검색 결과 링크 경고 (Flag) |
+| :---: | :---: |
+| <img src="docs/screenshots/01-popup-register.png" width="100%" alt="팝업 등록 화면"> | <img src="docs/screenshots/02-flag-warning.png" width="100%" alt="링크 경고 깃발"> |
+| **방문 중인 페이지나 불량 상품을 1클릭 등록** | **등록된 배드 링크 옆에 즉각 시각적 경고 깃발 표시** |
+
+<br>
+
+<div align="center">
+  <h3>3. 원치 않는 사이트 사전 차단 (Block Screen)</h3>
+  <img src="docs/screenshots/03-block-screen.png" width="75%" alt="사전 차단 화면">
+  <p><em>광고 폭탄이나 과도한 쿠키 사이트 방문 시 즉시 진입을 사전 차단하고 안전한 복귀/임시 허용 옵션 제공</em></p>
+</div>
 
 ---
 
