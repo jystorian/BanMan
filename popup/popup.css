@@ -136,7 +136,7 @@ body {
   transform: translateY(-1px);
 }
 
-.btn-dashboard-sq:hover .sq-icon:last-child {
+.btn-dashboard-sq:hover .sq-icon-gear {
   transform: rotate(45deg);
 }
 
@@ -146,7 +146,7 @@ body {
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
-/* 헤더 하단 행: 언어 선택 좌측 정렬 & 우측 상태 뱃지 */
+/* 헤더 하단 행: 크롬시티 보호중 좌측 & 언어 선택 우측 */
 .header-bottom-row {
   display: flex;
   align-items: center;
@@ -154,11 +154,33 @@ body {
   padding: 0 2px;
 }
 
+.header-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  margin-left: 2px;
+}
+
+.header-status-badge .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
+}
+
 .lang-select-group {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-left: 4px; /* 자연스러운 약간의 좌측 여백 */
+  margin-right: 2px;
 }
 
 .lang-globe-icon {
@@ -194,19 +216,6 @@ body {
 .lang-select option {
   background-color: #ffffff;
   color: #0f172a;
-}
-
-.header-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  background-color: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #475569;
 }
 
 .header-status-badge .status-dot {
