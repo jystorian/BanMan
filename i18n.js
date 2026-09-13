@@ -5,7 +5,7 @@ const I18N_DICTIONARY = {
     app_name: 'BanMan',
     app_slogan: 'Ban & Flag bad URLs for Chrome city',
     options_btn: '설정 및 목록 ⚙️',
-    options_btn_short: '설정·목록',
+    options_btn_short: '설정 및 목록',
     detecting: '감지 중...',
     checking_url: 'URL 확인 중...',
     target_header: '감지된 대상 URL / 사이트:',
@@ -148,14 +148,19 @@ const I18N_DICTIONARY = {
     ctx_remove: '🗑️ 등록 해제',
     toast_registered: '[BanMan] {action} 등록 완료: {target}',
     toast_removed: '[BanMan] 등록 해제 완료: {target}',
-    toast_invalid_url: '[BanMan] 등록할 수 없는 특수 링크입니다.'
+    toast_invalid_url: '[BanMan] 등록할 수 없는 특수 링크입니다.',
+    modal_delete_title: '규칙 삭제',
+    modal_delete_desc: '선택한 규칙을 목록에서 삭제하시겠습니까?',
+    skip_delete_confirm_label: '이번 세션 동안 다시 묻지 않고 바로 삭제',
+    skip_delete_confirm_toggle: '⚡ 바로 삭제 (확인 생략)',
+    city_shield_active: 'Chrome City 보호 중'
   },
 
   en: {
     app_name: 'BanMan',
     app_slogan: 'Ban & Flag bad URLs for Chrome city',
     options_btn: 'Settings & List ⚙️',
-    options_btn_short: 'Settings',
+    options_btn_short: 'Settings & List',
     detecting: 'Detecting...',
     checking_url: 'Checking URL...',
     target_header: 'Detected Target URL / Site:',
@@ -298,7 +303,12 @@ const I18N_DICTIONARY = {
     ctx_remove: '🗑️ Remove',
     toast_registered: '[BanMan] {action} registered: {target}',
     toast_removed: '[BanMan] Removed: {target}',
-    toast_invalid_url: '[BanMan] Cannot register special or invalid link.'
+    toast_invalid_url: '[BanMan] Cannot register special or invalid link.',
+    modal_delete_title: 'Delete Rule',
+    modal_delete_desc: 'Are you sure you want to delete this rule from the list?',
+    skip_delete_confirm_label: 'Do not ask again during this session',
+    skip_delete_confirm_toggle: '⚡ Quick Delete (Skip Confirm)',
+    city_shield_active: 'Chrome City Shield Active'
   },
 
   ja: {
@@ -448,7 +458,12 @@ const I18N_DICTIONARY = {
     ctx_remove: '🗑️ 登録解除',
     toast_registered: '[BanMan] {action} 登録完了: {target}',
     toast_removed: '[BanMan] 解除完了: {target}',
-    toast_invalid_url: '[BanMan] 登録できない特殊リンクです。'
+    toast_invalid_url: '[BanMan] 登録できない特殊リンクです。',
+    modal_delete_title: 'ルール削除',
+    modal_delete_desc: '選択したルールを一覧から削除しますか？',
+    skip_delete_confirm_label: 'このセッション中は確認なしで削除',
+    skip_delete_confirm_toggle: '⚡ クイック削除（確認省略）',
+    city_shield_active: 'Chrome City 保護中'
   }
 };
 

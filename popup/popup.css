@@ -19,14 +19,20 @@ body {
   padding: 14px 16px;
 }
 
-/* 타이틀 밑에 충분하고 시원한 여백 (18px) 및 하단 구분선 */
+/* 타이틀 밑에 충분하고 시원한 여백 (14px) 및 하단 구분선 */
 .header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 10px;
+}
+
+.header-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e9ecef;
   gap: 12px;
 }
 
@@ -79,19 +85,90 @@ body {
   line-height: 1.2;
 }
 
-.header-right {
-  display: flex;
-  flex-direction: row;
+/* 설정 및 목록 버튼: 너비 확장, 듀얼 아이콘(📋⚙️), 노란색 배경에 검정 글씨 */
+.btn-dashboard-sq {
+  width: 92px;
+  height: 46px;
+  display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: center;
+  gap: 2px;
+  background: linear-gradient(135deg, #fde047 0%, #facc15 100%);
+  border: 2px solid #ca8a04;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
   flex-shrink: 0;
-  height: 48px;
+  box-shadow: 0 2px 6px rgba(202, 138, 4, 0.35);
+  padding: 4px 6px;
+}
+
+.btn-dashboard-sq .sq-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
+}
+
+.btn-dashboard-sq .sq-icon {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+.btn-dashboard-sq .sq-text {
+  font-size: 10px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.btn-dashboard-sq:hover {
+  background: linear-gradient(135deg, #fef08a 0%, #fde047 100%);
+  border-color: #a16207;
+  box-shadow: 0 4px 12px rgba(250, 204, 21, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-dashboard-sq:hover .sq-icon:last-child {
+  transform: rotate(45deg);
+}
+
+.btn-dashboard-sq:active {
+  transform: scale(0.96);
+  background: #eab308;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 헤더 하단 행: 언어 선택 좌측 정렬 & 우측 상태 뱃지 */
+.header-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.lang-select-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 4px; /* 자연스러운 약간의 좌측 여백 */
+}
+
+.lang-globe-icon {
+  font-size: 12px;
+  line-height: 1;
 }
 
 .lang-select {
-  padding: 3px 6px;
-  font-size: 10px;
+  padding: 3px 8px;
+  font-size: 11px;
   font-weight: 700;
   border: 1.5px solid #cbd5e1;
   border-radius: 7px;
@@ -100,12 +177,8 @@ body {
   cursor: pointer;
   outline: none;
   transition: all 0.15s ease;
-  flex-shrink: 0;
-  height: 28px;
-  width: 78px;
-  text-align: right;
-  text-align-last: right;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  height: 27px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .lang-select:hover {
@@ -114,67 +187,34 @@ body {
 }
 
 .lang-select:focus {
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+  border-color: #eab308;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.35);
 }
 
 .lang-select option {
   background-color: #ffffff;
   color: #0f172a;
-  text-align: right;
-  direction: ltr;
 }
 
-.btn-dashboard-sq {
-  width: 48px;
-  height: 48px;
+.header-status-badge {
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-  border: 2px solid #f59e0b;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
-  padding: 2px;
+  gap: 5px;
+  padding: 3px 8px;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
 }
 
-.btn-dashboard-sq .sq-icon {
-  font-size: 19px;
-  line-height: 1;
-  display: block;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
-  transition: transform 0.25s ease;
-}
-
-.btn-dashboard-sq .sq-text {
-  font-size: 8.5px;
-  font-weight: 800;
-  color: #fbbf24;
-  letter-spacing: -0.3px;
-  line-height: 1;
-  text-align: center;
-}
-
-.btn-dashboard-sq:hover {
-  background: linear-gradient(145deg, #334155 0%, #1e293b 100%);
-  border-color: #fbbf24;
-  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.35);
-  transform: translateY(-1px);
-}
-
-.btn-dashboard-sq:hover .sq-icon {
-  transform: rotate(45deg);
-}
-
-.btn-dashboard-sq:active {
-  transform: scale(0.95);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+.header-status-badge .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
 }
 
 .target-card {
