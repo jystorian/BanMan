@@ -50,7 +50,10 @@ for (const f of filesToInclude) {
   }
 }
 
-const zipPath = path.join(distDir, 'BanMan-v1.0.0-store.zip');
+const rootManifest = JSON.parse(fs.readFileSync(path.join(rootDir, 'manifest.json'), 'utf8'));
+const version = rootManifest.version || '1.0.0';
+const zipName = `BanMan-v${version}-store.zip`;
+const zipPath = path.join(distDir, zipName);
 if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
 
 // Run PowerShell Compress-Archive
