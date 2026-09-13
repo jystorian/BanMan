@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Manifest-V3-success.svg?style=flat-square" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Chrome-Extension-4285F4.svg?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Extension">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
-  <a href="https://github.com/jystorian/BanMan/releases/tag/v1.0.2"><img src="https://img.shields.io/badge/Release-v1.0.2-orange.svg?style=flat-square" alt="Release v1.0.2"></a>
+  <a href="https://github.com/jystorian/BanMan/releases/tag/v1.1.0"><img src="https://img.shields.io/badge/Release-v1.1.0-orange.svg?style=flat-square" alt="Release v1.1.0"></a>
 </p>
 
 ---
@@ -42,6 +42,7 @@ BanMan은 웹 서핑 중 직접 겪어보고 불쾌했던 사이트(광고 폭�
 
 ## ✨ 주요 기능 (Key Features)
 
+- **🖱️ 웹페이지 우클릭 원클릭 관리 (Context Menu)**: 링크에 직접 들어가지 않고도 마우스 우클릭으로 즉시 사전 차단, 주의, 숨김, 해제
 - **🚫 광고 폭탄 / 쿠키 강요 페이지 사전 차단 (Ban)**: 접속 시 불쾌한 광고나 쿠키를 강요하는 사이트의 재진입을 사전에 완벽 차단
 - **🚩 쇼핑몰 '지뢰 제품' & 저품질 링크 경고 (Flag)**: 쇼핑몰, 앱스토어, 검색 결과에서 써보고 실망했던 링크 옆에 선명한 경고 깃발 표시
 - **👁️ 눈앞에서 지우는 링크 숨김 (Hide)**: 경고 깃발뿐 아니라 불쾌한 링크를 화면에서 아예 감추는 숨김 모드 지원
