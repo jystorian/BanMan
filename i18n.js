@@ -139,7 +139,23 @@ const I18N_DICTIONARY = {
     oauth_copied: '클립보드에 복사되었습니다!',
     oauth_saved: '클라이언트 ID가 성공적으로 저장되었습니다. 이제 [Google 계정 연동]을 시도해 보세요!',
     oauth_save_and_connect: '저장하고 바로 연동하기 🚀',
-    oauth_config_btn_subtle: '⚙️ 클라이언트 키 재설정'
+    oauth_config_btn_subtle: '⚙️ 클라이언트 키 재설정',
+
+    ctx_root: '🛡️ BanMan: 이 링크 처리',
+    ctx_block: '🚫 사전 차단 (Block)',
+    ctx_block_domain: '🌐 도메인 전체 차단',
+    ctx_block_url: '🔗 현재 링크 URL만 차단',
+    ctx_warn: '⚠️ 주의 표시 (Caution)',
+    ctx_warn_domain: '🌐 도메인 전체 주의',
+    ctx_warn_url: '🔗 현재 링크 URL만 주의',
+    ctx_hide: '👁️‍🗨️ 링크 숨김 (Hide)',
+    ctx_hide_domain: '🌐 도메인 전체 숨김',
+    ctx_hide_url: '🔗 현재 링크 URL만 숨김',
+    ctx_remove: '🗑️ 이 링크 등록 해제 (Remove)',
+    ctx_default_memo: '우클릭 메뉴로 등록됨',
+    toast_registered: '[BanMan] {action} 등록 완료: {target} ({scope})',
+    toast_removed: '[BanMan] 규칙 해제 완료: {target}',
+    toast_invalid_url: '[BanMan] 등록할 수 없는 특수 링크입니다.'
   },
 
   en: {
@@ -280,7 +296,23 @@ const I18N_DICTIONARY = {
     oauth_copied: 'Copied to clipboard!',
     oauth_saved: 'Client ID saved successfully. You can now click [Connect Google Account]!',
     oauth_save_and_connect: 'Save & Connect Now 🚀',
-    oauth_config_btn_subtle: '⚙️ Change Client ID'
+    oauth_config_btn_subtle: '⚙️ Change Client ID',
+
+    ctx_root: '🛡️ BanMan: Handle this link',
+    ctx_block: '🚫 Block Access (Block)',
+    ctx_block_domain: '🌐 Block Entire Domain',
+    ctx_block_url: '🔗 Block This URL Only',
+    ctx_warn: '⚠️ Show Caution Badge (Caution)',
+    ctx_warn_domain: '🌐 Caution for Entire Domain',
+    ctx_warn_url: '🔗 Caution for This URL Only',
+    ctx_hide: '👁️‍🗨️ Hide Links (Hide)',
+    ctx_hide_domain: '🌐 Hide Entire Domain',
+    ctx_hide_url: '🔗 Hide This URL Only',
+    ctx_remove: '🗑️ Remove from BanMan (Remove)',
+    ctx_default_memo: 'Registered via right-click menu',
+    toast_registered: '[BanMan] {action} registered: {target} ({scope})',
+    toast_removed: '[BanMan] Rule removed: {target}',
+    toast_invalid_url: '[BanMan] Cannot register special or invalid link.'
   },
 
   ja: {
@@ -421,7 +453,23 @@ const I18N_DICTIONARY = {
     oauth_copied: 'クリップボードにコピーしました！',
     oauth_saved: 'クライアントIDが正常に保存されました。 [Google アカウント連携] をお試しください！',
     oauth_save_and_connect: '保存してすぐに連携する 🚀',
-    oauth_config_btn_subtle: '⚙️ クライアントID再設定'
+    oauth_config_btn_subtle: '⚙️ クライアントID再設定',
+
+    ctx_root: '🛡️ BanMan: このリンクを処理',
+    ctx_block: '🚫 事前ブロック (Block)',
+    ctx_block_domain: '🌐 ドメイン全体をブロック',
+    ctx_block_url: '🔗 このURLのみブロック',
+    ctx_warn: '⚠️ 注意マーク表示 (Caution)',
+    ctx_warn_domain: '🌐 ドメイン全体を注意対象に',
+    ctx_warn_url: '🔗 このURLのみ注意対象に',
+    ctx_hide: '👁️‍🗨️ リンク非表示 (Hide)',
+    ctx_hide_domain: '🌐 ドメイン全体を非表示',
+    ctx_hide_url: '🔗 このURLのみ非表示',
+    ctx_remove: '🗑️ 登録を解除 (Remove)',
+    ctx_default_memo: '右クリックメニューから登録',
+    toast_registered: '[BanMan] {action} 登録完了: {target} ({scope})',
+    toast_removed: '[BanMan] ルールを解除しました: {target}',
+    toast_invalid_url: '[BanMan] 登録できない特殊リンクです。'
   }
 };
 

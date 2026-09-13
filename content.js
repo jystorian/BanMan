@@ -128,6 +128,58 @@
     }, 3500);
   }
 
+  // 3-1. 컨텍스트 메뉴 액션 알림 토스트 (우클릭 차단/주의/숨김/해제 결과)
+  function showActionToast(message, level = 'success') {
+    let container = document.querySelector('.cb-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'cb-toast-container';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'cb-toast';
+    const iconUrl = chrome.runtime.getURL('icons/face-b-badge-48.png');
+    const borderColor = level === 'error' ? '#ef4444' : (level === 'warn' ? '#f59e0b' : '#3b82f6');
+    toast.style.borderLeft = `5px solid ${borderColor}`;
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'cb-toast-title';
+    titleEl.style.color = '#0f172a';
+    titleEl.innerHTML = `
+      <img src="${iconUrl}" style="width:18px;height:18px;image-rendering:pixelated;vertical-align:middle;margin-right:6px;border-radius:3px;">
+      BanMan - Chrome City Protector
+    `;
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'cb-toast-memo';
+    msgEl.style.color = '#1e293b';
+    msgEl.style.fontWeight = '600';
+    msgEl.textContent = message;
+
+    toast.appendChild(titleEl);
+    toast.appendChild(msgEl);
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      toast.style.transform = 'translateY(-6px)';
+      setTimeout(() => {
+        toast.remove();
+        if (container.children.length === 0) container.remove();
+      }, 300);
+    }, 3200);
+  }
+
+  // 백그라운드 메시지 수신 (SHOW_TOAST)
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg && msg.type === 'SHOW_TOAST') {
+      showActionToast(msg.message, msg.level);
+      sendResponse({ received: true });
+    }
+  });
+
   // 4. 링크 검사 및 DOM 조작
   function processAllLinks() {
     if (!document.body) return;
