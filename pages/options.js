@@ -512,15 +512,121 @@ document.addEventListener('DOMContentLoaded', async () => {
     render();
   });
 
+  // 삭제 확인 모달 및 세션 스킵 상태 관리
+  const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+  const deleteModalCloseBtn = document.getElementById('deleteModalCloseBtn');
+  const deleteModalCancelBtn = document.getElementById('deleteModalCancelBtn');
+  const deleteModalConfirmBtn = document.getElementById('deleteModalConfirmBtn');
+  const deleteModalTarget = document.getElementById('deleteModalTarget');
+  const skipDeleteConfirmCheck = document.getElementById('skipDeleteConfirmCheck');
+  const sessionSkipDeleteToggle = document.getElementById('sessionSkipDeleteToggle');
+  const sessionSkipDeleteLabel = document.getElementById('sessionSkipDeleteLabel');
+
+  let keyToDelete = null;
+
+  function getSkipDeleteConfirm() {
+    return sessionStorage.getItem('banman_skip_del_confirm') === 'true';
+  }
+
+  function setSkipDeleteConfirm(val) {
+    if (val) {
+      sessionStorage.setItem('banman_skip_del_confirm', 'true');
+    } else {
+      sessionStorage.removeItem('banman_skip_del_confirm');
+    }
+    syncSkipDeleteUi();
+  }
+
+  function syncSkipDeleteUi() {
+    const isSkip = getSkipDeleteConfirm();
+    if (sessionSkipDeleteToggle) sessionSkipDeleteToggle.checked = isSkip;
+    if (skipDeleteConfirmCheck) skipDeleteConfirmCheck.checked = isSkip;
+    if (sessionSkipDeleteLabel) {
+      if (isSkip) sessionSkipDeleteLabel.classList.add('active');
+      else sessionSkipDeleteLabel.classList.remove('active');
+    }
+  }
+
+  syncSkipDeleteUi();
+
+  if (sessionSkipDeleteToggle) {
+    sessionSkipDeleteToggle.addEventListener('change', (e) => {
+      setSkipDeleteConfirm(e.target.checked);
+    });
+  }
+
+  function openDeleteModal(key) {
+    keyToDelete = key;
+    const item = currentRules[key];
+    if (deleteModalTarget) {
+      if (item && item.type === 'webstore' && item.title) {
+        deleteModalTarget.textContent = `${item.title} (${item.target || key})`;
+      } else {
+        deleteModalTarget.textContent = key;
+      }
+    }
+    if (skipDeleteConfirmCheck) {
+      skipDeleteConfirmCheck.checked = getSkipDeleteConfirm();
+    }
+    if (deleteConfirmModal) {
+      deleteConfirmModal.style.display = 'flex';
+    }
+  }
+
+  function closeDeleteModal() {
+    keyToDelete = null;
+    if (deleteConfirmModal) deleteConfirmModal.style.display = 'none';
+  }
+
+  deleteModalCloseBtn?.addEventListener('click', closeDeleteModal);
+  deleteModalCancelBtn?.addEventListener('click', closeDeleteModal);
+
+  deleteConfirmModal?.addEventListener('click', (e) => {
+    if (e.target === deleteConfirmModal) closeDeleteModal();
+  });
+
+  async function executeDeleteRule(key) {
+    if (!key || !currentRules[key]) return;
+    delete currentRules[key];
+    await chrome.storage.local.set({ blacklist_rules: currentRules });
+    render();
+  }
+
+  deleteModalConfirmBtn?.addEventListener('click', async () => {
+    if (skipDeleteConfirmCheck && skipDeleteConfirmCheck.checked) {
+      setSkipDeleteConfirm(true);
+    }
+    const key = keyToDelete;
+    closeDeleteModal();
+    if (key) {
+      await executeDeleteRule(key);
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (editModal && editModal.style.display === 'flex') {
+        closeEditModal();
+      }
+      if (deleteConfirmModal && deleteConfirmModal.style.display === 'flex') {
+        closeDeleteModal();
+      }
+    }
+  });
+
   // 8. 테이블 내 수정(모달 열기) 및 삭제 이벤트 위임
   rulesTableBody.addEventListener('click', async (e) => {
     const delBtn = e.target.closest('.delete-btn');
     if (delBtn) {
       const key = delBtn.getAttribute('data-key');
-      if (key && confirm(t('confirm_delete', currentLang, { key }))) {
-        delete currentRules[key];
-        await chrome.storage.local.set({ blacklist_rules: currentRules });
-        render();
+      if (!key) return;
+
+      if (getSkipDeleteConfirm()) {
+        // 이번 세션 확인 생략 활성화 시 즉시 삭제
+        await executeDeleteRule(key);
+      } else {
+        // 확인 모달 팝업
+        openDeleteModal(key);
       }
       return;
     }
