@@ -19,35 +19,23 @@ body {
   padding: 14px 16px;
 }
 
-/* 타이틀 밑에 충분하고 시원한 여백 (14px) 및 하단 구분선 */
+/* 타이틀 밑에 충분하고 시원한 여백 및 하단 구분선 */
 .header {
-  display: flex;
-  flex-direction: column;
   margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid #e2e8f0;
-  gap: 10px;
 }
 
-.header-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.logo-title {
+.header-main {
   display: flex;
   align-items: center;
   gap: 11px;
-  flex: 1;
-  min-width: 0;
-  height: 48px;
+  width: 100%;
 }
 
 .banman-header-icon {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
   vertical-align: middle;
   border-radius: 8px;
@@ -56,174 +44,145 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
-.brand-text {
+.header-content {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-width: 0;
-  height: 48px;
+  gap: 4px;
 }
 
-.brand-text h2 {
-  font-size: 21px;
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.header-row-top {
+  height: 26px;
+}
+
+.header-row-top h2 {
+  font-size: 20px;
   font-weight: 900;
   color: #0f172a;
   letter-spacing: -0.4px;
-  line-height: 1.1;
+  line-height: 1;
   margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* 설정 및 목록 버튼: 검정 바탕, 노란 글씨, 글씨 확대, 우측 톱니 아이콘, 한 줄 높이 */
+.btn-options-bar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  border: 1.5px solid #facc15;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
+  outline: none;
+}
+
+.btn-options-bar .btn-options-text {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #facc15;
+  letter-spacing: -0.2px;
+  line-height: 1;
+}
+
+.btn-options-bar .btn-options-icon {
+  font-size: 13px;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.25s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.btn-options-bar:hover {
+  background: linear-gradient(145deg, #334155 0%, #1e293b 100%);
+  border-color: #fde047;
+  box-shadow: 0 2px 8px rgba(250, 204, 21, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-options-bar:hover .btn-options-icon {
+  transform: rotate(45deg);
+}
+
+.btn-options-bar:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.header-row-bottom {
+  height: 20px;
 }
 
 .header-slogan {
   font-size: 10.5px;
   color: #64748b;
   font-weight: 600;
-  margin-top: 2px;
   letter-spacing: -0.2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-/* 설정 및 목록 버튼: 너비 확장, 듀얼 아이콘(📋⚙️), 노란색 배경에 검정 글씨 */
-.btn-dashboard-sq {
-  width: 92px;
-  height: 46px;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: linear-gradient(135deg, #fde047 0%, #facc15 100%);
-  border: 2px solid #ca8a04;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(202, 138, 4, 0.35);
-  padding: 4px 6px;
-}
-
-.btn-dashboard-sq .sq-icons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  font-size: 14px;
   line-height: 1;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
+  margin: 0;
 }
 
-.btn-dashboard-sq .sq-icon {
-  display: inline-block;
-  transition: transform 0.25s ease;
-}
-
-.btn-dashboard-sq .sq-text {
-  font-size: 10px;
-  font-weight: 900;
-  color: #0f172a;
-  letter-spacing: -0.3px;
-  line-height: 1.1;
-  text-align: center;
-}
-
-.btn-dashboard-sq:hover {
-  background: linear-gradient(135deg, #fef08a 0%, #fde047 100%);
-  border-color: #a16207;
-  box-shadow: 0 4px 12px rgba(250, 204, 21, 0.45);
-  transform: translateY(-1px);
-}
-
-.btn-dashboard-sq:hover .sq-icon-gear {
-  transform: rotate(45deg);
-}
-
-.btn-dashboard-sq:active {
-  transform: scale(0.96);
-  background: #eab308;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-/* 헤더 하단 행: 크롬시티 보호중 좌측 & 언어 선택 우측 */
-.header-bottom-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2px;
-}
-
-.header-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  background-color: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #475569;
-  margin-left: 2px;
-}
-
-.header-status-badge .status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #10b981;
-  box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
-}
-
+/* 언어 선택: 부제와 같은 폰트(10px), 설정 버튼보다 좁은 너비, 우측 끝 정렬 */
 .lang-select-group {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin-right: 2px;
-}
-
-.lang-globe-icon {
-  font-size: 12px;
-  line-height: 1;
+  flex-shrink: 0;
 }
 
 .lang-select {
-  padding: 3px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 7px;
+  height: 20px;
+  width: 78px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
   background-color: #ffffff;
-  color: #1e293b;
   cursor: pointer;
   outline: none;
   transition: all 0.15s ease;
-  height: 27px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  text-align: right;
+  text-align-last: right;
+  line-height: 1;
 }
 
 .lang-select:hover {
   border-color: #94a3b8;
+  color: #1e293b;
   background-color: #f8fafc;
 }
 
 .lang-select:focus {
-  border-color: #eab308;
-  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.35);
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
 }
 
 .lang-select option {
   background-color: #ffffff;
   color: #0f172a;
-}
-
-.header-status-badge .status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #10b981;
-  box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
+  text-align: right;
 }
 
 .target-card {
