@@ -210,13 +210,27 @@ async function evaluateTab(tabId, url) {
       await chrome.action.setBadgeText({ tabId, text: 'BAD' });
       await chrome.action.setBadgeBackgroundColor({ tabId, color: '#EA580C' });
 
-      // 시스템 데스크톱 알림 생성
+      // 시스템 데스크톱 알림 생성 (BanMan 주체 명시 및 다국어 지원)
       const notifId = `warn_${matchedRule.target}_${Date.now()}`;
+      const langData = await chrome.storage.local.get('app_lang').catch(() => ({}));
+      const lang = langData?.app_lang || 'ko';
+
+      let notifTitle = '[BanMan] ⚠️ 주의 대상 웹사이트 감지';
+      let notifMessage = `[사유: ${matchedRule.memo || '미기재'}]\n사용자가 등록한 주의/비추천 대상 웹사이트입니다.`;
+
+      if (lang === 'en') {
+        notifTitle = '[BanMan] ⚠️ Caution Target Detected';
+        notifMessage = `[Reason: ${matchedRule.memo || 'Not specified'}]\nThis site is registered in your BanMan caution list.`;
+      } else if (lang === 'ja') {
+        notifTitle = '[BanMan] ⚠️ 注意対象を検出しました';
+        notifMessage = `[理由: ${matchedRule.memo || '未記入'}]\nBanManの注意リストに登録されたサイトです。`;
+      }
+
       await chrome.notifications.create(notifId, {
         type: 'basic',
         iconUrl: 'icons/icon-128.png',
-        title: '⚠️ 주의/비추천 대상 감지',
-        message: `[사유: ${matchedRule.memo || '미기재'}]\n등록된 주의 대상 웹사이트 또는 확장입니다.`,
+        title: notifTitle,
+        message: notifMessage,
         priority: 2
       });
     } catch (e) {
