@@ -394,74 +394,36 @@ async function setupContextMenus(lang) {
 
   // Remove existing menus to prevent ID duplication
   chrome.contextMenus.removeAll(() => {
-    // 1. Root Menu
+    // 1. Root Menu (No shield emoji)
     chrome.contextMenus.create({
       id: 'banman_root',
       title: t('ctx_root', lang),
       contexts: ['link']
     });
 
-    // 2. Block Submenu
+    // 2. Direct 1-click Actions (URL only)
     chrome.contextMenus.create({
       id: 'banman_block',
       parentId: 'banman_root',
       title: t('ctx_block', lang),
       contexts: ['link']
     });
-    chrome.contextMenus.create({
-      id: 'banman_block_domain',
-      parentId: 'banman_block',
-      title: t('ctx_block_domain', lang),
-      contexts: ['link']
-    });
-    chrome.contextMenus.create({
-      id: 'banman_block_url',
-      parentId: 'banman_block',
-      title: t('ctx_block_url', lang),
-      contexts: ['link']
-    });
 
-    // 3. Caution/Warn Submenu
     chrome.contextMenus.create({
       id: 'banman_warn',
       parentId: 'banman_root',
       title: t('ctx_warn', lang),
       contexts: ['link']
     });
-    chrome.contextMenus.create({
-      id: 'banman_warn_domain',
-      parentId: 'banman_warn',
-      title: t('ctx_warn_domain', lang),
-      contexts: ['link']
-    });
-    chrome.contextMenus.create({
-      id: 'banman_warn_url',
-      parentId: 'banman_warn',
-      title: t('ctx_warn_url', lang),
-      contexts: ['link']
-    });
 
-    // 4. Hide Submenu
     chrome.contextMenus.create({
       id: 'banman_hide',
       parentId: 'banman_root',
       title: t('ctx_hide', lang),
       contexts: ['link']
     });
-    chrome.contextMenus.create({
-      id: 'banman_hide_domain',
-      parentId: 'banman_hide',
-      title: t('ctx_hide_domain', lang),
-      contexts: ['link']
-    });
-    chrome.contextMenus.create({
-      id: 'banman_hide_url',
-      parentId: 'banman_hide',
-      title: t('ctx_hide_url', lang),
-      contexts: ['link']
-    });
 
-    // 5. Separator
+    // 3. Separator
     chrome.contextMenus.create({
       id: 'banman_sep',
       parentId: 'banman_root',
@@ -469,7 +431,7 @@ async function setupContextMenus(lang) {
       contexts: ['link']
     });
 
-    // 6. Remove Menu
+    // 4. Remove Menu
     chrome.contextMenus.create({
       id: 'banman_remove',
       parentId: 'banman_root',
@@ -496,14 +458,14 @@ async function notifyUser(tabId, messageText, level = 'success') {
     await chrome.notifications.create(notifId, {
       type: 'basic',
       iconUrl: 'icons/icon-128.png',
-      title: 'BanMan - Chrome City Protector',
+      title: 'BanMan',
       message: messageText,
       priority: 1
     });
   } catch (e) {}
 }
 
-// 우클릭 컨텍스트 메뉴 클릭 이벤트 처리
+// 우클릭 컨텍스트 메뉴 클릭 이벤트 처리 (해당 URL만 즉시 1클릭 처리)
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const linkUrl = (info.linkUrl || '').trim();
   if (!linkUrl) return;
@@ -520,20 +482,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const menuItemId = info.menuItemId;
 
   let action = '';
-  let scope = '';
-
-  if (menuItemId.startsWith('banman_block_')) {
-    action = 'block';
-    scope = menuItemId.replace('banman_block_', '');
-  } else if (menuItemId.startsWith('banman_warn_')) {
-    action = 'warn';
-    scope = menuItemId.replace('banman_warn_', '');
-  } else if (menuItemId.startsWith('banman_hide_')) {
-    action = 'hide';
-    scope = menuItemId.replace('banman_hide_', '');
-  } else if (menuItemId === 'banman_remove') {
-    action = 'remove';
-  }
+  if (menuItemId === 'banman_block') action = 'block';
+  else if (menuItemId === 'banman_warn') action = 'warn';
+  else if (menuItemId === 'banman_hide') action = 'hide';
+  else if (menuItemId === 'banman_remove') action = 'remove';
 
   if (!action) return;
 
@@ -549,19 +501,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     target = extId;
     targetType = 'webstore';
   } else {
-    try {
-      const parsed = new URL(linkUrl);
-      if (scope === 'domain') {
-        target = parsed.hostname.toLowerCase();
-        targetType = 'domain';
-      } else {
-        target = linkUrl;
-        targetType = 'url';
-      }
-    } catch (e) {
-      notifyUser(tab?.id, t('toast_invalid_url', lang), 'error');
-      return;
-    }
+    // 사용자의 명시적 요청: 우클릭 시에는 해당 URL만 타겟팅
+    target = linkUrl;
+    targetType = 'url';
   }
 
   // 1. 등록 해제 액션
@@ -590,6 +532,18 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
     if (removed) {
       await chrome.storage.local.set({ blacklist_rules });
+
+      // 화면에 실시간 즉시 반영 (리프레시 불필요)
+      if (tab?.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'APPLY_LINK_ACTION',
+          linkUrl: linkUrl,
+          target: target,
+          action: 'remove',
+          rule: null
+        }).catch(() => {});
+      }
+
       const msg = t('toast_removed', lang, { target: removeKey });
       notifyUser(tab?.id, msg, 'info');
     } else {
@@ -609,24 +563,35 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const now = new Date();
   const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-  blacklist_rules[target] = {
+  // 메모는 빈 문자열로 등록하여 배지에 군더더기 문구 표시 방지
+  const newRule = {
     target: target,
     type: targetType,
     action: action,
-    memo: t('ctx_default_memo', lang),
+    memo: '',
     title: title || '',
     createdAt: createdAt,
     updatedAt: now.toISOString()
   };
 
+  blacklist_rules[target] = newRule;
   await chrome.storage.local.set({ blacklist_rules });
 
+  // 화면에 실시간 즉시 반영 (리프레시 불필요)
+  if (tab?.id) {
+    chrome.tabs.sendMessage(tab.id, {
+      type: 'APPLY_LINK_ACTION',
+      linkUrl: linkUrl,
+      target: target,
+      action: action,
+      rule: newRule
+    }).catch(() => {});
+  }
+
   const actionName = t(`stat_${action}`, lang) || action;
-  const scopeName = targetType === 'domain' ? (t('type_domain', lang) || '도메인 전체') : (targetType === 'webstore' ? (t('type_webstore', lang) || '크롬 웹스토어') : (t('type_url', lang) || 'URL'));
   const successMsg = t('toast_registered', lang, {
     action: actionName,
-    target: target,
-    scope: scopeName
+    target: target
   });
 
   notifyUser(tab?.id, successMsg, action === 'block' ? 'error' : (action === 'warn' ? 'warn' : 'success'));

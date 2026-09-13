@@ -53,10 +53,20 @@
 .cb-flag-icon, .cb-cowl-icon {
   width: 14px !important;
   height: 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
   object-fit: contain !important;
   vertical-align: middle !important;
   image-rendering: pixelated !important;
   margin-right: 3px !important;
+}
+
+.cb-badge > .cb-flag-icon:only-child,
+.cb-badge > .cb-cowl-icon:only-child {
+  margin-right: 0 !important;
 }
 
 /* 차단 링크 클릭 시 화면 우측 상단 토스트 알림 */
