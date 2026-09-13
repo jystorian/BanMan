@@ -19,7 +19,20 @@
    * @returns {Promise<string>} Access Token
    */
   async function getAuthToken(interactive = true) {
-    // 1. manifest.json의 oauth2.client_id 확인 (네이티브 원클릭 로그인 우선)
+    // 1. 사용자가 옵션 페이지에서 직접 입력/저장한 Custom Client ID 확인 (최우선 적용)
+    let customClientId = '';
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+        const res = await chrome.storage.local.get('custom_client_id');
+        customClientId = (res && res.custom_client_id ? res.custom_client_id.trim() : '');
+      }
+    } catch (e) {}
+
+    if (customClientId) {
+      return await getAuthTokenViaWebFlow(customClientId, interactive);
+    }
+
+    // 2. manifest.json의 oauth2.client_id 확인 (스토어 배포 버전 네이티브 원클릭 로그인)
     const manifest = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest) ? chrome.runtime.getManifest() : null;
     const manifestClientId = manifest?.oauth2?.client_id || '';
 
@@ -32,12 +45,12 @@
         chrome.identity.getAuthToken({ interactive }, (token) => {
           if (chrome.runtime.lastError) {
             const msg = chrome.runtime.lastError.message || '';
-            if (msg.includes('bad client id')) {
-              const err = new Error('CLIENT_ID_INVALID');
-              err.code = 'CLIENT_ID_INVALID';
-              return reject(err);
-            }
-            return reject(new Error(msg));
+            const isInvalid = msg.toLowerCase().includes('bad client id') ||
+                              msg.toLowerCase().includes('invalid') ||
+                              msg.toLowerCase().includes('oauth2');
+            const err = new Error(msg);
+            err.code = isInvalid ? 'CLIENT_ID_INVALID' : 'AUTH_ERROR';
+            return reject(err);
           }
           if (!token) {
             return reject(new Error('토큰 획득에 실패했습니다.'));
@@ -45,19 +58,6 @@
           resolve(token);
         });
       });
-    }
-
-    // 2. manifest에 없을 경우: 사용자가 옵션 페이지에서 직접 입력한 Custom Client ID (fallback)
-    let customClientId = '';
-    try {
-      if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-        const res = await chrome.storage.local.get('custom_client_id');
-        customClientId = (res && res.custom_client_id ? res.custom_client_id.trim() : '');
-      }
-    } catch (e) {}
-
-    if (customClientId) {
-      return await getAuthTokenViaWebFlow(customClientId, interactive);
     }
 
     const err = new Error('CLIENT_ID_REQUIRED');
@@ -94,9 +94,15 @@
         try {
           const responseUrl = new URL(redirectResponse);
           const hashParams = new URLSearchParams(responseUrl.hash.startsWith('#') ? responseUrl.hash.slice(1) : responseUrl.hash);
-          const token = hashParams.get('access_token');
+          const searchParams = responseUrl.searchParams;
+
+          const token = hashParams.get('access_token') || searchParams.get('access_token');
           if (!token) {
-            const error = hashParams.get('error') || '토큰 획득에 실패했습니다.';
+            const error = hashParams.get('error') ||
+                          searchParams.get('error') ||
+                          hashParams.get('error_description') ||
+                          searchParams.get('error_description') ||
+                          '토큰 획득에 실패했습니다.';
             return reject(new Error(error));
           }
           resolve(token);
