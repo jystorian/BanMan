@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Manifest-V3-success.svg?style=flat-square" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Chrome-Extension-4285F4.svg?style=flat-square&logo=googlechrome&logoColor=white" alt="Chrome Extension">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
-  <a href="https://github.com/jystorian/BanMan/releases/tag/v1.0.1"><img src="https://img.shields.io/badge/Release-v1.0.1-orange.svg?style=flat-square" alt="Release v1.0.1"></a>
+  <a href="https://github.com/jystorian/BanMan/releases/tag/v1.0.2"><img src="https://img.shields.io/badge/Release-v1.0.2-orange.svg?style=flat-square" alt="Release v1.0.2"></a>
 </p>
 
 ---
