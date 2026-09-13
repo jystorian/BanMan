@@ -42,10 +42,12 @@
     if (areaName === 'local' && changes.blacklist_rules) {
       cachedRules = changes.blacklist_rules.newValue || {};
       ruleIndex = buildRuleIndex(cachedRules);
-      // 기존 적용 표식을 초기화하고 다시 적용
+      // 기존 적용 표식 및 인라인 display 초기화
       document.querySelectorAll('[data-cb-annotated]').forEach(el => {
         el.removeAttribute('data-cb-annotated');
         el.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block');
+        el.style.display = '';
+        el.title = '';
       });
       document.querySelectorAll('.cb-badge').forEach(b => b.remove());
       processAllLinks();
@@ -172,11 +174,132 @@
     }, 3200);
   }
 
-  // 백그라운드 메시지 수신 (SHOW_TOAST)
+  // 단일 링크의 규칙 표식 및 배지 초기화
+  function clearRuleFromElement(link) {
+    if (!link) return;
+    link.removeAttribute('data-cb-annotated');
+    link.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block');
+    link.style.display = '';
+    link.title = '';
+
+    // 바로 뒤에 붙어 있는 cb-badge 요소 제거
+    if (link.nextSibling && link.nextSibling.nodeType === Node.ELEMENT_NODE && link.nextSibling.classList.contains('cb-badge')) {
+      link.nextSibling.remove();
+    }
+  }
+
+  // 단일 링크에 규칙 스타일 및 배지 적용 (군더더기 문구 배제)
+  function applyRuleToElement(link, rule, href) {
+    if (!link || !rule) return;
+
+    if (rule.action === 'hide') {
+      link.classList.add('cb-link-hidden');
+      link.style.display = 'none';
+    } else if (rule.action === 'warn') {
+      link.classList.add('cb-link-warn');
+      const hasMemo = !!(rule.memo && rule.memo.trim());
+      link.title = `[BanMan 주의]${hasMemo ? ' ' + rule.memo.trim() : ''}`;
+
+      const badge = document.createElement('span');
+      badge.className = 'cb-badge cb-badge-warn';
+      badge.title = hasMemo ? `[BanMan 주의 사유] ${rule.memo.trim()}` : '[BanMan 주의 대상]';
+
+      const flagIcon = document.createElement('span');
+      flagIcon.className = 'cb-flag-icon';
+      flagIcon.textContent = '🚩';
+      badge.appendChild(flagIcon);
+
+      if (hasMemo) {
+        badge.appendChild(document.createTextNode(` [${rule.memo.trim()}]`));
+      }
+
+      if (link.nextSibling) {
+        link.parentNode.insertBefore(badge, link.nextSibling);
+      } else {
+        link.parentNode.appendChild(badge);
+      }
+    } else if (rule.action === 'block') {
+      link.classList.add('cb-link-block');
+      const hasMemo = !!(rule.memo && rule.memo.trim());
+      link.title = `[BanMan 차단]${hasMemo ? ' ' + rule.memo.trim() : ''}`;
+
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showBlockedToast(rule, href || link.href);
+      }, true);
+
+      const badge = document.createElement('span');
+      badge.className = 'cb-badge cb-badge-block';
+      badge.title = hasMemo ? `[BanMan 차단 사유] ${rule.memo.trim()}` : '[BanMan 차단 대상]';
+
+      const cowlImg = document.createElement('img');
+      cowlImg.src = chrome.runtime.getURL('icons/icon-16.png');
+      cowlImg.className = 'cb-cowl-icon';
+      cowlImg.alt = 'BAN';
+
+      badge.appendChild(cowlImg);
+      const blockMemo = hasMemo ? ` [차단: ${rule.memo.trim()}]` : ' [차단]';
+      badge.appendChild(document.createTextNode(blockMemo));
+
+      if (link.nextSibling) {
+        link.parentNode.insertBefore(badge, link.nextSibling);
+      } else {
+        link.parentNode.appendChild(badge);
+      }
+    }
+  }
+
+  // 우클릭 메뉴 동작 시 해당 링크 실시간 즉시 조치 (페이지 리프레시 불필요)
+  function applyDirectLinkAction(linkUrl, target, action, rule) {
+    if (!document.body) return;
+
+    // 1. 메모리 캐시 및 검색 인덱스 즉시 동기화
+    if (action === 'remove') {
+      if (target && cachedRules[target]) delete cachedRules[target];
+      if (linkUrl && cachedRules[linkUrl]) delete cachedRules[linkUrl];
+    } else if (rule && target) {
+      cachedRules[target] = rule;
+    }
+    ruleIndex = buildRuleIndex(cachedRules);
+
+    // 2. 현재 화면의 모든 매칭 링크 탐색 후 1ms 내 즉시 갱신
+    const links = document.querySelectorAll('a[href]');
+    links.forEach(link => {
+      const href = link.href;
+      let isMatch = (href === linkUrl);
+      if (!isMatch && target) {
+        if (href === target || href.includes(target)) {
+          isMatch = true;
+        }
+      }
+      if (!isMatch && rule) {
+        const testRule = matchLink(href);
+        if (testRule && (testRule.target === target || testRule.target === linkUrl)) {
+          isMatch = true;
+        }
+      }
+
+      if (isMatch) {
+        clearRuleFromElement(link);
+        if (action !== 'remove' && rule) {
+          link.setAttribute('data-cb-annotated', 'true');
+          applyRuleToElement(link, rule, href);
+        }
+      }
+    });
+  }
+
+  // 백그라운드 메시지 수신 (SHOW_TOAST 및 실시간 APPLY_LINK_ACTION)
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg && msg.type === 'SHOW_TOAST') {
+    if (!msg) return;
+
+    if (msg.type === 'SHOW_TOAST') {
       showActionToast(msg.message, msg.level);
       sendResponse({ received: true });
+    } else if (msg.type === 'APPLY_LINK_ACTION') {
+      applyDirectLinkAction(msg.linkUrl, msg.target, msg.action, msg.rule);
+      sendResponse({ received: true, applied: true });
     }
   });
 
@@ -199,60 +322,7 @@
         const rule = matchLink(href);
 
         if (!rule) continue;
-
-        if (rule.action === 'hide') {
-          link.classList.add('cb-link-hidden');
-          link.style.display = 'none';
-        } else if (rule.action === 'warn') {
-          link.classList.add('cb-link-warn');
-          const memoText = rule.memo ? ` [${rule.memo}]` : ' [주의 대상]';
-          link.title = `[BanMan 주의] ${rule.memo || ''}`;
-
-          const badge = document.createElement('span');
-          badge.className = 'cb-badge cb-badge-warn';
-          badge.title = `[BanMan 등록 사유] ${rule.memo || '미기재'}`;
-
-          const flagIcon = document.createElement('span');
-          flagIcon.className = 'cb-flag-icon';
-          flagIcon.textContent = '🚩';
-
-          badge.appendChild(flagIcon);
-          badge.appendChild(document.createTextNode(memoText));
-
-          // 링크 바로 뒤에 배지 삽입
-          if (link.nextSibling) {
-            link.parentNode.insertBefore(badge, link.nextSibling);
-          } else {
-            link.parentNode.appendChild(badge);
-          }
-        } else if (rule.action === 'block') {
-          link.classList.add('cb-link-block');
-          link.title = `[BanMan 차단] ${rule.memo || ''}`;
-
-          link.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showBlockedToast(rule, href);
-          }, true);
-
-          const badge = document.createElement('span');
-          badge.className = 'cb-badge cb-badge-block';
-          badge.title = `[BanMan 차단 사유] ${rule.memo || '미기재'}`;
-
-          const cowlImg = document.createElement('img');
-          cowlImg.src = chrome.runtime.getURL('icons/icon-16.png');
-          cowlImg.className = 'cb-cowl-icon';
-          cowlImg.alt = 'BAN';
-
-          badge.appendChild(cowlImg);
-          badge.appendChild(document.createTextNode(rule.memo ? ` [차단: ${rule.memo}]` : ' [차단]'));
-
-          if (link.nextSibling) {
-            link.parentNode.insertBefore(badge, link.nextSibling);
-          } else {
-            link.parentNode.appendChild(badge);
-          }
-        }
+        applyRuleToElement(link, rule, href);
       }
 
       index = end;
