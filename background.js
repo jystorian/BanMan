@@ -1,5 +1,11 @@
 // background.js - Service Worker for BanMan (Chrome City Protector)
 
+try {
+  importScripts('i18n.js');
+} catch (e) {
+  console.warn('importScripts i18n.js failed:', e);
+}
+
 const WEBSTORE_REGEX = /chromewebstore\.google\.com\/detail\/(?:[^\/]+\/)?([a-p]{32})/i;
 
 // O(1) 고속 조회를 위한 인메모리 인덱스 캐시 (10,000개 이상 대용량 대응)
@@ -266,6 +272,40 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   } catch (e) {}
 });
 
+// 웹스토어 확장 프로그램 제목 조회 헬퍼 함수
+async function fetchWebstoreTitleDirect(extId) {
+  extId = (extId || '').toLowerCase().trim();
+  if (!extId) return null;
+
+  try {
+    const url = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'ko,en;q=0.9' } });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // 1. <title> 태그 검색
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+    if (titleMatch && titleMatch[1]) {
+      const title = titleMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
+      if (title && !title.toLowerCase().includes('chrome web store') && !title.toLowerCase().includes('chrome 웹스토어')) {
+        return title;
+      }
+    }
+
+    // 2. <meta property="og:title"> 검색
+    const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
+                    html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+    if (ogMatch && ogMatch[1]) {
+      const title = ogMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
+      if (title) return title;
+    }
+  } catch (err) {
+    console.warn('background fetch webstore title failed:', err);
+  }
+
+  return null;
+}
+
 // 메시지 수신 핸들러 (Content Script 또는 Pages 통신)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_RULES') {
@@ -278,46 +318,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // 웹스토어 확장 프로그램 제목 조회 (Service Worker의 host_permissions로 CORS 없이 fetch)
   if (message.type === 'FETCH_WEBSTORE_TITLE') {
     (async () => {
-      const extId = (message.extId || '').toLowerCase().trim();
-      if (!extId) {
-        sendResponse({ title: null });
-        return;
-      }
-
-      try {
-        const url = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
-        const res = await fetch(url, { headers: { 'Accept-Language': 'ko,en;q=0.9' } });
-        if (!res.ok) {
-          sendResponse({ title: null });
-          return;
-        }
-        const html = await res.text();
-
-        // 1. <title> 태그 검색
-        const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-        if (titleMatch && titleMatch[1]) {
-          const title = titleMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
-          if (title && !title.toLowerCase().includes('chrome web store') && !title.toLowerCase().includes('chrome 웹스토어')) {
-            sendResponse({ title });
-            return;
-          }
-        }
-
-        // 2. <meta property="og:title"> 검색
-        const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
-                        html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
-        if (ogMatch && ogMatch[1]) {
-          const title = ogMatch[1].replace(/\s*-\s*Chrome.*$/i, '').replace(/\s*-\s*크롬.*$/i, '').trim();
-          if (title) {
-            sendResponse({ title });
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('background fetch webstore title failed:', err);
-      }
-
-      sendResponse({ title: null });
+      const title = await fetchWebstoreTitleDirect(message.extId);
+      sendResponse({ title });
     })();
     return true; // 비동기 응답 유지
   }
@@ -378,5 +380,273 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     })();
     return true;
+  }
+});
+
+// ==========================================
+// Context Menu Actions for Links
+// ==========================================
+
+async function setupContextMenus(lang) {
+  if (!lang) {
+    lang = await getAppLanguage();
+  }
+
+  // Remove existing menus to prevent ID duplication
+  chrome.contextMenus.removeAll(() => {
+    // 1. Root Menu
+    chrome.contextMenus.create({
+      id: 'banman_root',
+      title: t('ctx_root', lang),
+      contexts: ['link']
+    });
+
+    // 2. Block Submenu
+    chrome.contextMenus.create({
+      id: 'banman_block',
+      parentId: 'banman_root',
+      title: t('ctx_block', lang),
+      contexts: ['link']
+    });
+    chrome.contextMenus.create({
+      id: 'banman_block_domain',
+      parentId: 'banman_block',
+      title: t('ctx_block_domain', lang),
+      contexts: ['link']
+    });
+    chrome.contextMenus.create({
+      id: 'banman_block_url',
+      parentId: 'banman_block',
+      title: t('ctx_block_url', lang),
+      contexts: ['link']
+    });
+
+    // 3. Caution/Warn Submenu
+    chrome.contextMenus.create({
+      id: 'banman_warn',
+      parentId: 'banman_root',
+      title: t('ctx_warn', lang),
+      contexts: ['link']
+    });
+    chrome.contextMenus.create({
+      id: 'banman_warn_domain',
+      parentId: 'banman_warn',
+      title: t('ctx_warn_domain', lang),
+      contexts: ['link']
+    });
+    chrome.contextMenus.create({
+      id: 'banman_warn_url',
+      parentId: 'banman_warn',
+      title: t('ctx_warn_url', lang),
+      contexts: ['link']
+    });
+
+    // 4. Hide Submenu
+    chrome.contextMenus.create({
+      id: 'banman_hide',
+      parentId: 'banman_root',
+      title: t('ctx_hide', lang),
+      contexts: ['link']
+    });
+    chrome.contextMenus.create({
+      id: 'banman_hide_domain',
+      parentId: 'banman_hide',
+      title: t('ctx_hide_domain', lang),
+      contexts: ['link']
+    });
+    chrome.contextMenus.create({
+      id: 'banman_hide_url',
+      parentId: 'banman_hide',
+      title: t('ctx_hide_url', lang),
+      contexts: ['link']
+    });
+
+    // 5. Separator
+    chrome.contextMenus.create({
+      id: 'banman_sep',
+      parentId: 'banman_root',
+      type: 'separator',
+      contexts: ['link']
+    });
+
+    // 6. Remove Menu
+    chrome.contextMenus.create({
+      id: 'banman_remove',
+      parentId: 'banman_root',
+      title: t('ctx_remove', lang),
+      contexts: ['link']
+    });
+  });
+}
+
+// 사용자 피드백 안내 함수 (인페이지 토스트 및 데스크톱 알림)
+async function notifyUser(tabId, messageText, level = 'success') {
+  if (tabId) {
+    chrome.tabs.sendMessage(tabId, {
+      type: 'SHOW_TOAST',
+      message: messageText,
+      level: level
+    }).catch(() => {
+      // 탭에 content script가 없거나 권한이 없는 내부 페이지일 경우 안전하게 패스
+    });
+  }
+
+  try {
+    const notifId = `ctx_${Date.now()}`;
+    await chrome.notifications.create(notifId, {
+      type: 'basic',
+      iconUrl: 'icons/icon-128.png',
+      title: 'BanMan - Chrome City Protector',
+      message: messageText,
+      priority: 1
+    });
+  } catch (e) {}
+}
+
+// 우클릭 컨텍스트 메뉴 클릭 이벤트 처리
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  const linkUrl = (info.linkUrl || '').trim();
+  if (!linkUrl) return;
+
+  const lang = await getAppLanguage();
+
+  // 특수/시스템 URL 검증
+  if (linkUrl.startsWith('chrome://') || linkUrl.startsWith('chrome-extension://') || linkUrl.startsWith('about:') || linkUrl.startsWith('javascript:')) {
+    notifyUser(tab?.id, t('toast_invalid_url', lang), 'error');
+    return;
+  }
+
+  const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
+  const menuItemId = info.menuItemId;
+
+  let action = '';
+  let scope = '';
+
+  if (menuItemId.startsWith('banman_block_')) {
+    action = 'block';
+    scope = menuItemId.replace('banman_block_', '');
+  } else if (menuItemId.startsWith('banman_warn_')) {
+    action = 'warn';
+    scope = menuItemId.replace('banman_warn_', '');
+  } else if (menuItemId.startsWith('banman_hide_')) {
+    action = 'hide';
+    scope = menuItemId.replace('banman_hide_', '');
+  } else if (menuItemId === 'banman_remove') {
+    action = 'remove';
+  }
+
+  if (!action) return;
+
+  // 웹스토어 링크 감지
+  const webMatch = linkUrl.match(WEBSTORE_REGEX);
+  const isWebstore = !!webMatch;
+  const extId = webMatch ? webMatch[1].toLowerCase() : null;
+
+  let target = '';
+  let targetType = 'url';
+
+  if (isWebstore) {
+    target = extId;
+    targetType = 'webstore';
+  } else {
+    try {
+      const parsed = new URL(linkUrl);
+      if (scope === 'domain') {
+        target = parsed.hostname.toLowerCase();
+        targetType = 'domain';
+      } else {
+        target = linkUrl;
+        targetType = 'url';
+      }
+    } catch (e) {
+      notifyUser(tab?.id, t('toast_invalid_url', lang), 'error');
+      return;
+    }
+  }
+
+  // 1. 등록 해제 액션
+  if (action === 'remove') {
+    let removed = false;
+    let removeKey = target;
+
+    if (blacklist_rules[target]) {
+      delete blacklist_rules[target];
+      removed = true;
+    } else {
+      try {
+        const parsed = new URL(linkUrl);
+        const host = parsed.hostname.toLowerCase();
+        if (blacklist_rules[host]) {
+          delete blacklist_rules[host];
+          removed = true;
+          removeKey = host;
+        } else if (blacklist_rules[linkUrl]) {
+          delete blacklist_rules[linkUrl];
+          removed = true;
+          removeKey = linkUrl;
+        }
+      } catch (e) {}
+    }
+
+    if (removed) {
+      await chrome.storage.local.set({ blacklist_rules });
+      const msg = t('toast_removed', lang, { target: removeKey });
+      notifyUser(tab?.id, msg, 'info');
+    } else {
+      notifyUser(tab?.id, `[BanMan] '${target}' 등록된 규칙을 찾을 수 없습니다.`, 'info');
+    }
+    return;
+  }
+
+  // 2. 등록/수정 액션 (block, warn, hide)
+  let title = '';
+  if (targetType === 'webstore') {
+    try {
+      title = await fetchWebstoreTitleDirect(extId);
+    } catch (e) {}
+  }
+
+  const now = new Date();
+  const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  blacklist_rules[target] = {
+    target: target,
+    type: targetType,
+    action: action,
+    memo: t('ctx_default_memo', lang),
+    title: title || '',
+    createdAt: createdAt,
+    updatedAt: now.toISOString()
+  };
+
+  await chrome.storage.local.set({ blacklist_rules });
+
+  const actionName = t(`stat_${action}`, lang) || action;
+  const scopeName = targetType === 'domain' ? (t('type_domain', lang) || '도메인 전체') : (targetType === 'webstore' ? (t('type_webstore', lang) || '크롬 웹스토어') : (t('type_url', lang) || 'URL'));
+  const successMsg = t('toast_registered', lang, {
+    action: actionName,
+    target: target,
+    scope: scopeName
+  });
+
+  notifyUser(tab?.id, successMsg, action === 'block' ? 'error' : (action === 'warn' ? 'warn' : 'success'));
+});
+
+// 확장 프로그램 설치 및 업데이트 시 컨텍스트 메뉴 초기화
+chrome.runtime.onInstalled.addListener(async () => {
+  const lang = await getAppLanguage();
+  setupContextMenus(lang);
+});
+
+// 브라우저 시작 시 컨텍스트 메뉴 검증
+chrome.runtime.onStartup.addListener(async () => {
+  const lang = await getAppLanguage();
+  setupContextMenus(lang);
+});
+
+// 언어 변경 시 컨텍스트 메뉴 즉시 갱신
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.app_lang) {
+    setupContextMenus(changes.app_lang.newValue);
   }
 });
