@@ -3,6 +3,7 @@
 (() => {
   let cachedRules = {};
   let ruleIndex = { domainMap: new Map(), webstoreMap: new Map(), urlRules: [] };
+  let lastRightClickInfo = null;
   const WEBSTORE_REGEX = /chromewebstore\.google\.com\/detail\/(?:[^\/]+\/)?([a-p]{32})/i;
 
   function buildRuleIndex(rules = {}) {
@@ -20,6 +21,12 @@
         domainMap.set(target, rule);
       } else {
         urlRules.push({ target, rule });
+        if (rule.rawUrl) {
+          const rawTarget = rule.rawUrl.toLowerCase().trim();
+          if (rawTarget && rawTarget !== target) {
+            urlRules.push({ target: rawTarget, rule });
+          }
+        }
       }
     }
 
@@ -95,11 +102,17 @@
       currentHost = currentHost.slice(dotIndex + 1);
     }
 
-    // URL 접두사/포함 매칭 (특수 규칙만 순회)
+    // URL 접두사/포함 매칭 (특수 규칙만 순회 + 디코딩 매칭)
     if (ruleIndex.urlRules.length > 0) {
       const hrefLower = href.toLowerCase();
+      let decodedHref = '';
+      try {
+        decodedHref = decodeURIComponent(href).toLowerCase();
+      } catch (e) {}
+
       for (let i = 0; i < ruleIndex.urlRules.length; i++) {
-        if (hrefLower.includes(ruleIndex.urlRules[i].target)) {
+        const ruleTarget = ruleIndex.urlRules[i].target;
+        if (hrefLower.includes(ruleTarget) || (decodedHref && decodedHref.includes(ruleTarget))) {
           return ruleIndex.urlRules[i].rule;
         }
       }
@@ -184,34 +197,42 @@
     }, 3200);
   }
 
-  // 스마트 컨테이너 감지: 링크를 둘러싼 독립형 광고 카드, 상품 카드, 배너 박스 식별
-  function getSmartContainer(link) {
-    if (!link || !link.parentElement) return null;
+  // 스마트 컨테이너 감지: 링크 또는 클릭 요소를 둘러싼 독립형 광고 카드, 상품 카드, 배너 박스 식별
+  function getSmartContainer(element) {
+    if (!element || !element.parentElement) return null;
 
-    const FORBIDDEN_TAGS = new Set(['HTML', 'BODY', 'MAIN', 'HEADER', 'FOOTER', 'NAV', 'SECTION']);
-    let current = link.parentElement;
+    const FORBIDDEN_TAGS = new Set(['HTML', 'BODY', 'MAIN', 'HEADER', 'FOOTER', 'NAV']);
+    let current = element.parentElement;
     let bestCandidate = null;
 
-    // 최대 5단계 조상까지 탐색
-    for (let depth = 0; depth < 5 && current; depth++) {
+    // 명시적 광고 클래스/ID 패턴 (정규식)
+    const AD_CLASS_REGEX = /(?:^|[\s_-])(?:ad|ads|advert|banner|sponsor|adfit|adsbygoogle|adbox|adarea|adunit|adwrap|adlayer|aside_ad|ad_section|ad_view|ad-area|ad-wrap|ad-slot)(?:[\s_-]|$)/i;
+
+    // 최대 6단계 조상까지 탐색
+    for (let depth = 0; depth < 6 && current; depth++) {
       if (FORBIDDEN_TAGS.has(current.tagName)) break;
 
-      const cls = (current.className || '').toString().toLowerCase();
-      const id = (current.id || '').toString().toLowerCase();
+      const cls = (current.className || '').toString();
+      const id = (current.id || '').toString();
       const tagName = current.tagName.toLowerCase();
 
       // 1. 광고 및 스폰서 명시적 컨테이너
-      const isExplicitAd = cls.includes('ad-') || cls.includes('ad_') || cls.includes('ads-') ||
-                           cls.includes('ads_') || cls.includes('banner') || cls.includes('sponsor') ||
-                           cls.includes('advert') || id.includes('ad-') || id.includes('banner') ||
-                           id.includes('sponsor') || id.includes('advert');
+      const isExplicitAd = AD_CLASS_REGEX.test(cls) || AD_CLASS_REGEX.test(id) ||
+                           current.hasAttribute('data-ad') || current.hasAttribute('data-ad-unit') ||
+                           current.hasAttribute('data-ad-slot') || current.hasAttribute('data-ad-client') ||
+                           current.hasAttribute('data-adfit') || current.classList.contains('adsbygoogle') ||
+                           current.getAttribute('aria-label') === '광고' || current.getAttribute('aria-label') === 'AD';
 
       // 2. 카드 및 상품 단위 아이템 (li, article, .card, div.item 등)
       const isItemContainer = tagName === 'article' ||
                               (tagName === 'li' && (cls.includes('item') || cls.includes('product') || cls.includes('card') || cls.includes('unit') || cls.includes('entry'))) ||
                               (cls.includes('card') || cls.includes('product-item') || cls.includes('product_item') || cls.includes('thumb-box'));
 
-      if (isExplicitAd || isItemContainer) {
+      if (isExplicitAd) {
+        // 명시적 광고는 링크 개수 상관없이 즉시 해당 컨테이너 선택
+        bestCandidate = current;
+        break;
+      } else if (isItemContainer) {
         const distinctLinks = new Set();
         const allInnerLinks = current.querySelectorAll('a[href]');
         for (let l of allInnerLinks) {
@@ -219,10 +240,9 @@
           distinctLinks.add(clean);
         }
 
-        // 단일 목적지 링크(썸네일+제목 등)이거나 링크가 2개 이하인 단일 품목/배너 카드일 때만 선택
-        if (distinctLinks.size <= 2) {
+        // 단일 목적지 링크(썸네일+제목 등)이거나 링크가 3개 이하인 단일 품목/배너 카드일 때 선택
+        if (distinctLinks.size <= 3) {
           bestCandidate = current;
-          if (isExplicitAd) break;
         }
       }
 
@@ -337,7 +357,40 @@
     }
     ruleIndex = buildRuleIndex(cachedRules);
 
-    // 2. iframe 프레임 광고 실시간 제거 (우클릭이 iframe에서 발생했거나 프레임 URL이 일치할 때)
+    // 2. 우클릭 직후 '숨김' 실행 시, 우클릭된 실제 DOM 노드 및 스마트 컨테이너 즉시 은닉 (최우선 보장)
+    if (action === 'hide' && lastRightClickInfo && (Date.now() - lastRightClickInfo.time < 20000)) {
+      const directTarget = lastRightClickInfo.target;
+      const directLink = lastRightClickInfo.link;
+
+      if (directLink && document.body.contains(directLink)) {
+        directLink.classList.add('cb-link-hidden');
+        directLink.style.display = 'none';
+        const container = getSmartContainer(directLink);
+        if (container && container !== directLink) {
+          container.classList.add('cb-container-hidden');
+          container.style.display = 'none';
+        }
+      } else if (directTarget && document.body.contains(directTarget)) {
+        directTarget.classList.add('cb-link-hidden');
+        directTarget.style.display = 'none';
+        const container = getSmartContainer(directTarget) || directTarget.closest('article, li, [class*="card"], [class*="ad"], [class*="banner"]');
+        if (container && !['BODY', 'HTML', 'MAIN'].includes(container.tagName)) {
+          container.classList.add('cb-container-hidden');
+          container.style.display = 'none';
+        }
+      }
+    }
+
+    // 3. iframe 프레임 내부일 때 자체 은닉 및 상위 윈도우에 은닉 메시지 전송
+    if (action === 'hide' && window !== window.top) {
+      document.documentElement.style.display = 'none';
+      if (document.body) document.body.style.display = 'none';
+      try {
+        window.parent.postMessage({ type: 'BANMAN_HIDE_IFRAME' }, '*');
+      } catch (e) {}
+    }
+
+    // 4. iframe 프레임 광고 실시간 제거 (우클릭이 iframe에서 발생했거나 프레임 URL이 일치할 때)
     if (action === 'hide') {
       const matchUrls = [frameUrl, rawLinkUrl, linkUrl, target].filter(Boolean);
       document.querySelectorAll('iframe').forEach(iframe => {
@@ -347,26 +400,43 @@
         } catch (e) {}
         if (!src) return;
 
-        const isIframeHit = matchUrls.some(u => src === u || src.includes(u) || u.includes(src));
+        let isIframeHit = matchUrls.some(u => src === u || src.includes(u) || u.includes(src));
+        if (!isIframeHit) {
+          try {
+            const decSrc = decodeURIComponent(src);
+            isIframeHit = matchUrls.some(u => decSrc === u || decSrc.includes(u) || u.includes(decSrc));
+          } catch (e) {}
+        }
+
         if (isIframeHit) {
           iframe.classList.add('cb-container-hidden');
-          if (iframe.parentElement && !['BODY', 'HTML', 'MAIN'].includes(iframe.parentElement.tagName)) {
-            const parentCls = (iframe.parentElement.className || '').toString().toLowerCase();
-            if (parentCls.includes('ad') || parentCls.includes('banner') || iframe.parentElement.offsetHeight <= iframe.offsetHeight + 30) {
-              iframe.parentElement.classList.add('cb-container-hidden');
+          iframe.style.display = 'none';
+          const parentContainer = getSmartContainer(iframe) || iframe.parentElement;
+          if (parentContainer && !['BODY', 'HTML', 'MAIN'].includes(parentContainer.tagName)) {
+            const parentCls = (parentContainer.className || '').toString().toLowerCase();
+            if (parentCls.includes('ad') || parentCls.includes('banner') || parentContainer.offsetHeight <= iframe.offsetHeight + 30) {
+              parentContainer.classList.add('cb-container-hidden');
+              parentContainer.style.display = 'none';
             }
           }
         }
       });
     }
 
-    // 3. 현재 화면의 모든 매칭 링크 탐색 후 1ms 내 즉시 갱신
+    // 5. 현재 화면의 모든 매칭 링크 탐색 후 즉시 갱신 (인코딩된 링크 및 타겟 완벽 매칭)
     const links = document.querySelectorAll('a[href]');
     links.forEach(link => {
       const href = link.href;
+      let decHref = '';
+      try { decHref = decodeURIComponent(href); } catch (e) {}
+
       let isMatch = (href === linkUrl || (rawLinkUrl && href === rawLinkUrl));
+      if (!isMatch && decHref) {
+        isMatch = (decHref === linkUrl || (rawLinkUrl && decHref === rawLinkUrl));
+      }
       if (!isMatch && target) {
-        if (href === target || href.includes(target) || target.includes(href)) {
+        if (href === target || href.includes(target) || target.includes(href) ||
+            (decHref && (decHref === target || decHref.includes(target) || target.includes(decHref)))) {
           isMatch = true;
         }
       }
@@ -469,10 +539,35 @@
     }, 150);
   });
 
-  // 6. 우클릭 시점의 링크/상품 메타데이터(타이틀, 썸네일 이미지) 캡처
+  // iframe 서브프레임에서 보낸 은닉 메시지 수신 (부모 창에서 iframe 요소 박스 완벽 정리)
+  window.addEventListener('message', (ev) => {
+    if (ev && ev.data && ev.data.type === 'BANMAN_HIDE_IFRAME') {
+      document.querySelectorAll('iframe').forEach(ifr => {
+        try {
+          if (ifr.contentWindow === ev.source) {
+            ifr.classList.add('cb-container-hidden');
+            ifr.style.display = 'none';
+            const parent = getSmartContainer(ifr) || ifr.parentElement;
+            if (parent && !['BODY', 'HTML', 'MAIN'].includes(parent.tagName)) {
+              parent.classList.add('cb-container-hidden');
+              parent.style.display = 'none';
+            }
+          }
+        } catch (e) {}
+      });
+    }
+  });
+
+  // 6. 우클릭 시점의 링크/상품 메타데이터(타이틀, 썸네일 이미지) 및 클릭 노드 캡처
   document.addEventListener('contextmenu', (e) => {
     try {
       const link = e.target.closest('a[href]');
+      lastRightClickInfo = {
+        target: e.target,
+        link: link,
+        time: Date.now()
+      };
+
       if (!link) return;
 
       // 1) 타이틀 추출

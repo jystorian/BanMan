@@ -27,6 +27,12 @@ function buildRuleIndex(rules = {}) {
       domainMap.set(target, rule);
     } else {
       urlRules.push({ target, rule });
+      if (rule.rawUrl) {
+        const rawTarget = rule.rawUrl.toLowerCase().trim();
+        if (rawTarget && rawTarget !== target) {
+          urlRules.push({ target: rawTarget, rule });
+        }
+      }
     }
   }
 
@@ -649,6 +655,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     createdAt: createdAt,
     updatedAt: now.toISOString()
   };
+
+  if (rawLinkUrl && rawLinkUrl !== target) {
+    newRule.rawUrl = rawLinkUrl;
+  }
 
   blacklist_rules[target] = newRule;
   await chrome.storage.local.set({ blacklist_rules });

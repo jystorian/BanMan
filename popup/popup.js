@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (actionRadio) actionRadio.checked = true;
 
       saveBtn.textContent = t('save_btn_edit', currentLang);
-      deleteBtn.style.display = 'block';
+      deleteBtn.style.display = 'inline-flex';
       statusMsg.textContent = t('status_registered', currentLang, { date: existing.createdAt || '-' });
     } else {
       saveBtn.textContent = t('save_btn_add', currentLang);
