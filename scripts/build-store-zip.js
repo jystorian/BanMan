@@ -7,6 +7,31 @@ const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
 if (!fs.existsSync(distDir)) fs.mkdirSync(distDir, { recursive: true });
 
+// Pre-build syntax check for all JavaScript files
+const jsFilesToCheck = [
+  'background.js',
+  'content.js',
+  'i18n.js',
+  'drive-sync.js',
+  'crypto-helper.js',
+  path.join('pages', 'options.js'),
+  path.join('pages', 'blocked.js'),
+  path.join('popup', 'popup.js')
+];
+
+for (const jsFile of jsFilesToCheck) {
+  const fullPath = path.join(rootDir, jsFile);
+  if (fs.existsSync(fullPath)) {
+    try {
+      execSync(`node -c "${fullPath}"`, { stdio: 'pipe' });
+    } catch (err) {
+      console.error(`❌ SYNTAX ERROR in ${jsFile}:`, err.stderr ? err.stderr.toString() : err.message);
+      process.exit(1);
+    }
+  }
+}
+console.log('✅ All JavaScript files passed syntax check.');
+
 const filesToInclude = [
   'manifest.json',
   'background.js',

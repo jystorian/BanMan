@@ -568,15 +568,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
-  const menuItemId = info.menuItemId;
-
-  let action = '';
-  if (menuItemId === 'banman_block') action = 'block';
-  else if (menuItemId === 'banman_warn') action = 'warn';
-  else if (menuItemId === 'banman_hide') action = 'hide';
-  else if (menuItemId === 'banman_remove') action = 'remove';
-
-  if (!action) return;
 
   // 웹스토어 링크 감지
   const webMatch = linkUrl.match(WEBSTORE_REGEX);
@@ -748,3 +739,6 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     setupContextMenus(changes.app_lang.newValue);
   }
 });
+
+// 서비스 워커 로드 시에도 안전하게 컨텍스트 메뉴 즉시 초기화
+setupContextMenus();
