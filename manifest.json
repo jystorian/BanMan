@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BanMan: Ban & Flag Bad URLs",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArm8SjyEbjjw3KprLd8Jz5EoQ4w9PkgMUIe9mo+ZREaVFz3jyCDil6rHhmcwoE5Ps6OsRtbYdEfCUdGmcf8yoMidF31KLuFoxfGSsIEEI9fYLhzwy3l62G0gl2NrZN26Fs5uSggFcYmzzUvXpBPdDDeviRfYVYDgV3bdP7vZSx+0WmHtReJX9i9+cUo7bqsYk+pA0pbfeHN0EmzSgXAsrQgTX+xqzVqbOkIESyZN8hNY1iNuc0tkqa01TPxs0/sWf1ogkpSpiH4CMNcichojvM4mLQJtdIjqHFXr1lMXYaZ8x0fXPbn94qlwE0acPuhIOabzQ+RLIGVJgQPS/mgdkOwIDAQAB",
   "description": "원치 않는 사이트 사전 차단(Ban)과 링크 경고 깃발(Flag)로 쾌적한 웹서핑을 돕는 스마트 브라우징 가드",
   "icons": {
@@ -45,7 +45,9 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "css": ["content.css"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "options_page": "pages/options.html",

@@ -4,6 +4,19 @@
   display: none !important;
 }
 
+/* 스마트 컨테이너 숨김 스타일 (광고 박스, 상품 카드, iframe 프레임 전체 정리) */
+.cb-container-hidden {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 .cb-link-warn {
   text-decoration: line-through !important;
   opacity: 0.65 !important;
