@@ -99,7 +99,7 @@ const I18N_DICTIONARY = {
     import_error: 'JSON 파일을 읽는 도중 오류가 발생했습니다: {error}',
 
     // 구글 드라이브 동기화 및 E2EE 암호화
-    drive_card_title: '☁️ Google Drive 동기화 (선택)',
+    drive_card_title: 'Google Drive 동기화 (선택)',
     drive_card_desc: '새 PC에서도 안전하게 차단 규칙을 동기화합니다 (appDataFolder 백업)',
     drive_status_disconnected: 'Google 계정이 연동되지 않았습니다.',
     drive_status_connected: '연동된 계정: {email}',
@@ -256,7 +256,7 @@ const I18N_DICTIONARY = {
     import_error: 'Error reading JSON file: {error}',
 
     // Google Drive Sync & E2EE
-    drive_card_title: '☁️ Google Drive Sync (Optional)',
+    drive_card_title: 'Google Drive Sync (Optional)',
     drive_card_desc: 'Safely sync your ban & flag rules across your PCs (via appDataFolder)',
     drive_status_disconnected: 'Google account is not connected.',
     drive_status_connected: 'Connected: {email}',
@@ -413,7 +413,7 @@ const I18N_DICTIONARY = {
     import_error: 'JSONファイルの読み込み中にエラーが発生しました: {error}',
 
     // Google ドライブ同期 & E2EE
-    drive_card_title: '☁️ Google ドライブ同期 (オプション)',
+    drive_card_title: 'Google ドライブ同期 (オプション)',
     drive_card_desc: '新しいPCでも安全にルールを同期できます (appDataFolderバックアップ)',
     drive_status_disconnected: 'Google アカウントが接続されていません。',
     drive_status_connected: '接続中: {email}',
