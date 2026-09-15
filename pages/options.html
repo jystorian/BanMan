@@ -54,7 +54,12 @@
 
       <!-- 수동 규칙 추가 카드 -->
       <section class="card add-card">
-        <h2 data-i18n="add_card_title">새 규칙 직접 추가</h2>
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title"><span class="card-title-icon">➕</span> <span data-i18n="add_card_title">새 규칙 직접 추가</span></h2>
+            <p class="card-subtitle" data-i18n="add_card_desc">차단, 주의, 또는 숨길 URL/도메인을 직접 등록합니다.</p>
+          </div>
+        </div>
         <form id="addRuleForm" class="add-form">
           <div class="form-row">
             <div class="form-col flex-2">
@@ -92,9 +97,9 @@
 
       <!-- 구글 드라이브 클라우드 동기화 카드 (선택) -->
       <section class="card drive-card">
-        <div class="card-header-row">
-          <div>
-            <h2 data-i18n="drive_card_title">☁️ Google Drive 동기화 (선택)</h2>
+        <div class="card-header card-header-row">
+          <div class="card-title-group">
+            <h2 class="card-title"><span class="card-title-icon">☁️</span> <span data-i18n="drive_card_title">Google Drive 동기화 (선택)</span></h2>
             <p class="card-subtitle" data-i18n="drive_card_desc">새 PC에서도 안전하게 차단 규칙을 동기화합니다 (appDataFolder 백업)</p>
           </div>
           <div class="drive-account-status">
@@ -127,14 +132,18 @@
 
       <!-- 목록 관리 카드 -->
       <section class="card list-card">
-        <div class="list-header">
-          <div class="list-title-group">
-            <h2 data-i18n="list_card_title">등록된 규칙 목록</h2>
-            <label class="session-skip-toggle-bar" id="sessionSkipDeleteLabel" title="체크 시 이번 세션(창 닫기 전까지) 동안 삭제 확인 대화상자 없이 바로 삭제합니다.">
-              <input type="checkbox" id="sessionSkipDeleteToggle">
-              <span data-i18n="skip_delete_confirm_toggle">⚡ 바로 삭제 (확인 생략)</span>
-            </label>
+        <div class="card-header list-card-header">
+          <div class="card-title-group">
+            <h2 class="card-title"><span class="card-title-icon">📋</span> <span data-i18n="list_card_title">등록된 규칙 목록</span></h2>
+            <p class="card-subtitle" data-i18n="list_card_desc">현재 활성화된 모든 사이트/링크 방어 및 필터링 규칙입니다.</p>
           </div>
+          <label class="session-skip-toggle-bar" id="sessionSkipDeleteLabel" title="체크 시 이번 세션(창 닫기 전까지) 동안 삭제 확인 대화상자 없이 바로 삭제합니다.">
+            <input type="checkbox" id="sessionSkipDeleteToggle">
+            <span data-i18n="skip_delete_confirm_toggle">⚡ 바로 삭제 (확인 생략)</span>
+          </label>
+        </div>
+
+        <div class="list-toolbar">
           <div class="filter-controls">
             <input type="text" id="searchInput" data-i18n-placeholder="search_placeholder" placeholder="대상 또는 메모 검색..." class="search-input">
             <div class="filter-tabs">
