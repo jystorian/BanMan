@@ -465,15 +465,40 @@ async function notifyUser(tabId, messageText, level = 'success') {
   } catch (e) {}
 }
 
-// 우클릭 컨텍스트 메뉴 클릭 이벤트 처리 (해당 URL만 즉시 1클릭 처리)
+// 광고 또는 리디렉션 추적 URL에서 실제 목적지 URL 추출
+function extractActualTargetUrl(rawUrl) {
+  if (!rawUrl) return '';
+  try {
+    const parsed = new URL(rawUrl);
+    const searchParams = parsed.searchParams;
+    const candidateKeys = ['adurl', 'url', 'dest', 'destination', 'target', 'redirect', 'r', 'out', 'link'];
+    for (const key of candidateKeys) {
+      const val = searchParams.get(key);
+      if (val && (val.startsWith('http://') || val.startsWith('https://'))) {
+        try {
+          return decodeURIComponent(val);
+        } catch (e) {
+          return val;
+        }
+      }
+    }
+  } catch (e) {}
+  return rawUrl;
+}
+
+// 우클릭 컨텍스트 메뉴 클릭 이벤트 처리 (해당 URL만 즉시 1클릭 처리 + 스마트 광고/iframe 감지)
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  const linkUrl = (info.linkUrl || '').trim();
-  if (!linkUrl) return;
+  const rawLinkUrl = (info.linkUrl || '').trim();
+  if (!rawLinkUrl) return;
+
+  const frameUrl = (info.frameUrl || '').trim();
+  const frameId = info.frameId || 0;
+  const linkUrl = extractActualTargetUrl(rawLinkUrl);
 
   const lang = await getAppLanguage();
 
   // 특수/시스템 URL 검증
-  if (linkUrl.startsWith('chrome://') || linkUrl.startsWith('chrome-extension://') || linkUrl.startsWith('about:') || linkUrl.startsWith('javascript:')) {
+  if (rawLinkUrl.startsWith('chrome://') || rawLinkUrl.startsWith('chrome-extension://') || rawLinkUrl.startsWith('about:') || rawLinkUrl.startsWith('javascript:')) {
     notifyUser(tab?.id, t('toast_invalid_url', lang), 'error');
     return;
   }
@@ -533,15 +558,22 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (removed) {
       await chrome.storage.local.set({ blacklist_rules });
 
-      // 화면에 실시간 즉시 반영 (리프레시 불필요)
+      // 화면에 실시간 즉시 반영 (리프레시 불필요 + 메인 및 서브프레임 동시 전달)
       if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, {
+        const payload = {
           type: 'APPLY_LINK_ACTION',
           linkUrl: linkUrl,
+          rawLinkUrl: rawLinkUrl,
+          frameUrl: frameUrl,
+          frameId: frameId,
           target: target,
           action: 'remove',
           rule: null
-        }).catch(() => {});
+        };
+        chrome.tabs.sendMessage(tab.id, payload).catch(() => {});
+        if (frameId > 0) {
+          chrome.tabs.sendMessage(tab.id, payload, { frameId }).catch(() => {});
+        }
       }
 
       const msg = t('toast_removed', lang, { target: removeKey });
@@ -577,15 +609,22 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   blacklist_rules[target] = newRule;
   await chrome.storage.local.set({ blacklist_rules });
 
-  // 화면에 실시간 즉시 반영 (리프레시 불필요)
+  // 화면에 실시간 즉시 반영 (리프레시 불필요 + 메인 및 서브프레임 동시 전달)
   if (tab?.id) {
-    chrome.tabs.sendMessage(tab.id, {
+    const payload = {
       type: 'APPLY_LINK_ACTION',
       linkUrl: linkUrl,
+      rawLinkUrl: rawLinkUrl,
+      frameUrl: frameUrl,
+      frameId: frameId,
       target: target,
       action: action,
       rule: newRule
-    }).catch(() => {});
+    };
+    chrome.tabs.sendMessage(tab.id, payload).catch(() => {});
+    if (frameId > 0) {
+      chrome.tabs.sendMessage(tab.id, payload, { frameId }).catch(() => {});
+    }
   }
 
   const actionName = t(`stat_${action}`, lang) || action;
