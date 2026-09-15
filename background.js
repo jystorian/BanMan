@@ -406,35 +406,37 @@ async function setupContextMenus(lang) {
     lang = await getAppLanguage();
   }
 
+  const CONTEXT_TARGETS = ['link', 'video', 'audio', 'image', 'frame'];
+
   // Remove existing menus to prevent ID duplication
   chrome.contextMenus.removeAll(() => {
     // 1. Root Menu (No shield emoji)
     chrome.contextMenus.create({
       id: 'banman_root',
       title: t('ctx_root', lang),
-      contexts: ['link']
+      contexts: CONTEXT_TARGETS
     });
 
-    // 2. Direct 1-click Actions (URL only)
+    // 2. Direct 1-click Actions (URL/Media)
     chrome.contextMenus.create({
       id: 'banman_block',
       parentId: 'banman_root',
       title: t('ctx_block', lang),
-      contexts: ['link']
+      contexts: CONTEXT_TARGETS
     });
 
     chrome.contextMenus.create({
       id: 'banman_warn',
       parentId: 'banman_root',
       title: t('ctx_warn', lang),
-      contexts: ['link']
+      contexts: CONTEXT_TARGETS
     });
 
     chrome.contextMenus.create({
       id: 'banman_hide',
       parentId: 'banman_root',
       title: t('ctx_hide', lang),
-      contexts: ['link']
+      contexts: CONTEXT_TARGETS
     });
 
     // 3. Separator
@@ -442,7 +444,7 @@ async function setupContextMenus(lang) {
       id: 'banman_sep',
       parentId: 'banman_root',
       type: 'separator',
-      contexts: ['link']
+      contexts: CONTEXT_TARGETS
     });
 
     // 4. Remove Menu
@@ -450,7 +452,7 @@ async function setupContextMenus(lang) {
       id: 'banman_remove',
       parentId: 'banman_root',
       title: t('ctx_remove', lang),
-      contexts: ['link']
+      contexts: CONTEXT_TARGETS
     });
   });
 }
@@ -518,16 +520,46 @@ function extractActualTargetUrl(rawUrl) {
   return rawUrl;
 }
 
-// 우클릭 컨텍스트 메뉴 클릭 이벤트 처리 (해당 URL만 즉시 1클릭 처리 + 스마트 광고/iframe 감지)
+// 우클릭 컨텍스트 메뉴 클릭 이벤트 처리 (해당 URL만 즉시 1클릭 처리 + 스마트 광고/iframe/비디오/이미지 감지)
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  const rawLinkUrl = (info.linkUrl || '').trim();
-  if (!rawLinkUrl) return;
+  let rawLinkUrl = (info.linkUrl || info.srcUrl || info.frameUrl || '').trim();
+  if (!rawLinkUrl && lastContextMetadata?.mediaSrc) {
+    rawLinkUrl = lastContextMetadata.mediaSrc.trim();
+  }
+  if (!rawLinkUrl && lastContextMetadata?.href) {
+    rawLinkUrl = lastContextMetadata.href.trim();
+  }
+
+  const lang = await getAppLanguage();
+  const menuItemId = info.menuItemId;
+
+  let action = '';
+  if (menuItemId === 'banman_block') action = 'block';
+  else if (menuItemId === 'banman_warn') action = 'warn';
+  else if (menuItemId === 'banman_hide') action = 'hide';
+  else if (menuItemId === 'banman_remove') action = 'remove';
+
+  if (!action) return;
+
+  // URL이 없는 동적 배너/요소의 '숨기기' 요청 처리 (현재 화면에서 DOM 즉시 은닉)
+  if (!rawLinkUrl) {
+    if (action === 'hide' && tab?.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'APPLY_LINK_ACTION',
+        action: 'hide',
+        linkUrl: '',
+        rawLinkUrl: '',
+        target: '',
+        rule: null
+      }).catch(() => {});
+      notifyUser(tab.id, t('toast_element_hidden', lang) || '[BanMan] 선택한 요소를 화면에서 숨겼습니다.', 'info');
+    }
+    return;
+  }
 
   const frameUrl = (info.frameUrl || '').trim();
   const frameId = info.frameId || 0;
   const linkUrl = extractActualTargetUrl(rawLinkUrl);
-
-  const lang = await getAppLanguage();
 
   // 특수/시스템 URL 검증
   if (rawLinkUrl.startsWith('chrome://') || rawLinkUrl.startsWith('chrome-extension://') || rawLinkUrl.startsWith('about:') || rawLinkUrl.startsWith('javascript:')) {
@@ -626,19 +658,26 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     try {
       title = await fetchWebstoreTitleDirect(extId);
     } catch (e) {}
-  } else if (lastContextMetadata && (lastContextMetadata.href === rawLinkUrl || lastContextMetadata.href === linkUrl)) {
+  } else if (lastContextMetadata && (
+    lastContextMetadata.href === rawLinkUrl || lastContextMetadata.href === linkUrl ||
+    lastContextMetadata.mediaSrc === rawLinkUrl || lastContextMetadata.mediaSrc === linkUrl
+  )) {
     title = lastContextMetadata.title || '';
     thumbnail = lastContextMetadata.thumbnail || '';
   }
 
-  // 썸네일이 없고 도메인이 식별 가능한 경우 고화질 파비콘을 자동 기본값으로 설정
+  // 썸네일이 없고 도메인이 식별 가능한 경우 고화질 파비콘 또는 미디어 주소를 자동 기본값으로 설정
   if (!thumbnail) {
-    try {
-      const parsed = new URL(linkUrl.startsWith('http') ? linkUrl : 'https://' + linkUrl);
-      if (parsed.hostname) {
-        thumbnail = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(parsed.hostname)}&sz=64`;
-      }
-    } catch (e) {}
+    if (info.mediaType === 'image' && rawLinkUrl) {
+      thumbnail = rawLinkUrl;
+    } else {
+      try {
+        const parsed = new URL(linkUrl.startsWith('http') ? linkUrl : 'https://' + linkUrl);
+        if (parsed.hostname) {
+          thumbnail = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(parsed.hostname)}&sz=64`;
+        }
+      } catch (e) {}
+    }
   }
 
   const now = new Date();
