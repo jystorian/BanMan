@@ -306,8 +306,16 @@ async function fetchWebstoreTitleDirect(extId) {
   return null;
 }
 
+let lastContextMetadata = null;
+
 // 메시지 수신 핸들러 (Content Script 또는 Pages 통신)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'UPDATE_CONTEXT_METADATA') {
+    lastContextMetadata = message.data || null;
+    sendResponse({ received: true });
+    return true;
+  }
+
   if (message.type === 'GET_RULES') {
     chrome.storage.local.get('blacklist_rules').then(({ blacklist_rules = {} }) => {
       sendResponse({ rules: blacklist_rules });
@@ -465,6 +473,24 @@ async function notifyUser(tabId, messageText, level = 'success') {
   } catch (e) {}
 }
 
+// 긴 URL 스마트 축약 (도메인은 살리고 쿼리 파라미터는 슬림하게)
+function formatDisplayUrl(rawUrl, maxLen = 42) {
+  if (!rawUrl) return '';
+  try {
+    const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl);
+    const host = parsed.hostname;
+    let path = parsed.pathname + parsed.search;
+    if (path === '/' || !path) return host;
+    if (host.length + path.length > maxLen) {
+      const remain = Math.max(8, maxLen - host.length - 4);
+      path = path.slice(0, remain) + '...';
+    }
+    return host + path;
+  } catch (e) {
+    return rawUrl.length > maxLen ? rawUrl.slice(0, maxLen - 3) + '...' : rawUrl;
+  }
+}
+
 // 광고 또는 리디렉션 추적 URL에서 실제 목적지 URL 추출
 function extractActualTargetUrl(rawUrl) {
   if (!rawUrl) return '';
@@ -576,19 +602,36 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }
       }
 
-      const msg = t('toast_removed', lang, { target: removeKey });
+      const displayRemoveKey = formatDisplayUrl(removeKey, 42);
+      const msg = t('toast_removed', lang, { target: displayRemoveKey });
       notifyUser(tab?.id, msg, 'info');
     } else {
-      notifyUser(tab?.id, `[BanMan] '${target}' 등록된 규칙을 찾을 수 없습니다.`, 'info');
+      const displayTarget = formatDisplayUrl(target, 42);
+      notifyUser(tab?.id, `[BanMan] '${displayTarget}' 등록된 규칙을 찾을 수 없습니다.`, 'info');
     }
     return;
   }
 
   // 2. 등록/수정 액션 (block, warn, hide)
   let title = '';
+  let thumbnail = '';
+
   if (targetType === 'webstore') {
     try {
       title = await fetchWebstoreTitleDirect(extId);
+    } catch (e) {}
+  } else if (lastContextMetadata && (lastContextMetadata.href === rawLinkUrl || lastContextMetadata.href === linkUrl)) {
+    title = lastContextMetadata.title || '';
+    thumbnail = lastContextMetadata.thumbnail || '';
+  }
+
+  // 썸네일이 없고 도메인이 식별 가능한 경우 고화질 파비콘을 자동 기본값으로 설정
+  if (!thumbnail) {
+    try {
+      const parsed = new URL(linkUrl.startsWith('http') ? linkUrl : 'https://' + linkUrl);
+      if (parsed.hostname) {
+        thumbnail = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(parsed.hostname)}&sz=64`;
+      }
     } catch (e) {}
   }
 
@@ -602,6 +645,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     action: action,
     memo: '',
     title: title || '',
+    thumbnail: thumbnail || '',
     createdAt: createdAt,
     updatedAt: now.toISOString()
   };
@@ -628,9 +672,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   const actionName = t(`stat_${action}`, lang) || action;
+  const displayTarget = formatDisplayUrl(target, 42);
   const successMsg = t('toast_registered', lang, {
     action: actionName,
-    target: target
+    target: displayTarget
   });
 
   notifyUser(tab?.id, successMsg, action === 'block' ? 'error' : (action === 'warn' ? 'warn' : 'success'));

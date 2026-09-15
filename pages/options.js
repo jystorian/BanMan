@@ -152,6 +152,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // URL 스마트 축약 함수
+  function formatDisplayUrl(rawUrl, maxLen = 45) {
+    if (!rawUrl) return '';
+    try {
+      const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl);
+      const host = parsed.hostname;
+      let path = parsed.pathname + parsed.search;
+      if (path === '/' || !path) return host;
+      if (host.length + path.length > maxLen) {
+        const remain = Math.max(8, maxLen - host.length - 4);
+        path = path.slice(0, remain) + '...';
+      }
+      return host + path;
+    } catch (e) {
+      return rawUrl.length > maxLen ? rawUrl.slice(0, maxLen - 3) + '...' : rawUrl;
+    }
+  }
+
+  // 타겟에서 호스트 도메인 추출
+  function extractDomain(targetStr) {
+    if (!targetStr) return '';
+    try {
+      const parsed = new URL(targetStr.startsWith('http') ? targetStr : 'https://' + targetStr);
+      return parsed.hostname || targetStr;
+    } catch (e) {
+      return targetStr;
+    }
+  }
+
   // 1. 규칙 로드 및 통계 갱신
   async function loadData() {
     const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
@@ -268,27 +297,32 @@ document.addEventListener('DOMContentLoaded', async () => {
           actionClass = 'hide';
         }
 
-        // 대상 명칭 및 링크 처리 (웹스토어 및 일반 웹페이지/도메인)
+        // 대상 명칭, 썸네일/파비콘, 도메인 배지 및 2단 계층 링크 처리
         let targetHtml = '';
         if (rule.type === 'webstore') {
           const extId = (rule.target || key).toLowerCase();
           const hasTitle = rule.title && rule.title !== extId;
           const displayName = hasTitle ? rule.title : extId;
           const webstoreUrl = `https://chromewebstore.google.com/detail/${encodeURIComponent(extId)}`;
-          // 제목이 있는 경우에만 하단에 ID를 보조로 표시하여, 제목 부재 시 위아래 ID 중복 방지
-          const subIdHtml = hasTitle
-            ? `<span class="target-sub-id">ID: ${escapeHtml(extId)}</span>`
-            : '';
           const webstoreTitle = currentLang === 'ko' ? '크롬 웹스토어 열기' : (currentLang === 'ja' ? 'Chrome ウェブストアを開く' : 'Open Chrome Web Store');
+          const thumbUrl = rule.thumbnail || 'https://www.google.com/s2/favicons?domain=chromewebstore.google.com&sz=64';
 
           targetHtml = `
-            <div class="target-cell">
-              <div class="target-title-row">
-                <span class="target-name" data-ext-id="${escapeHtml(extId)}">${escapeHtml(displayName)}</span>
-                <a href="${webstoreUrl}" target="_blank" rel="noopener noreferrer" class="target-ext-link webstore-ext-link" title="${webstoreTitle}">🔗</a>
+            <div class="target-card-cell">
+              <div class="target-thumb-wrap">
+                <img src="${escapeHtml(thumbUrl)}" class="target-thumb-img is-favicon" alt="" onerror="this.src='../icons/icon-32.png'; this.onerror=null;">
               </div>
-              ${subIdHtml}
-              <span class="type-tag ${typeClass}">${typeLabel}</span>
+              <div class="target-info-wrap">
+                <div class="target-title-row">
+                  <span class="target-name" data-ext-id="${escapeHtml(extId)}" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
+                  <a href="${webstoreUrl}" target="_blank" rel="noopener noreferrer" class="target-ext-link webstore-ext-link" title="${webstoreTitle}">🔗</a>
+                </div>
+                <div class="target-meta-row">
+                  <span class="target-domain-badge">🏬 Web Store</span>
+                  <span class="target-url-sub" title="ID: ${escapeHtml(extId)}">ID: ${escapeHtml(extId)}</span>
+                  <span class="type-tag ${typeClass}">${typeLabel}</span>
+                </div>
+              </div>
             </div>
           `;
         } else {
@@ -298,14 +332,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             linkUrl = 'https://' + linkUrl;
           }
           const linkTitle = currentLang === 'ko' ? '새 탭에서 사이트 열기' : (currentLang === 'ja' ? '新しいタブで開く' : 'Open in new tab');
+          const domain = extractDomain(targetStr);
+          const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64` : '../icons/icon-32.png';
+          const thumbUrl = rule.thumbnail || faviconUrl;
+          const hasCustomThumb = !!(rule.thumbnail && !rule.thumbnail.includes('google.com/s2/favicons'));
+          const displayName = (rule.title && rule.title.trim()) ? rule.title.trim() : (domain || targetStr);
+          const displayUrl = formatDisplayUrl(targetStr, 42);
 
           targetHtml = `
-            <div class="target-cell">
-              <div class="target-title-row">
-                <span class="target-name">${escapeHtml(targetStr)}</span>
-                <a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener noreferrer" class="target-ext-link" title="${linkTitle}">🔗</a>
+            <div class="target-card-cell">
+              <div class="target-thumb-wrap">
+                <img src="${escapeHtml(thumbUrl)}" class="target-thumb-img ${hasCustomThumb ? 'is-custom-thumb' : 'is-favicon'}" alt="" onerror="this.src='${escapeHtml(faviconUrl)}'; this.onerror=null;">
               </div>
-              <span class="type-tag ${typeClass}">${typeLabel}</span>
+              <div class="target-info-wrap">
+                <div class="target-title-row">
+                  <span class="target-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
+                  <a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener noreferrer" class="target-ext-link" title="${linkTitle}">🔗</a>
+                </div>
+                <div class="target-meta-row">
+                  ${domain ? `<span class="target-domain-badge">🌐 ${escapeHtml(domain)}</span>` : ''}
+                  <span class="target-url-sub" title="${escapeHtml(targetStr)}">${escapeHtml(displayUrl)}</span>
+                  <span class="type-tag ${typeClass}">${typeLabel}</span>
+                </div>
+              </div>
             </div>
           `;
         }
