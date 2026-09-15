@@ -41,6 +41,7 @@
       ruleIndex = buildRuleIndex(cachedRules);
       processAllLinks();
       processAllIframes();
+      processAllVideos();
     } catch (e) {
       console.error('규칙 로드 실패:', e);
     }
@@ -65,6 +66,7 @@
       document.querySelectorAll('.cb-badge').forEach(b => b.remove());
       processAllLinks();
       processAllIframes();
+      processAllVideos();
     }
   });
 
@@ -357,12 +359,31 @@
     }
     ruleIndex = buildRuleIndex(cachedRules);
 
-    // 2. 우클릭 직후 '숨김' 실행 시, 우클릭된 실제 DOM 노드 및 스마트 컨테이너 즉시 은닉 (최우선 보장)
+    // 2. 우클릭 직후 '숨김' 실행 시, 우클릭된 실제 DOM 노드(비디오, iframe, 링크 등) 및 스마트 컨테이너 즉시 은닉 (최우선 보장)
     if (action === 'hide' && lastRightClickInfo && (Date.now() - lastRightClickInfo.time < 20000)) {
       const directTarget = lastRightClickInfo.target;
       const directLink = lastRightClickInfo.link;
+      const directVideo = lastRightClickInfo.video;
+      const directIframe = lastRightClickInfo.iframe;
 
-      if (directLink && document.body.contains(directLink)) {
+      if (directVideo && document.body.contains(directVideo)) {
+        try { directVideo.pause(); } catch (e) {}
+        directVideo.classList.add('cb-container-hidden');
+        directVideo.style.display = 'none';
+        const container = getSmartContainer(directVideo) || directVideo.closest('article, li, [class*="card"], [class*="ad"], [class*="banner"], [class*="player"], [class*="video"]');
+        if (container && container !== directVideo && !['BODY', 'HTML', 'MAIN'].includes(container.tagName)) {
+          container.classList.add('cb-container-hidden');
+          container.style.display = 'none';
+        }
+      } else if (directIframe && document.body.contains(directIframe)) {
+        directIframe.classList.add('cb-container-hidden');
+        directIframe.style.display = 'none';
+        const container = getSmartContainer(directIframe) || directIframe.closest('article, li, [class*="card"], [class*="ad"], [class*="banner"]');
+        if (container && container !== directIframe && !['BODY', 'HTML', 'MAIN'].includes(container.tagName)) {
+          container.classList.add('cb-container-hidden');
+          container.style.display = 'none';
+        }
+      } else if (directLink && document.body.contains(directLink)) {
         directLink.classList.add('cb-link-hidden');
         directLink.style.display = 'none';
         const container = getSmartContainer(directLink);
@@ -371,9 +392,9 @@
           container.style.display = 'none';
         }
       } else if (directTarget && document.body.contains(directTarget)) {
-        directTarget.classList.add('cb-link-hidden');
+        directTarget.classList.add('cb-container-hidden');
         directTarget.style.display = 'none';
-        const container = getSmartContainer(directTarget) || directTarget.closest('article, li, [class*="card"], [class*="ad"], [class*="banner"]');
+        const container = getSmartContainer(directTarget) || directTarget.closest('article, li, [class*="card"], [class*="ad"], [class*="banner"], [class*="player"], [class*="video"]');
         if (container && !['BODY', 'HTML', 'MAIN'].includes(container.tagName)) {
           container.classList.add('cb-container-hidden');
           container.style.display = 'none';
@@ -458,6 +479,7 @@
 
     if (action === 'hide') {
       processAllIframes();
+      processAllVideos();
     }
   }
 
@@ -529,6 +551,31 @@
     });
   }
 
+  // 4-2. 동영상 광고 검사 및 은닉 (배너 비디오 및 비디오 플레이어 광고)
+  function processAllVideos() {
+    if (!document.body) return;
+    document.querySelectorAll('video').forEach(video => {
+      let src = '';
+      try {
+        src = video.currentSrc || video.src || video.querySelector('source')?.src || video.getAttribute('data-src') || '';
+      } catch (e) {}
+
+      if (!src) return;
+
+      const rule = matchLink(src);
+      if (rule && rule.action === 'hide') {
+        try { video.pause(); } catch (e) {}
+        video.classList.add('cb-container-hidden');
+        video.style.display = 'none';
+        const parentContainer = getSmartContainer(video) || video.closest('article, li, [class*="card"], [class*="ad"], [class*="banner"], [class*="player"], [class*="video"]');
+        if (parentContainer && !['BODY', 'HTML', 'MAIN'].includes(parentContainer.tagName)) {
+          parentContainer.classList.add('cb-container-hidden');
+          parentContainer.style.display = 'none';
+        }
+      }
+    });
+  }
+
   // 5. 동적 렌더링(무한 스크롤, SPA 등) 대응 디바운스 옵저버
   let debounceTimer = null;
   const observer = new MutationObserver(() => {
@@ -536,6 +583,7 @@
     debounceTimer = setTimeout(() => {
       processAllLinks();
       processAllIframes();
+      processAllVideos();
     }, 150);
   });
 
@@ -558,41 +606,75 @@
     }
   });
 
-  // 6. 우클릭 시점의 링크/상품 메타데이터(타이틀, 썸네일 이미지) 및 클릭 노드 캡처
+  // 6. 우클릭 시점의 링크/동영상/광고/상품 메타데이터(타이틀, 썸네일) 및 클릭 노드 캡처
   document.addEventListener('contextmenu', (e) => {
     try {
-      const link = e.target.closest('a[href]');
+      const target = e.target;
+      const link = target.closest('a[href]');
+      const video = target.closest('video') || (target.tagName === 'VIDEO' ? target : null) || target.querySelector('video') || target.parentElement?.querySelector('video');
+      const iframe = target.closest('iframe') || (target.tagName === 'IFRAME' ? target : null);
+      const img = (target.tagName === 'IMG') ? target : target.closest('img') || target.querySelector('img');
+
+      let mediaSrc = '';
+      if (video) {
+        mediaSrc = video.currentSrc || video.src || video.querySelector('source')?.src || video.getAttribute('data-src') || '';
+      } else if (iframe) {
+        mediaSrc = iframe.src || iframe.getAttribute('src') || '';
+      } else if (img) {
+        mediaSrc = img.currentSrc || img.src || img.getAttribute('data-src') || '';
+      }
+
       lastRightClickInfo = {
-        target: e.target,
+        target: target,
         link: link,
+        video: video,
+        iframe: iframe,
+        img: img,
+        mediaSrc: mediaSrc,
         time: Date.now()
       };
 
-      if (!link) return;
-
       // 1) 타이틀 추출
-      let title = (link.getAttribute('title') || '').trim();
-      if (!title) {
-        const text = (link.textContent || '').trim();
-        if (text && text.length >= 2 && text.length <= 100) {
-          title = text.replace(/\s+/g, ' ');
+      let title = '';
+      if (link) {
+        title = (link.getAttribute('title') || '').trim();
+        if (!title) {
+          const text = (link.textContent || '').trim();
+          if (text && text.length >= 2 && text.length <= 100) {
+            title = text.replace(/\s+/g, ' ');
+          }
         }
+      }
+      if (!title && video) {
+        title = (video.getAttribute('title') || video.getAttribute('aria-label') || '').trim();
+        if (!title && video.parentElement) {
+          const pTitle = (video.parentElement.getAttribute('title') || video.parentElement.getAttribute('aria-label') || '').trim();
+          if (pTitle) title = pTitle;
+        }
+      }
+      if (!title && iframe) {
+        title = (iframe.getAttribute('title') || iframe.getAttribute('name') || '').trim();
+      }
+      if (!title && img && img.alt) {
+        title = img.alt.trim();
       }
 
       // 2) 썸네일 이미지 추출
       let thumbnail = '';
-      let imgEl = (e.target.tagName === 'IMG') ? e.target : link.querySelector('img');
-      if (!imgEl) {
-        const container = link.closest('[class*="ad-"], [class*="card"], [class*="item"], li, article');
-        if (container) {
-          imgEl = container.querySelector('img');
+      if (video && video.poster) {
+        thumbnail = video.poster;
+      } else if (img) {
+        thumbnail = img.currentSrc || img.src || img.getAttribute('data-src') || '';
+      } else if (link) {
+        let imgEl = link.querySelector('img');
+        if (!imgEl) {
+          const container = link.closest('[class*="ad-"], [class*="card"], [class*="item"], li, article');
+          if (container) {
+            imgEl = container.querySelector('img');
+          }
         }
-      }
-
-      if (imgEl) {
-        thumbnail = imgEl.currentSrc || imgEl.src || imgEl.getAttribute('data-src') || '';
-        if (!title && imgEl.alt) {
-          title = imgEl.alt.trim();
+        if (imgEl) {
+          thumbnail = imgEl.currentSrc || imgEl.src || imgEl.getAttribute('data-src') || '';
         }
       }
 
@@ -600,7 +682,9 @@
       chrome.runtime.sendMessage({
         type: 'UPDATE_CONTEXT_METADATA',
         data: {
-          href: link.href,
+          href: link?.href || '',
+          mediaSrc: mediaSrc || '',
+          mediaType: video ? 'video' : (iframe ? 'iframe' : (img ? 'image' : '')),
           title: title || '',
           thumbnail: thumbnail || ''
         }
