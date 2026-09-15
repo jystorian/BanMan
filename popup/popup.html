@@ -13,13 +13,6 @@
         <div class="header-content">
           <div class="header-row header-row-top">
             <h2 data-i18n="app_name">BanMan</h2>
-            <button id="openOptionsBtn" class="btn-options-bar" data-i18n-title="options_btn" title="설정 및 목록 ⚙️">
-              <span class="btn-options-text" data-i18n="options_btn_short">설정 및 목록</span>
-              <span class="btn-options-icon">⚙️</span>
-            </button>
-          </div>
-          <div class="header-row header-row-bottom">
-            <p class="header-slogan" data-i18n="app_slogan">Ban & Flag bad URLs for Chrome city</p>
             <div class="lang-select-group">
               <select id="langSelect" class="lang-select" title="Language / 언어">
                 <option value="ko">🇰🇷 한국어</option>
@@ -27,6 +20,9 @@
                 <option value="ja">🇯🇵 日本語</option>
               </select>
             </div>
+          </div>
+          <div class="header-row header-row-bottom">
+            <p class="header-slogan" data-i18n="app_slogan">Ban & Flag bad URLs for Chrome city</p>
           </div>
         </div>
       </div>
@@ -116,6 +112,7 @@
     <div class="btn-group">
       <button id="saveBtn" class="btn btn-primary" data-i18n="save_btn_add">블랙리스트 등록</button>
       <button id="deleteBtn" class="btn btn-secondary" style="display: none;" data-i18n="delete_btn">해제</button>
+      <button id="openOptionsBtn" class="btn btn-secondary btn-options-inline" data-i18n="options_btn_short">목록/설정</button>
     </div>
 
     <div id="statusMsg" class="status-msg"></div>
