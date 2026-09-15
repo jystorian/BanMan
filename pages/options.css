@@ -462,23 +462,93 @@ input[type="text"]:focus, select:focus {
   background-color: #f8fafc;
 }
 
-.target-cell {
+.target-card-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.target-thumb-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.target-thumb-img {
+  display: block;
+}
+
+.target-thumb-img.is-custom-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.target-thumb-img.is-favicon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.target-info-wrap {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
 }
 
 .target-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
 }
 
 .target-name {
-  font-weight: 600;
-  color: #1a202c;
-  word-break: break-all;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 420px;
+}
+
+.target-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.target-domain-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+  background-color: #fef08a;
+  border: 1px solid #facc15;
+  padding: 1px 6px;
+  border-radius: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.target-url-sub {
+  font-size: 11.5px;
+  color: #64748b;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
 }
 
 .target-ext-link,
@@ -498,13 +568,6 @@ input[type="text"]:focus, select:focus {
 .webstore-ext-link:hover {
   opacity: 1;
   transform: scale(1.15);
-}
-
-.target-sub-id {
-  font-size: 11px;
-  color: #718096;
-  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  word-break: break-all;
 }
 
 .type-tag {

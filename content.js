@@ -469,6 +469,50 @@
     }, 150);
   });
 
+  // 6. 우클릭 시점의 링크/상품 메타데이터(타이틀, 썸네일 이미지) 캡처
+  document.addEventListener('contextmenu', (e) => {
+    try {
+      const link = e.target.closest('a[href]');
+      if (!link) return;
+
+      // 1) 타이틀 추출
+      let title = (link.getAttribute('title') || '').trim();
+      if (!title) {
+        const text = (link.textContent || '').trim();
+        if (text && text.length >= 2 && text.length <= 100) {
+          title = text.replace(/\s+/g, ' ');
+        }
+      }
+
+      // 2) 썸네일 이미지 추출
+      let thumbnail = '';
+      let imgEl = (e.target.tagName === 'IMG') ? e.target : link.querySelector('img');
+      if (!imgEl) {
+        const container = link.closest('[class*="ad-"], [class*="card"], [class*="item"], li, article');
+        if (container) {
+          imgEl = container.querySelector('img');
+        }
+      }
+
+      if (imgEl) {
+        thumbnail = imgEl.currentSrc || imgEl.src || imgEl.getAttribute('data-src') || '';
+        if (!title && imgEl.alt) {
+          title = imgEl.alt.trim();
+        }
+      }
+
+      // 3) 백그라운드로 우클릭 메타데이터 즉시 전송
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_CONTEXT_METADATA',
+        data: {
+          href: link.href,
+          title: title || '',
+          thumbnail: thumbnail || ''
+        }
+      }).catch(() => {});
+    } catch (err) {}
+  }, true);
+
   // 초기 시작
   loadRules();
 
