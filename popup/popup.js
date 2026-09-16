@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const targetDomain = document.getElementById('targetDomain');
   const targetUrlText = document.getElementById('targetUrlText');
   const scopeSelector = document.getElementById('scopeSelector');
+  const highlightTypeGroup = document.getElementById('highlightTypeGroup');
   const memoInput = document.getElementById('memoInput');
   const saveBtn = document.getElementById('saveBtn');
   const deleteBtn = document.getElementById('deleteBtn');
@@ -83,11 +84,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       const actionRadio = document.querySelector(`input[name="actionType"][value="${existing.action}"]`);
       if (actionRadio) actionRadio.checked = true;
 
+      if (existing.action === 'highlight') {
+        highlightTypeGroup.style.display = 'block';
+        const hlRadio = document.querySelector(`input[name="highlightType"][value="${existing.highlightType || 'star'}"]`);
+        if (hlRadio) hlRadio.checked = true;
+      } else {
+        highlightTypeGroup.style.display = 'none';
+      }
+
       saveBtn.textContent = t('save_btn_edit', currentLang);
       deleteBtn.style.display = 'inline-flex';
       statusMsg.textContent = t('status_registered', currentLang, { date: existing.createdAt || '-' });
     } else {
-      saveBtn.textContent = t('save_btn_add', currentLang);
+      const selectedAction = document.querySelector('input[name="actionType"]:checked')?.value || 'block';
+      if (selectedAction === 'highlight') {
+        highlightTypeGroup.style.display = 'block';
+        saveBtn.textContent = t('save_btn_add_highlight', currentLang);
+      } else {
+        highlightTypeGroup.style.display = 'none';
+        saveBtn.textContent = t('save_btn_add', currentLang);
+      }
       deleteBtn.style.display = 'none';
       statusMsg.textContent = t('status_unregistered', currentLang);
     }
@@ -100,6 +116,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyTranslations(currentLang);
     updateTargetBadge();
     checkExistingRule();
+  });
+
+  // 액션 라디오 변경 이벤트 (강조 서브분류 토글 및 버튼 문구 변경)
+  document.querySelectorAll('input[name="actionType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const isHighlight = radio.value === 'highlight';
+      highlightTypeGroup.style.display = isHighlight ? 'block' : 'none';
+
+      const { target } = getSelectedTarget();
+      const existing = target ? blacklist_rules[target] : null;
+      if (!existing) {
+        saveBtn.textContent = isHighlight
+          ? t('save_btn_add_highlight', currentLang)
+          : t('save_btn_add', currentLang);
+      }
+    });
   });
 
   // 옵션 페이지 열기
@@ -239,6 +271,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       createdAt
     };
 
+    if (action === 'highlight') {
+      ruleObj.highlightType = document.querySelector('input[name="highlightType"]:checked')?.value || 'star';
+    }
+
     // 웹스토어 확장 프로그램 이름이 있는 경우 함께 저장
     if (type === 'webstore') {
       const titleToSave = webstoreTitle || (blacklist_rules[target]?.title) || '';
@@ -251,7 +287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await chrome.storage.local.set({ blacklist_rules });
 
-    // 현재 탭 배지 즉시 반영
+    // 현재 탭 배지 즉시 반영 및 페이지 실시간 갱신
     if (tab && tab.id) {
       try {
         if (action === 'block') {
@@ -263,7 +299,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (action === 'hide') {
           await chrome.action.setBadgeText({ tabId: tab.id, text: 'HIDE' });
           await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#64748B' });
+        } else if (action === 'highlight') {
+          await chrome.action.setBadgeText({ tabId: tab.id, text: 'HL' });
+          await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#8B5CF6' });
         }
+
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'APPLY_LINK_ACTION',
+          target: target,
+          action: action,
+          rule: ruleObj
+        }).catch(() => {});
       } catch (e) {}
     }
 

@@ -177,7 +177,7 @@ body {
 /* 통계 카드 행 */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -208,6 +208,7 @@ body {
 .stat-card.block .stat-num { color: #e53e3e; }
 .stat-card.warn .stat-num { color: #dd6b20; }
 .stat-card.hide .stat-num { color: #4a5568; }
+.stat-card.highlight .stat-num { color: #8b5cf6; }
 
 .stat-label {
   font-size: 12px;
@@ -647,6 +648,20 @@ input[type="text"]:focus, select:focus {
 .action-badge.block { background: #ffebee; color: #c62828; }
 .action-badge.warn { background: #fff3e0; color: #d97706; }
 .action-badge.hide { background: #edf2f7; color: #4a5568; }
+.action-badge.highlight { background: #f5f3ff; color: #7c3aed; }
+
+.hl-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.hl-type-badge.star { background: #fef3c7; color: #b45309; }
+.hl-type-badge.pin { background: #e0e7ff; color: #4338ca; }
+.hl-type-badge.custom { background: #f3e8ff; color: #7e22ce; }
 
 /* 테이블 컬럼 너비 분배 - 대상 및 유형 컬럼에 최대 폭 집중 할당 */
 .col-target {
@@ -856,6 +871,12 @@ input[type="text"]:focus, select:focus {
   border-color: #cbd5e0;
 }
 
+.inline-action-select.highlight {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+  border-color: #ddd6fe;
+}
+
 .inline-action-select:hover {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   filter: brightness(0.97);
@@ -1041,6 +1062,52 @@ input[type="text"]:focus, select:focus {
 
 .modal-action-card.hide:has(input:checked) .text strong {
   color: #1a202c;
+}
+
+.modal-action-card.highlight:has(input:checked) {
+  border-color: #8b5cf6;
+  background-color: #f5f3ff;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.modal-action-card.highlight:has(input:checked) .text strong {
+  color: #6d28d9;
+}
+
+.modal-highlight-selector {
+  display: flex;
+  background-color: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.modal-hl-option {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.modal-hl-option input {
+  display: none;
+}
+
+.modal-hl-option span {
+  display: block;
+  padding: 6px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  color: #475569;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.modal-hl-option input:checked + span {
+  background: #ffffff;
+  color: #7c3aed;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .modal-input {

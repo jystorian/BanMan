@@ -54,7 +54,7 @@
       // 기존 적용 표식 및 인라인 display/컨테이너 초기화
       document.querySelectorAll('[data-cb-annotated]').forEach(el => {
         el.removeAttribute('data-cb-annotated');
-        el.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block');
+        el.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block', 'cb-link-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
         el.style.display = '';
         el.title = '';
       });
@@ -62,6 +62,9 @@
         c.classList.remove('cb-container-hidden');
         c.removeAttribute('data-cb-hidden-for');
         c.style.display = '';
+      });
+      document.querySelectorAll('.cb-container-highlight').forEach(c => {
+        c.classList.remove('cb-container-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
       });
       document.querySelectorAll('.cb-badge').forEach(b => b.remove());
       processAllLinks();
@@ -258,7 +261,7 @@
   function clearRuleFromElement(link) {
     if (!link) return;
     link.removeAttribute('data-cb-annotated');
-    link.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block');
+    link.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block', 'cb-link-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
     link.style.display = '';
     link.title = '';
 
@@ -269,14 +272,19 @@
 
     // 스마트 컨테이너 복원
     const container = getSmartContainer(link);
-    if (container && container !== link && container.classList.contains('cb-container-hidden')) {
-      container.classList.remove('cb-container-hidden');
-      container.removeAttribute('data-cb-hidden-for');
-      container.style.display = '';
+    if (container && container !== link) {
+      if (container.classList.contains('cb-container-hidden')) {
+        container.classList.remove('cb-container-hidden');
+        container.removeAttribute('data-cb-hidden-for');
+        container.style.display = '';
+      }
+      if (container.classList.contains('cb-container-highlight')) {
+        container.classList.remove('cb-container-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
+      }
     }
   }
 
-  // 단일 링크에 규칙 스타일 및 배지 적용 (스마트 컨테이너 숨김 포함)
+  // 단일 링크에 규칙 스타일 및 배지 적용 (스마트 컨테이너 숨김 및 강조 포함)
   function applyRuleToElement(link, rule, href) {
     if (!link || !rule) return;
 
@@ -336,6 +344,42 @@
       badge.appendChild(cowlImg);
       const blockMemo = hasMemo ? ` [차단: ${rule.memo.trim()}]` : ' [차단]';
       badge.appendChild(document.createTextNode(blockMemo));
+
+      if (link.nextSibling) {
+        link.parentNode.insertBefore(badge, link.nextSibling);
+      } else {
+        link.parentNode.appendChild(badge);
+      }
+    } else if (rule.action === 'highlight') {
+      const hlType = rule.highlightType || 'star';
+      link.classList.add('cb-link-highlight', `cb-highlight-${hlType}`);
+
+      const hasMemo = !!(rule.memo && rule.memo.trim());
+      const labelText = hlType === 'pin' ? '검토' : (hlType === 'star' ? '추천' : '강조');
+      link.title = `[BanMan ${labelText}]${hasMemo ? ' ' + rule.memo.trim() : ''}`;
+
+      // 스마트 컨테이너(카드/아이템 등)가 있을 경우 테두리 네온 강조
+      const container = getSmartContainer(link);
+      if (container && container !== link && container.offsetHeight < 800) {
+        container.classList.add('cb-container-highlight', `cb-highlight-${hlType}`);
+      }
+
+      // 강조 뱃지 생성
+      const badge = document.createElement('span');
+      badge.className = `cb-badge cb-badge-highlight cb-badge-${hlType}`;
+      badge.title = hasMemo ? `[BanMan ${labelText}] ${rule.memo.trim()}` : `[BanMan ${labelText}]`;
+
+      const iconText = hlType === 'pin' ? '📌' : (hlType === 'star' ? '⭐' : '✨');
+      const hlIcon = document.createElement('span');
+      hlIcon.className = 'cb-highlight-icon';
+      hlIcon.textContent = iconText;
+      badge.appendChild(hlIcon);
+
+      if (hasMemo) {
+        badge.appendChild(document.createTextNode(` [${rule.memo.trim()}]`));
+      } else {
+        badge.appendChild(document.createTextNode(` [${labelText}]`));
+      }
 
       if (link.nextSibling) {
         link.parentNode.insertBefore(badge, link.nextSibling);

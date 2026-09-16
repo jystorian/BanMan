@@ -99,6 +99,36 @@
             </div>
           </div>
         </label>
+
+        <label class="action-card">
+          <input type="radio" name="actionType" value="highlight">
+          <div class="card-content highlight">
+            <span class="act-icon">✨</span>
+            <div class="act-info">
+              <strong data-i18n="action_highlight_title">강조</strong>
+              <small data-i18n="action_highlight_desc">테두리 / 추천 뱃지</small>
+            </div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 강조 서브타입 선택 (강조 액션 선택 시 노출) -->
+    <div id="highlightTypeGroup" class="form-group" style="display: none;">
+      <label class="form-label" data-i18n="hl_type_label">강조 분류:</label>
+      <div class="segmented-control">
+        <label class="segment">
+          <input type="radio" name="highlightType" value="star" checked>
+          <span data-i18n="hl_type_star">⭐ 추천/좋아요</span>
+        </label>
+        <label class="segment">
+          <input type="radio" name="highlightType" value="pin">
+          <span data-i18n="hl_type_pin">📌 검토</span>
+        </label>
+        <label class="segment">
+          <input type="radio" name="highlightType" value="custom">
+          <span data-i18n="hl_type_custom">✨ 일반 강조</span>
+        </label>
       </div>
     </div>
 

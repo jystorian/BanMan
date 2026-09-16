@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const blockCountEl = document.getElementById('blockCount');
   const warnCountEl = document.getElementById('warnCount');
   const hideCountEl = document.getElementById('hideCount');
+  const highlightCountEl = document.getElementById('highlightCount');
 
   const addRuleForm = document.getElementById('addRuleForm');
   const newTarget = document.getElementById('newTarget');
@@ -214,17 +215,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     let block = 0;
     let warn = 0;
     let hide = 0;
+    let highlight = 0;
 
     entries.forEach(([_, rule]) => {
       if (rule.action === 'block') block++;
       else if (rule.action === 'warn') warn++;
       else if (rule.action === 'hide') hide++;
+      else if (rule.action === 'highlight') highlight++;
     });
 
     totalCountEl.textContent = total;
     blockCountEl.textContent = block;
     warnCountEl.textContent = warn;
     hideCountEl.textContent = hide;
+    if (highlightCountEl) highlightCountEl.textContent = highlight;
 
     // 필터링 및 검색 적용
     const filtered = entries.filter(([key, rule]) => {
@@ -295,7 +299,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (rule.action === 'hide') {
           actionLabel = t('action_hide', currentLang);
           actionClass = 'hide';
+        } else if (rule.action === 'highlight') {
+          actionLabel = t('stat_highlight', currentLang);
+          actionClass = 'highlight';
         }
+
+        // 강조 서브분류 배지
+        const hlTypeBadge = rule.action === 'highlight'
+          ? `<span class="hl-type-badge ${rule.highlightType || 'star'}">${rule.highlightType === 'pin' ? '📌 ' + t('hl_type_pin', currentLang) : (rule.highlightType === 'custom' ? '✨ ' + t('hl_type_custom', currentLang) : '⭐ ' + t('hl_type_star', currentLang))}</span>`
+          : '';
 
         // 대상 명칭, 썸네일/파비콘, 도메인 배지 및 2단 계층 링크 처리
         let targetHtml = '';
@@ -321,6 +333,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <span class="target-domain-badge">🏬 Web Store</span>
                   <span class="target-url-sub" title="ID: ${escapeHtml(extId)}">ID: ${escapeHtml(extId)}</span>
                   <span class="type-tag ${typeClass}">${typeLabel}</span>
+                  ${hlTypeBadge}
                 </div>
               </div>
             </div>
@@ -353,6 +366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   ${domain ? `<span class="target-domain-badge">🌐 ${escapeHtml(domain)}</span>` : ''}
                   <span class="target-url-sub" title="${escapeHtml(targetStr)}">${escapeHtml(displayUrl)}</span>
                   <span class="type-tag ${typeClass}">${typeLabel}</span>
+                  ${hlTypeBadge}
                 </div>
               </div>
             </div>
@@ -368,6 +382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <option value="block" ${rule.action === 'block' ? 'selected' : ''}>🚫 ${t('action_block', currentLang)}</option>
               <option value="warn" ${rule.action === 'warn' ? 'selected' : ''}>⚠️ ${t('action_warn', currentLang)}</option>
               <option value="hide" ${rule.action === 'hide' ? 'selected' : ''}>🙈 ${t('action_hide', currentLang)}</option>
+              <option value="highlight" ${rule.action === 'highlight' ? 'selected' : ''}>✨ ${t('stat_highlight', currentLang)}</option>
             </select>
           </td>
           <td class="memo-cell">${escapeHtml(rule.memo || '-')}</td>
@@ -474,6 +489,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       createdAt
     };
 
+    if (action === 'highlight') {
+      ruleObj.highlightType = 'star';
+    }
+
     if (type === 'webstore' && webstoreTitle) {
       ruleObj.title = webstoreTitle;
     }
@@ -495,6 +514,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const newAction = select.value;
       if (key && currentRules[key]) {
         currentRules[key].action = newAction;
+        if (newAction === 'highlight' && !currentRules[key].highlightType) {
+          currentRules[key].highlightType = 'star';
+        }
         await chrome.storage.local.set({ blacklist_rules: currentRules });
         render();
       }
@@ -509,6 +531,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const modalSaveBtn = document.getElementById('modalSaveBtn');
   const modalTargetDisplay = document.getElementById('modalTargetDisplay');
   const modalMemoInput = document.getElementById('modalMemoInput');
+  const modalHighlightTypeGroup = document.getElementById('modalHighlightTypeGroup');
 
   function openEditModal(key) {
     const item = currentRules[key];
@@ -525,9 +548,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const actionRadio = document.querySelector(`input[name="modalAction"][value="${item.action}"]`);
     if (actionRadio) actionRadio.checked = true;
 
+    if (item.action === 'highlight') {
+      if (modalHighlightTypeGroup) modalHighlightTypeGroup.style.display = 'block';
+      const hlRadio = document.querySelector(`input[name="modalHighlightType"][value="${item.highlightType || 'star'}"]`);
+      if (hlRadio) hlRadio.checked = true;
+    } else {
+      if (modalHighlightTypeGroup) modalHighlightTypeGroup.style.display = 'none';
+    }
+
     editModal.style.display = 'flex';
     modalMemoInput.focus();
   }
+
+  // 모달 내 액션 변경 시 강조 분류 표시 토글
+  document.querySelectorAll('input[name="modalAction"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (modalHighlightTypeGroup) {
+        modalHighlightTypeGroup.style.display = radio.value === 'highlight' ? 'block' : 'none';
+      }
+    });
+  });
 
   function closeEditModal() {
     editModal.style.display = 'none';
@@ -555,6 +595,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     currentRules[editingKey].action = selectedAction;
     currentRules[editingKey].memo = newMemo;
+
+    if (selectedAction === 'highlight') {
+      currentRules[editingKey].highlightType = document.querySelector('input[name="modalHighlightType"]:checked')?.value || 'star';
+    }
 
     await chrome.storage.local.set({ blacklist_rules: currentRules });
     closeEditModal();

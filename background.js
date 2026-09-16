@@ -439,6 +439,35 @@ async function setupContextMenus(lang) {
       contexts: CONTEXT_TARGETS
     });
 
+    // 2-1. Highlight Submenu & Actions
+    chrome.contextMenus.create({
+      id: 'banman_highlight',
+      parentId: 'banman_root',
+      title: t('ctx_highlight', lang),
+      contexts: CONTEXT_TARGETS
+    });
+
+    chrome.contextMenus.create({
+      id: 'banman_hl_star',
+      parentId: 'banman_highlight',
+      title: t('ctx_hl_star', lang),
+      contexts: CONTEXT_TARGETS
+    });
+
+    chrome.contextMenus.create({
+      id: 'banman_hl_pin',
+      parentId: 'banman_highlight',
+      title: t('ctx_hl_pin', lang),
+      contexts: CONTEXT_TARGETS
+    });
+
+    chrome.contextMenus.create({
+      id: 'banman_hl_custom',
+      parentId: 'banman_highlight',
+      title: t('ctx_hl_custom', lang),
+      contexts: CONTEXT_TARGETS
+    });
+
     // 3. Separator
     chrome.contextMenus.create({
       id: 'banman_sep',
@@ -531,12 +560,15 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   const lang = await getAppLanguage();
-  const menuItemId = info.menuItemId;
-
   let action = '';
+  let highlightType = 'star';
+
   if (menuItemId === 'banman_block') action = 'block';
   else if (menuItemId === 'banman_warn') action = 'warn';
   else if (menuItemId === 'banman_hide') action = 'hide';
+  else if (menuItemId === 'banman_hl_star') { action = 'highlight'; highlightType = 'star'; }
+  else if (menuItemId === 'banman_hl_pin') { action = 'highlight'; highlightType = 'pin'; }
+  else if (menuItemId === 'banman_hl_custom') { action = 'highlight'; highlightType = 'custom'; }
   else if (menuItemId === 'banman_remove') action = 'remove';
 
   if (!action) return;
@@ -686,6 +718,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     updatedAt: now.toISOString()
   };
 
+  if (action === 'highlight') {
+    newRule.highlightType = highlightType || 'star';
+  }
+
   if (rawLinkUrl && rawLinkUrl !== target) {
     newRule.rawUrl = rawLinkUrl;
   }
@@ -711,7 +747,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
   }
 
-  const actionName = t(`stat_${action}`, lang) || action;
+  let actionName = t(`stat_${action}`, lang) || action;
+  if (action === 'highlight') {
+    actionName = t(`hl_type_${newRule.highlightType}`, lang) || actionName;
+  }
   const displayTarget = formatDisplayUrl(target, 42);
   const successMsg = t('toast_registered', lang, {
     action: actionName,

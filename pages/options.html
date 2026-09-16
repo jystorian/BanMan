@@ -50,6 +50,10 @@
           <span class="stat-num" id="hideCount">0</span>
           <span class="stat-label"><span class="stat-icon"><svg class="icon-closed-eye stat-icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10s4 6 10 6 10-6 10-6"/><path d="m5 14-1.8 2.3"/><path d="m9 16.5-0.8 2.8"/><path d="m15 16.5 0.8 2.8"/><path d="m19 14 1.8 2.3"/></svg></span> <span data-i18n="stat_hide">링크 숨김</span></span>
         </div>
+        <div class="stat-card highlight">
+          <span class="stat-num" id="highlightCount">0</span>
+          <span class="stat-label"><span class="stat-icon">✨</span> <span data-i18n="stat_highlight">강조</span></span>
+        </div>
       </section>
 
       <!-- 수동 규칙 추가 카드 -->
@@ -80,6 +84,7 @@
                 <option value="block" data-i18n="action_block">사전 차단</option>
                 <option value="warn" data-i18n="action_warn">주의</option>
                 <option value="hide" data-i18n="action_hide">링크 숨김</option>
+                <option value="highlight" data-i18n="action_highlight">강조 (추천/검토)</option>
               </select>
             </div>
           </div>
@@ -151,6 +156,7 @@
               <button class="tab-btn" data-filter="block" data-i18n="filter_block">차단</button>
               <button class="tab-btn" data-filter="warn" data-i18n="filter_warn">주의</button>
               <button class="tab-btn" data-filter="hide" data-i18n="filter_hide">숨김</button>
+              <button class="tab-btn" data-filter="highlight" data-i18n="filter_highlight">강조</button>
             </div>
           </div>
         </div>
@@ -239,6 +245,34 @@
                   <small data-i18n="action_hide_desc">웹페이지 내 링크 숨김</small>
                 </div>
               </div>
+            </label>
+            <label class="modal-action-card highlight">
+              <input type="radio" name="modalAction" value="highlight">
+              <div class="card-inner">
+                <span class="icon">✨</span>
+                <div class="text">
+                  <strong data-i18n="action_highlight_title">강조</strong>
+                  <small data-i18n="action_highlight_desc">테두리 / 추천 뱃지</small>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div id="modalHighlightTypeGroup" class="modal-field" style="display: none;">
+          <label class="modal-label" data-i18n="hl_type_label">강조 분류</label>
+          <div class="modal-highlight-selector">
+            <label class="modal-hl-option">
+              <input type="radio" name="modalHighlightType" value="star" checked>
+              <span data-i18n="hl_type_star">⭐ 추천/좋아요</span>
+            </label>
+            <label class="modal-hl-option">
+              <input type="radio" name="modalHighlightType" value="pin">
+              <span data-i18n="hl_type_pin">📌 검토</span>
+            </label>
+            <label class="modal-hl-option">
+              <input type="radio" name="modalHighlightType" value="custom">
+              <span data-i18n="hl_type_custom">✨ 일반 강조</span>
             </label>
           </div>
         </div>

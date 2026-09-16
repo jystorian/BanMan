@@ -286,6 +286,12 @@ body {
   box-shadow: 0 0 0 1px #4a5568;
 }
 
+.action-card input:checked + .card-content.highlight {
+  border-color: #8b5cf6;
+  background-color: #f5f3ff;
+  box-shadow: 0 0 0 1px #8b5cf6;
+}
+
 .act-icon {
   width: 20px;
   min-width: 20px;
