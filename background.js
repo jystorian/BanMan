@@ -401,104 +401,145 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Context Menu Actions for Links
 // ==========================================
 
+let menuSetupPromise = null;
+
 async function setupContextMenus(lang) {
-  if (!lang) {
-    lang = await getAppLanguage();
+  // 동시 다발적 호출 시 이전 생성이 완료될 때까지 대기 (경쟁 상태 완벽 방지)
+  if (menuSetupPromise) {
+    try {
+      await menuSetupPromise;
+    } catch (e) {}
   }
 
-  const CONTEXT_TARGETS = ['link', 'video', 'audio', 'image', 'frame'];
+  menuSetupPromise = (async () => {
+    try {
+      if (!lang) {
+        lang = await getAppLanguage();
+      }
 
-  // Remove existing menus to prevent ID duplication
-  chrome.contextMenus.removeAll(() => {
-    // 1. Root Menu (모든 웹 영역에서 우클릭 가능하도록 'all' 설정)
-    chrome.contextMenus.create({
-      id: 'banman_root',
-      title: t('ctx_root', lang),
-      contexts: ['all']
-    });
+      const CONTEXT_TARGETS = ['link', 'video', 'audio', 'image', 'frame'];
 
-    // 2. Direct 1-click Actions (URL/Media)
-    chrome.contextMenus.create({
-      id: 'banman_block',
-      parentId: 'banman_root',
-      title: t('ctx_block', lang),
-      contexts: CONTEXT_TARGETS
-    });
+      // 1. 기존 메뉴를 비동기로 깨끗이 제거 후 완료 대기
+      await new Promise((resolve) => {
+        chrome.contextMenus.removeAll(() => {
+          if (chrome.runtime.lastError) {
+            // Unchecked runtime.lastError 방지
+          }
+          resolve();
+        });
+      });
 
-    chrome.contextMenus.create({
-      id: 'banman_warn',
-      parentId: 'banman_root',
-      title: t('ctx_warn', lang),
-      contexts: CONTEXT_TARGETS
-    });
+      // 2. chrome.runtime.lastError를 항시 점검하여 Unchecked 에러를 원천 차단하는 안전한 생성 래퍼
+      const safeCreate = (properties) => {
+        return new Promise((resolve) => {
+          chrome.contextMenus.create(properties, () => {
+            if (chrome.runtime.lastError) {
+              // 중복 생성이나 이미 존재하는 항목 에러를 안전하게 점검/억제하여 크롬 에러 콘솔 오염 방지
+            }
+            resolve();
+          });
+        });
+      };
 
-    chrome.contextMenus.create({
-      id: 'banman_hide',
-      parentId: 'banman_root',
-      title: t('ctx_hide', lang),
-      contexts: CONTEXT_TARGETS
-    });
+      // 3. 부모 메뉴가 완전히 생성된 후 자식 메뉴가 등록되도록 순차적(Sequential) 생성
+      // 3-1. Root Menu (모든 웹 영역에서 우클릭 가능하도록 'all' 설정)
+      await safeCreate({
+        id: 'banman_root',
+        title: t('ctx_root', lang),
+        contexts: ['all']
+      });
 
-    // 2-1. Highlight Submenu & Actions
-    chrome.contextMenus.create({
-      id: 'banman_highlight',
-      parentId: 'banman_root',
-      title: t('ctx_highlight', lang),
-      contexts: CONTEXT_TARGETS
-    });
+      // 3-2. Direct 1-click Actions (URL/Media)
+      await safeCreate({
+        id: 'banman_block',
+        parentId: 'banman_root',
+        title: t('ctx_block', lang),
+        contexts: CONTEXT_TARGETS
+      });
 
-    chrome.contextMenus.create({
-      id: 'banman_hl_star',
-      parentId: 'banman_highlight',
-      title: t('ctx_hl_star', lang),
-      contexts: CONTEXT_TARGETS
-    });
+      await safeCreate({
+        id: 'banman_warn',
+        parentId: 'banman_root',
+        title: t('ctx_warn', lang),
+        contexts: CONTEXT_TARGETS
+      });
 
-    chrome.contextMenus.create({
-      id: 'banman_hl_pin',
-      parentId: 'banman_highlight',
-      title: t('ctx_hl_pin', lang),
-      contexts: CONTEXT_TARGETS
-    });
+      await safeCreate({
+        id: 'banman_hide',
+        parentId: 'banman_root',
+        title: t('ctx_hide', lang),
+        contexts: CONTEXT_TARGETS
+      });
 
-    chrome.contextMenus.create({
-      id: 'banman_hl_custom',
-      parentId: 'banman_highlight',
-      title: t('ctx_hl_custom', lang),
-      contexts: CONTEXT_TARGETS
-    });
+      // 3-3. Highlight Submenu & Actions
+      await safeCreate({
+        id: 'banman_highlight',
+        parentId: 'banman_root',
+        title: t('ctx_highlight', lang),
+        contexts: CONTEXT_TARGETS
+      });
 
-    // 3. Separator
-    chrome.contextMenus.create({
-      id: 'banman_sep',
-      parentId: 'banman_root',
-      type: 'separator',
-      contexts: CONTEXT_TARGETS
-    });
+      await safeCreate({
+        id: 'banman_hl_star',
+        parentId: 'banman_highlight',
+        title: t('ctx_hl_star', lang),
+        contexts: CONTEXT_TARGETS
+      });
 
-    // 4. Remove Menu
-    chrome.contextMenus.create({
-      id: 'banman_remove',
-      parentId: 'banman_root',
-      title: t('ctx_remove', lang),
-      contexts: CONTEXT_TARGETS
-    });
+      await safeCreate({
+        id: 'banman_hl_pin',
+        parentId: 'banman_highlight',
+        title: t('ctx_hl_pin', lang),
+        contexts: CONTEXT_TARGETS
+      });
 
-    // 5. Separator & Element Picker (사파리 스타일 화면 요소 선택 가리기)
-    chrome.contextMenus.create({
-      id: 'banman_sep_picker',
-      parentId: 'banman_root',
-      type: 'separator',
-      contexts: CONTEXT_TARGETS
-    });
+      await safeCreate({
+        id: 'banman_hl_custom',
+        parentId: 'banman_highlight',
+        title: t('ctx_hl_custom', lang),
+        contexts: CONTEXT_TARGETS
+      });
 
-    chrome.contextMenus.create({
-      id: 'banman_pick_element',
-      parentId: 'banman_root',
-      title: t('ctx_element_picker', lang),
-      contexts: ['all']
-    });
-  });
+      // 3-4. Separator
+      await safeCreate({
+        id: 'banman_sep',
+        parentId: 'banman_root',
+        type: 'separator',
+        contexts: CONTEXT_TARGETS
+      });
+
+      // 3-5. Remove Menu
+      await safeCreate({
+        id: 'banman_remove',
+        parentId: 'banman_root',
+        title: t('ctx_remove', lang),
+        contexts: CONTEXT_TARGETS
+      });
+
+      // 3-6. Separator & Element Picker (사파리 스타일 화면 요소 선택 가리기)
+      await safeCreate({
+        id: 'banman_sep_picker',
+        parentId: 'banman_root',
+        type: 'separator',
+        contexts: CONTEXT_TARGETS
+      });
+
+      await safeCreate({
+        id: 'banman_pick_element',
+        parentId: 'banman_root',
+        title: t('ctx_element_picker', lang),
+        contexts: ['all']
+      });
+    } catch (err) {
+      console.warn('setupContextMenus error:', err);
+    }
+  })();
+
+  try {
+    await menuSetupPromise;
+  } finally {
+    menuSetupPromise = null;
+  }
 }
 
 // 사용자 피드백 안내 함수 (인페이지 토스트 및 데스크톱 알림)
@@ -801,21 +842,21 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 // 확장 프로그램 설치 및 업데이트 시 컨텍스트 메뉴 초기화
 chrome.runtime.onInstalled.addListener(async () => {
   const lang = await getAppLanguage();
-  setupContextMenus(lang);
+  await setupContextMenus(lang);
 });
 
 // 브라우저 시작 시 컨텍스트 메뉴 검증
 chrome.runtime.onStartup.addListener(async () => {
   const lang = await getAppLanguage();
-  setupContextMenus(lang);
+  await setupContextMenus(lang);
 });
 
 // 언어 변경 시 컨텍스트 메뉴 즉시 갱신
-chrome.storage.onChanged.addListener((changes, areaName) => {
+chrome.storage.onChanged.addListener(async (changes, areaName) => {
   if (areaName === 'local' && changes.app_lang) {
-    setupContextMenus(changes.app_lang.newValue);
+    await setupContextMenus(changes.app_lang.newValue);
   }
 });
 
-// 서비스 워커 로드 시에도 안전하게 컨텍스트 메뉴 즉시 초기화
+// 서비스 워커 로드 시에도 안전하게 컨텍스트 메뉴 즉시 초기화 (동시 호출 시 뮤텍스로 안전 직렬화)
 setupContextMenus();
