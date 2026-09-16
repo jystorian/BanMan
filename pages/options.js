@@ -1005,6 +1005,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]);
 
     const isConnected = !!config.drive_connected;
+    const driveCard = document.querySelector('.drive-card');
+    if (driveCard) {
+      driveCard.classList.toggle('connected', isConnected);
+    }
     if (driveControls) {
       driveControls.style.display = isConnected ? 'flex' : 'none';
     }
