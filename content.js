@@ -446,6 +446,15 @@
       }
     }
 
+    // 2-1. 우클릭된 대상 링크가 있으면 최우선 즉시 갱신 (지연 없이 즉시 반영)
+    if (lastRightClickInfo?.link && document.body.contains(lastRightClickInfo.link)) {
+      clearRuleFromElement(lastRightClickInfo.link);
+      if (action !== 'remove' && rule) {
+        lastRightClickInfo.link.setAttribute('data-cb-annotated', 'true');
+        applyRuleToElement(lastRightClickInfo.link, rule, lastRightClickInfo.link.href);
+      }
+    }
+
     // 3. iframe 프레임 내부일 때 자체 은닉 및 상위 윈도우에 은닉 메시지 전송
     if (action === 'hide' && window !== window.top) {
       document.documentElement.style.display = 'none';

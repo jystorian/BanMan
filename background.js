@@ -551,53 +551,65 @@ function extractActualTargetUrl(rawUrl) {
 
 // 우클릭 컨텍스트 메뉴 클릭 이벤트 처리 (해당 URL만 즉시 1클릭 처리 + 스마트 광고/iframe/비디오/이미지 감지)
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  let rawLinkUrl = (info.linkUrl || info.srcUrl || info.frameUrl || '').trim();
-  if (!rawLinkUrl && lastContextMetadata?.mediaSrc) {
-    rawLinkUrl = lastContextMetadata.mediaSrc.trim();
-  }
-  if (!rawLinkUrl && lastContextMetadata?.href) {
-    rawLinkUrl = lastContextMetadata.href.trim();
-  }
+  try {
+    const menuItemId = info?.menuItemId;
+    if (!menuItemId) return;
 
-  const lang = await getAppLanguage();
-  let action = '';
-  let highlightType = 'star';
-
-  if (menuItemId === 'banman_block') action = 'block';
-  else if (menuItemId === 'banman_warn') action = 'warn';
-  else if (menuItemId === 'banman_hide') action = 'hide';
-  else if (menuItemId === 'banman_hl_star') { action = 'highlight'; highlightType = 'star'; }
-  else if (menuItemId === 'banman_hl_pin') { action = 'highlight'; highlightType = 'pin'; }
-  else if (menuItemId === 'banman_hl_custom') { action = 'highlight'; highlightType = 'custom'; }
-  else if (menuItemId === 'banman_remove') action = 'remove';
-
-  if (!action) return;
-
-  // URL이 없는 동적 배너/요소의 '숨기기' 요청 처리 (현재 화면에서 DOM 즉시 은닉)
-  if (!rawLinkUrl) {
-    if (action === 'hide' && tab?.id) {
-      chrome.tabs.sendMessage(tab.id, {
-        type: 'APPLY_LINK_ACTION',
-        action: 'hide',
-        linkUrl: '',
-        rawLinkUrl: '',
-        target: '',
-        rule: null
-      }).catch(() => {});
-      notifyUser(tab.id, t('toast_element_hidden', lang) || '[BanMan] 선택한 요소를 화면에서 숨겼습니다.', 'info');
+    let targetTab = tab;
+    if (!targetTab?.id) {
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        targetTab = tabs && tabs[0];
+      } catch (e) {}
     }
-    return;
-  }
 
-  const frameUrl = (info.frameUrl || '').trim();
-  const frameId = info.frameId || 0;
-  const linkUrl = extractActualTargetUrl(rawLinkUrl);
+    let rawLinkUrl = (info.linkUrl || info.srcUrl || info.frameUrl || '').trim();
+    if (!rawLinkUrl && lastContextMetadata?.mediaSrc) {
+      rawLinkUrl = lastContextMetadata.mediaSrc.trim();
+    }
+    if (!rawLinkUrl && lastContextMetadata?.href) {
+      rawLinkUrl = lastContextMetadata.href.trim();
+    }
 
-  // 특수/시스템 URL 검증
-  if (rawLinkUrl.startsWith('chrome://') || rawLinkUrl.startsWith('chrome-extension://') || rawLinkUrl.startsWith('about:') || rawLinkUrl.startsWith('javascript:')) {
-    notifyUser(tab?.id, t('toast_invalid_url', lang), 'error');
-    return;
-  }
+    const lang = await getAppLanguage();
+    let action = '';
+    let highlightType = 'star';
+
+    if (menuItemId === 'banman_block') action = 'block';
+    else if (menuItemId === 'banman_warn') action = 'warn';
+    else if (menuItemId === 'banman_hide') action = 'hide';
+    else if (menuItemId === 'banman_hl_star') { action = 'highlight'; highlightType = 'star'; }
+    else if (menuItemId === 'banman_hl_pin') { action = 'highlight'; highlightType = 'pin'; }
+    else if (menuItemId === 'banman_hl_custom') { action = 'highlight'; highlightType = 'custom'; }
+    else if (menuItemId === 'banman_remove') action = 'remove';
+
+    if (!action) return;
+
+    // URL이 없는 동적 배너/요소의 '숨기기' 요청 처리 (현재 화면에서 DOM 즉시 은닉)
+    if (!rawLinkUrl) {
+      if (action === 'hide' && targetTab?.id) {
+        chrome.tabs.sendMessage(targetTab.id, {
+          type: 'APPLY_LINK_ACTION',
+          action: 'hide',
+          linkUrl: '',
+          rawLinkUrl: '',
+          target: '',
+          rule: null
+        }).catch(() => {});
+        notifyUser(targetTab.id, t('toast_element_hidden', lang) || '[BanMan] 선택한 요소를 화면에서 숨겼습니다.', 'info');
+      }
+      return;
+    }
+
+    const frameUrl = (info.frameUrl || '').trim();
+    const frameId = info.frameId || 0;
+    const linkUrl = extractActualTargetUrl(rawLinkUrl);
+
+    // 특수/시스템 URL 검증
+    if (rawLinkUrl.startsWith('chrome://') || rawLinkUrl.startsWith('chrome-extension://') || rawLinkUrl.startsWith('about:') || rawLinkUrl.startsWith('javascript:')) {
+      notifyUser(targetTab?.id, t('toast_invalid_url', lang), 'error');
+      return;
+    }
 
   const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
 
@@ -646,7 +658,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       await chrome.storage.local.set({ blacklist_rules });
 
       // 화면에 실시간 즉시 반영 (리프레시 불필요 + 메인 및 서브프레임 동시 전달)
-      if (tab?.id) {
+      if (targetTab?.id) {
         const payload = {
           type: 'APPLY_LINK_ACTION',
           linkUrl: linkUrl,
@@ -657,18 +669,18 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           action: 'remove',
           rule: null
         };
-        chrome.tabs.sendMessage(tab.id, payload).catch(() => {});
+        chrome.tabs.sendMessage(targetTab.id, payload).catch(() => {});
         if (frameId > 0) {
-          chrome.tabs.sendMessage(tab.id, payload, { frameId }).catch(() => {});
+          chrome.tabs.sendMessage(targetTab.id, payload, { frameId }).catch(() => {});
         }
       }
 
       const displayRemoveKey = formatDisplayUrl(removeKey, 42);
       const msg = t('toast_removed', lang, { target: displayRemoveKey });
-      notifyUser(tab?.id, msg, 'info');
+      notifyUser(targetTab?.id, msg, 'info');
     } else {
       const displayTarget = formatDisplayUrl(target, 42);
-      notifyUser(tab?.id, `[BanMan] '${displayTarget}' 등록된 규칙을 찾을 수 없습니다.`, 'info');
+      notifyUser(targetTab?.id, `[BanMan] '${displayTarget}' 등록된 규칙을 찾을 수 없습니다.`, 'info');
     }
     return;
   }
@@ -730,7 +742,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   await chrome.storage.local.set({ blacklist_rules });
 
   // 화면에 실시간 즉시 반영 (리프레시 불필요 + 메인 및 서브프레임 동시 전달)
-  if (tab?.id) {
+  if (targetTab?.id) {
     const payload = {
       type: 'APPLY_LINK_ACTION',
       linkUrl: linkUrl,
@@ -741,9 +753,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       action: action,
       rule: newRule
     };
-    chrome.tabs.sendMessage(tab.id, payload).catch(() => {});
+    chrome.tabs.sendMessage(targetTab.id, payload).catch(() => {});
     if (frameId > 0) {
-      chrome.tabs.sendMessage(tab.id, payload, { frameId }).catch(() => {});
+      chrome.tabs.sendMessage(targetTab.id, payload, { frameId }).catch(() => {});
     }
   }
 
@@ -757,7 +769,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     target: displayTarget
   });
 
-  notifyUser(tab?.id, successMsg, action === 'block' ? 'error' : (action === 'warn' ? 'warn' : 'success'));
+  notifyUser(targetTab?.id, successMsg, action === 'block' ? 'error' : (action === 'warn' ? 'warn' : 'success'));
+  } catch (err) {
+    console.error('BanMan contextMenu onClicked error:', err);
+  }
 });
 
 // 확장 프로그램 설치 및 업데이트 시 컨텍스트 메뉴 초기화

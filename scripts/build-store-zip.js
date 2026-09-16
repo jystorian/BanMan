@@ -32,6 +32,14 @@ for (const jsFile of jsFilesToCheck) {
 }
 console.log('✅ All JavaScript files passed syntax check.');
 
+// Security check: ensure no private key (.pem) exists in root extension directory
+const rootFiles = fs.readdirSync(rootDir);
+const pemFiles = rootFiles.filter(f => f.endsWith('.pem'));
+if (pemFiles.length > 0) {
+  console.error(`❌ SECURITY ERROR: Found private key file (.pem) in extension root: ${pemFiles.join(', ')}. Move it outside the extension folder.`);
+  process.exit(1);
+}
+
 const filesToInclude = [
   'manifest.json',
   'background.js',
