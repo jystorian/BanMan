@@ -540,7 +540,7 @@ async function setupContextMenus(lang) {
         contexts: CONTEXT_TARGETS
       });
 
-      // 3-3. Highlight Submenu & Actions (🟢 검토, 🔵 보관, 💜 좋아요)
+      // 3-3. Highlight Submenu & Actions (📌 검토, 🔖 보관, 💜 좋아요)
       await safeCreate({
         id: 'banman_highlight',
         parentId: 'banman_root',

@@ -238,14 +238,15 @@ body {
   vertical-align: middle;
 }
 
+.btn-delete-element,
 .btn-restore {
-  background-color: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background-color: #fff5f5;
+  color: #e53e3e;
+  border: 1px solid #feb2b2;
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -253,10 +254,18 @@ body {
   gap: 4px;
 }
 
+.btn-delete-element:hover,
 .btn-restore:hover {
-  background-color: #dbeafe;
-  border-color: #93c5fd;
-  color: #1d4ed8;
+  background-color: #e53e3e;
+  border-color: #c53030;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(229, 62, 62, 0.3);
+  transform: scale(1.03);
+}
+
+.btn-delete-element:active,
+.btn-restore:active {
+  transform: scale(0.97);
 }
 
 /* 로컬 백업 및 복원 카드 스타일 */

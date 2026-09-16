@@ -347,9 +347,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             <td class="memo-cell">${escapeHtml(item.rule.summary || '-')}</td>
             <td class="date-cell">${formatDateStacked(item.rule.createdAt)}</td>
             <td class="col-manage">
-              <button type="button" class="btn-restore" data-domain="${escapeHtml(item.domain)}" data-id="${escapeHtml(item.rule.id)}" title="${t('btn_restore_element', currentLang)}">
-                <span>↩</span>
-                <span>${t('btn_restore_element', currentLang)}</span>
+              <button type="button" class="btn-delete-element delete-element-btn" data-domain="${escapeHtml(item.domain)}" data-id="${escapeHtml(item.rule.id)}" data-selector="${escapeHtml(item.rule.selector)}" title="${t('btn_delete', currentLang)}">
+                <span>✕</span>
+                <span>${t('btn_delete', currentLang)}</span>
               </button>
             </td>
           `;
@@ -775,6 +775,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sessionSkipDeleteLabel = document.getElementById('sessionSkipDeleteLabel');
 
   let keyToDelete = null;
+  let elementToDelete = null;
 
   function getSkipDeleteConfirm() {
     return sessionStorage.getItem('banman_skip_del_confirm') === 'true';
@@ -809,6 +810,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function openDeleteModal(key) {
     keyToDelete = key;
+    elementToDelete = null;
     const item = currentRules[key];
     if (deleteModalTarget) {
       if (item && item.type === 'webstore' && item.title) {
@@ -825,8 +827,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function openDeleteElementModal(domain, ruleId, selector) {
+    keyToDelete = null;
+    elementToDelete = { domain, ruleId, selector };
+    if (deleteModalTarget) {
+      deleteModalTarget.textContent = `${domain} : ${selector || ruleId}`;
+    }
+    if (skipDeleteConfirmCheck) {
+      skipDeleteConfirmCheck.checked = getSkipDeleteConfirm();
+    }
+    if (deleteConfirmModal) {
+      deleteConfirmModal.style.display = 'flex';
+    }
+  }
+
   function closeDeleteModal() {
     keyToDelete = null;
+    elementToDelete = null;
     if (deleteConfirmModal) deleteConfirmModal.style.display = 'none';
   }
 
@@ -844,14 +861,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     render();
   }
 
+  async function executeDeleteElementRule(domain, ruleId) {
+    if (!domain || !ruleId || !currentElementRules[domain]) return;
+    currentElementRules[domain] = currentElementRules[domain].filter(r => r.id !== ruleId);
+    if (currentElementRules[domain].length === 0) {
+      delete currentElementRules[domain];
+    }
+    await chrome.storage.local.set({ element_hide_rules: currentElementRules });
+    render();
+  }
+
   deleteModalConfirmBtn?.addEventListener('click', async () => {
     if (skipDeleteConfirmCheck && skipDeleteConfirmCheck.checked) {
       setSkipDeleteConfirm(true);
     }
     const key = keyToDelete;
+    const elTarget = elementToDelete;
     closeDeleteModal();
     if (key) {
       await executeDeleteRule(key);
+    } else if (elTarget) {
+      await executeDeleteElementRule(elTarget.domain, elTarget.ruleId);
     }
   });
 
@@ -866,21 +896,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // 8. 테이블 내 수정(모달 열기), 삭제, 복원 이벤트 위임
+  // 8. 테이블 내 수정(모달 열기), 삭제 이벤트 위임
   rulesTableBody.addEventListener('click', async (e) => {
-    // 요소 가리기 규칙 복원(삭제) 버튼
-    const restoreBtn = e.target.closest('.btn-restore');
-    if (restoreBtn) {
-      const domain = restoreBtn.getAttribute('data-domain');
-      const ruleId = restoreBtn.getAttribute('data-id');
+    // 요소 가림 규칙 삭제 버튼
+    const delElementBtn = e.target.closest('.delete-element-btn, .btn-delete-element, .btn-restore');
+    if (delElementBtn) {
+      const domain = delElementBtn.getAttribute('data-domain');
+      const ruleId = delElementBtn.getAttribute('data-id');
+      const selector = delElementBtn.getAttribute('data-selector') || '';
       if (domain && ruleId && currentElementRules[domain]) {
-        if (confirm(t('confirm_restore_element', currentLang))) {
-          currentElementRules[domain] = currentElementRules[domain].filter(r => r.id !== ruleId);
-          if (currentElementRules[domain].length === 0) {
-            delete currentElementRules[domain];
-          }
-          await chrome.storage.local.set({ element_hide_rules: currentElementRules });
-          render();
+        if (getSkipDeleteConfirm()) {
+          // 이번 세션 확인 생략 활성화 시 즉시 삭제
+          await executeDeleteElementRule(domain, ruleId);
+        } else {
+          // 확인 모달 팝업
+          openDeleteElementModal(domain, ruleId, selector);
         }
       }
       return;
