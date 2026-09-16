@@ -264,6 +264,12 @@ body {
   border-left: 4px solid #3b82f6;
 }
 
+.backup-card .card-header {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
 .backup-actions {
   display: flex;
   align-items: center;
@@ -1386,10 +1392,13 @@ input[type="text"]:focus, select:focus {
   border: 1px solid #b2f5ea;
 }
 
+.drive-card:not(.connected) .card-header {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
 .drive-controls {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px dashed #e2e8f0;
   display: flex;
   flex-direction: column;
   gap: 14px;
