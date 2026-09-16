@@ -260,7 +260,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (highlightCountEl) highlightCountEl.textContent = highlight;
     if (elementCountEl) elementCountEl.textContent = elementTotal;
 
-    // 요소 가리기 규칙 탭인 경우 전용 렌더링
+    const rulesTable = document.querySelector('.rules-table');
+    if (rulesTable) {
+      rulesTable.classList.toggle('element-mode', currentFilter === 'elements');
+    }
+
+    // 요소 가림 규칙 탭인 경우 전용 렌더링
     if (currentFilter === 'elements') {
       if (rulesTableHeadRow) {
         rulesTableHeadRow.innerHTML = `
@@ -442,9 +447,17 @@ document.addEventListener('DOMContentLoaded', async () => {
           actionClass = 'highlight';
         }
 
-        // 강조 서브분류 배지
+        // 강조 서브분류 배지 (검토, 보관, 좋아요)
+        let hlType = rule.highlightType || 'pin';
+        if (hlType === 'star') hlType = 'heart';
+        if (hlType === 'custom') hlType = 'bookmark';
+
+        let hlIconText = '📌 ' + t('hl_type_pin', currentLang);
+        if (hlType === 'bookmark') hlIconText = '🔖 ' + t('hl_type_bookmark', currentLang);
+        else if (hlType === 'heart') hlIconText = '❤️ ' + t('hl_type_heart', currentLang);
+
         const hlTypeBadge = rule.action === 'highlight'
-          ? `<span class="hl-type-badge ${rule.highlightType || 'star'}">${rule.highlightType === 'pin' ? '📌 ' + t('hl_type_pin', currentLang) : (rule.highlightType === 'custom' ? '✨ ' + t('hl_type_custom', currentLang) : '⭐ ' + t('hl_type_star', currentLang))}</span>`
+          ? `<span class="hl-type-badge ${hlType}">${hlIconText}</span>`
           : '';
 
         // 대상 명칭, 썸네일/파비콘, 도메인 배지 및 2단 계층 링크 처리
@@ -628,7 +641,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     if (action === 'highlight') {
-      ruleObj.highlightType = 'star';
+      ruleObj.highlightType = 'pin';
     }
 
     if (type === 'webstore' && webstoreTitle) {
@@ -653,7 +666,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (key && currentRules[key]) {
         currentRules[key].action = newAction;
         if (newAction === 'highlight' && !currentRules[key].highlightType) {
-          currentRules[key].highlightType = 'star';
+          currentRules[key].highlightType = 'pin';
         }
         await chrome.storage.local.set({ blacklist_rules: currentRules });
         render();
@@ -688,7 +701,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (item.action === 'highlight') {
       if (modalHighlightTypeGroup) modalHighlightTypeGroup.style.display = 'block';
-      const hlRadio = document.querySelector(`input[name="modalHighlightType"][value="${item.highlightType || 'star'}"]`);
+      let hlType = item.highlightType || 'pin';
+      if (hlType === 'star') hlType = 'heart';
+      if (hlType === 'custom') hlType = 'bookmark';
+      const hlRadio = document.querySelector(`input[name="modalHighlightType"][value="${hlType}"]`);
       if (hlRadio) hlRadio.checked = true;
     } else {
       if (modalHighlightTypeGroup) modalHighlightTypeGroup.style.display = 'none';
@@ -735,7 +751,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentRules[editingKey].memo = newMemo;
 
     if (selectedAction === 'highlight') {
-      currentRules[editingKey].highlightType = document.querySelector('input[name="modalHighlightType"]:checked')?.value || 'star';
+      currentRules[editingKey].highlightType = document.querySelector('input[name="modalHighlightType"]:checked')?.value || 'pin';
     }
 
     await chrome.storage.local.set({ blacklist_rules: currentRules });

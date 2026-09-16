@@ -49,9 +49,9 @@
           <span class="stat-num" id="highlightCount">0</span>
           <span class="stat-label"><span class="stat-icon">✨</span> <span data-i18n="stat_highlight">강조</span></span>
         </div>
-        <div class="stat-card element-hide" id="elementStatCard" style="cursor: pointer;" title="요소 가리기 규칙 관리">
+        <div class="stat-card element-hide" id="elementStatCard" style="cursor: pointer;" title="요소 가림 규칙 관리">
           <span class="stat-num" id="elementCount">0</span>
-          <span class="stat-label"><span class="stat-icon">🎯</span> <span data-i18n="stat_element_hide">요소 가리기</span></span>
+          <span class="stat-label"><span class="stat-icon">🎯</span> <span data-i18n="stat_element_hide">요소 가림</span></span>
         </div>
       </section>
 
@@ -104,7 +104,7 @@
         <div class="card-header card-header-row">
           <div class="card-title-group">
             <h2 class="card-title" data-i18n="backup_card_title">로컬 파일 백업 및 복원</h2>
-            <p class="card-subtitle" data-i18n="backup_card_desc">차단 규칙 및 요소 가리기 규칙을 JSON 파일로 안전하게 내보내거나 가져옵니다.</p>
+            <p class="card-subtitle" data-i18n="backup_card_desc">차단 규칙 및 요소 가림 규칙을 JSON 파일로 안전하게 내보내거나 가져옵니다.</p>
           </div>
           <div class="backup-actions">
             <button type="button" id="exportBtn" class="btn btn-outline backup-btn" data-i18n="export_json">📥 JSON 내보내기</button>
@@ -173,7 +173,7 @@
               <button class="tab-btn" data-filter="warn" data-i18n="filter_warn">주의</button>
               <button class="tab-btn" data-filter="hide" data-i18n="filter_hide">숨김</button>
               <button class="tab-btn" data-filter="highlight" data-i18n="filter_highlight">강조</button>
-              <button class="tab-btn tab-btn-elements" data-filter="elements" data-i18n="tab_element_rules">🎯 요소 가리기 규칙</button>
+              <button class="tab-btn tab-btn-elements" data-filter="elements" data-i18n="tab_element_rules">🎯 요소 가림</button>
             </div>
           </div>
         </div>
@@ -280,16 +280,16 @@
           <label class="modal-label" data-i18n="hl_type_label">강조 분류</label>
           <div class="modal-highlight-selector">
             <label class="modal-hl-option">
-              <input type="radio" name="modalHighlightType" value="star" checked>
-              <span data-i18n="hl_type_star">⭐ 추천/좋아요</span>
-            </label>
-            <label class="modal-hl-option">
-              <input type="radio" name="modalHighlightType" value="pin">
+              <input type="radio" name="modalHighlightType" value="pin" checked>
               <span data-i18n="hl_type_pin">📌 검토</span>
             </label>
             <label class="modal-hl-option">
-              <input type="radio" name="modalHighlightType" value="custom">
-              <span data-i18n="hl_type_custom">✨ 일반 강조</span>
+              <input type="radio" name="modalHighlightType" value="bookmark">
+              <span data-i18n="hl_type_bookmark">🔖 보관</span>
+            </label>
+            <label class="modal-hl-option">
+              <input type="radio" name="modalHighlightType" value="heart">
+              <span data-i18n="hl_type_heart">❤️ 좋아요</span>
             </label>
           </div>
         </div>

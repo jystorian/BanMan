@@ -471,18 +471,11 @@ async function setupContextMenus(lang) {
         contexts: CONTEXT_TARGETS
       });
 
-      // 3-3. Highlight Submenu & Actions
+      // 3-3. Highlight Submenu & Actions (검토 📌, 보관 🔖, 좋아요 ❤️)
       await safeCreate({
         id: 'banman_highlight',
         parentId: 'banman_root',
         title: t('ctx_highlight', lang),
-        contexts: CONTEXT_TARGETS
-      });
-
-      await safeCreate({
-        id: 'banman_hl_star',
-        parentId: 'banman_highlight',
-        title: t('ctx_hl_star', lang),
         contexts: CONTEXT_TARGETS
       });
 
@@ -494,9 +487,16 @@ async function setupContextMenus(lang) {
       });
 
       await safeCreate({
-        id: 'banman_hl_custom',
+        id: 'banman_hl_bookmark',
         parentId: 'banman_highlight',
-        title: t('ctx_hl_custom', lang),
+        title: t('ctx_hl_bookmark', lang),
+        contexts: CONTEXT_TARGETS
+      });
+
+      await safeCreate({
+        id: 'banman_hl_heart',
+        parentId: 'banman_highlight',
+        title: t('ctx_hl_heart', lang),
         contexts: CONTEXT_TARGETS
       });
 
@@ -619,10 +619,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       } catch (e) {}
     }
 
-    // 사파리 스타일 화면 요소 선택 모드 시작 요청 처리
+    // 사파리 스타일 화면 요소 선택 모드 시작 요청 처리 (최상위 메인 프레임만 전달)
     if (menuItemId === 'banman_pick_element') {
       if (targetTab?.id) {
-        chrome.tabs.sendMessage(targetTab.id, { type: 'START_ELEMENT_PICKER' }).catch(() => {});
+        chrome.tabs.sendMessage(targetTab.id, { type: 'START_ELEMENT_PICKER' }, { frameId: 0 }).catch(() => {});
       }
       return;
     }
@@ -637,14 +637,16 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
     const lang = await getAppLanguage();
     let action = '';
-    let highlightType = 'star';
+    let highlightType = 'pin';
 
     if (menuItemId === 'banman_block') action = 'block';
     else if (menuItemId === 'banman_warn') action = 'warn';
     else if (menuItemId === 'banman_hide') action = 'hide';
-    else if (menuItemId === 'banman_hl_star') { action = 'highlight'; highlightType = 'star'; }
     else if (menuItemId === 'banman_hl_pin') { action = 'highlight'; highlightType = 'pin'; }
-    else if (menuItemId === 'banman_hl_custom') { action = 'highlight'; highlightType = 'custom'; }
+    else if (menuItemId === 'banman_hl_bookmark') { action = 'highlight'; highlightType = 'bookmark'; }
+    else if (menuItemId === 'banman_hl_heart') { action = 'highlight'; highlightType = 'heart'; }
+    else if (menuItemId === 'banman_hl_star') { action = 'highlight'; highlightType = 'heart'; }
+    else if (menuItemId === 'banman_hl_custom') { action = 'highlight'; highlightType = 'bookmark'; }
     else if (menuItemId === 'banman_remove') action = 'remove';
 
     if (!action) return;

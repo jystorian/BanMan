@@ -760,9 +760,9 @@ input[type="text"]:focus, select:focus {
   line-height: 1.2;
   flex-shrink: 0;
 }
-.hl-type-badge.star { background: #fef3c7; color: #b45309; }
 .hl-type-badge.pin { background: #e0e7ff; color: #4338ca; }
-.hl-type-badge.custom { background: #f3e8ff; color: #7e22ce; }
+.hl-type-badge.bookmark, .hl-type-badge.custom { background: #fef3c7; color: #b45309; }
+.hl-type-badge.heart, .hl-type-badge.star { background: #ffe4e6; color: #be123c; }
 
 .selector-code-badge {
   display: inline-block;
@@ -803,6 +803,29 @@ input[type="text"]:focus, select:focus {
   width: 75px;
   text-align: center;
   white-space: nowrap;
+}
+
+/* 요소 가림 모드 전용 컬럼 비율 - 긴 셀렉터 및 복원 버튼에 최적화 */
+.rules-table.element-mode .col-target {
+  width: 22%;
+}
+
+.rules-table.element-mode .col-action {
+  width: 30%;
+}
+
+.rules-table.element-mode .col-memo {
+  width: auto;
+}
+
+.rules-table.element-mode .col-date {
+  width: 105px;
+  text-align: center;
+}
+
+.rules-table.element-mode .col-manage {
+  width: 95px;
+  text-align: center;
 }
 
 .rules-table th.col-date, .rules-table th.col-manage {
