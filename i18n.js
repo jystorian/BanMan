@@ -170,7 +170,28 @@ const I18N_DICTIONARY = {
     modal_delete_desc: '선택한 규칙을 목록에서 삭제하시겠습니까?',
     skip_delete_confirm_label: '이번 세션 동안 다시 묻지 않고 바로 삭제',
     skip_delete_confirm_toggle: '⚡ 바로 삭제 (확인 생략)',
-    city_shield_active: 'Chrome City 보호 중'
+    city_shield_active: 'Chrome City 보호 중',
+
+    stat_element_hide: '요소 가리기',
+    btn_element_picker: '화면 요소 직접 선택하여 가리기',
+    btn_element_picker_desc: '광고 블록이나 불필요한 영역을 사파리처럼 선택하여 영구 은닉',
+    ctx_element_picker: '🎯 화면 요소 가리기 (블록 선택)',
+    picker_bar_title: '가릴 요소를 클릭하세요',
+    picker_bar_hint: '↑ 상위 블록 확대 · ↓ 축소 · ESC 취소',
+    picker_bar_done: '선택 완료',
+    picker_bar_undo: '직전 숨김 되돌리기',
+    picker_toast_hidden: '[BanMan] 선택한 요소를 숨겼습니다. (다음 방문 시에도 자동 은닉)',
+    picker_toast_undone: '[BanMan] 직전 숨김 처리를 되돌렸습니다.',
+    picker_toast_no_undo: '[BanMan] 되돌릴 숨김 항목이 없습니다.',
+    tab_element_rules: '🎯 요소 가리기 규칙',
+    element_rules_title: '화면 요소 가리기 규칙 관리',
+    element_rules_desc: '웹페이지에서 직접 선택하여 숨긴 광고 블록 및 요소들의 도메인별 규칙입니다.',
+    th_element_domain: '도메인',
+    th_element_selector: 'CSS 선택자',
+    th_element_preview: '대상 요약',
+    empty_element_rules: '등록된 요소 가리기 규칙이 없습니다. 웹페이지에서 직접 가리기를 사용해보세요!',
+    btn_restore_element: '복원 (삭제)',
+    confirm_restore_element: '이 요소를 복원하시겠습니까? 다음 페이지 접속 시 다시 표시됩니다.'
   },
 
   en: {
@@ -342,7 +363,28 @@ const I18N_DICTIONARY = {
     modal_delete_desc: 'Are you sure you want to delete this rule from the list?',
     skip_delete_confirm_label: 'Do not ask again during this session',
     skip_delete_confirm_toggle: '⚡ Quick Delete (Skip Confirm)',
-    city_shield_active: 'Chrome City Shield Active'
+    city_shield_active: 'Chrome City Shield Active',
+
+    stat_element_hide: 'Hide Elements',
+    btn_element_picker: 'Hide Distracting Elements',
+    btn_element_picker_desc: 'Select and hide ads or annoying blocks permanently (Safari style)',
+    ctx_element_picker: '🎯 Hide Element (Block Picker)',
+    picker_bar_title: 'Click an element to hide',
+    picker_bar_hint: '↑ Expand area · ↓ Shrink · ESC Exit',
+    picker_bar_done: 'Done',
+    picker_bar_undo: 'Undo Last',
+    picker_toast_hidden: '[BanMan] Element hidden permanently on this domain.',
+    picker_toast_undone: '[BanMan] Undid last element hiding.',
+    picker_toast_no_undo: '[BanMan] Nothing to undo.',
+    tab_element_rules: '🎯 Element Rules',
+    element_rules_title: 'Manage Element Hiding Rules',
+    element_rules_desc: 'Rules for ad blocks and elements hidden via the element picker per domain.',
+    th_element_domain: 'Domain',
+    th_element_selector: 'CSS Selector',
+    th_element_preview: 'Summary',
+    empty_element_rules: 'No element hiding rules registered yet. Try using the picker on any webpage!',
+    btn_restore_element: 'Restore (Delete)',
+    confirm_restore_element: 'Restore this element? It will be visible again on next visit.'
   },
 
   ja: {
@@ -514,7 +556,28 @@ const I18N_DICTIONARY = {
     modal_delete_desc: '選択したルールを一覧から削除しますか？',
     skip_delete_confirm_label: 'このセッション中は確認なしで削除',
     skip_delete_confirm_toggle: '⚡ クイック削除（確認省略）',
-    city_shield_active: 'Chrome City 保護中'
+    city_shield_active: 'Chrome City 保護中',
+
+    stat_element_hide: '要素非表示',
+    btn_element_picker: '画面の要素を選択して非表示',
+    btn_element_picker_desc: 'Safariのように広告ブロックや邪魔な要素を選択して永久非表示',
+    ctx_element_picker: '🎯 画面要素を非表示（ブロック選択）',
+    picker_bar_title: '非表示にする要素をクリックしてください',
+    picker_bar_hint: '↑ 範囲拡大 · ↓ 縮小 · ESC 終了',
+    picker_bar_done: '完了',
+    picker_bar_undo: '直前の非表示を戻す',
+    picker_toast_hidden: '[BanMan] 選択した要素を非表示にしました。（再訪問時も自動非表示）',
+    picker_toast_undone: '[BanMan] 直前の非表示を元に戻しました。',
+    picker_toast_no_undo: '[BanMan] 元に戻す項目がありません。',
+    tab_element_rules: '🎯 要素非表示ルール',
+    element_rules_title: '画面要素の非表示ルール管理',
+    element_rules_desc: 'Webページ上で直接選択して非表示にした広告ブロック等のドメイン別ルールです。',
+    th_element_domain: 'ドメイン',
+    th_element_selector: 'CSS セレクタ',
+    th_element_preview: '対象の概要',
+    empty_element_rules: '登録された要素非表示ルールはありません。Webページで直接選択してみてください！',
+    btn_restore_element: '復元（削除）',
+    confirm_restore_element: 'この要素を復元しますか？次回アクセス時に再表示されます。'
   }
 };
 

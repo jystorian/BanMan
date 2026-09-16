@@ -218,3 +218,201 @@
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   Safari-style Distraction Control / Element Picker Styles
+   ========================================================================== */
+
+/* 요소 가리기 모드 활성화 시 전체 커서 */
+body.bm-picker-active {
+  cursor: crosshair !important;
+  user-select: none !important;
+}
+
+body.bm-picker-active * {
+  cursor: crosshair !important;
+}
+
+/* 상단 글래스모피즘 플로팅 컨트롤 바 */
+.bm-picker-toolbar {
+  position: fixed !important;
+  top: 18px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483647 !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.2) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  color: #f8fafc !important;
+  pointer-events: auto !important;
+  cursor: default !important;
+  animation: bm-toolbar-drop 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes bm-toolbar-drop {
+  from { opacity: 0; transform: translate(-50%, -24px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.bm-picker-toolbar * {
+  cursor: default !important;
+}
+
+.bm-picker-title-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.bm-picker-icon {
+  font-size: 16px !important;
+  line-height: 1 !important;
+}
+
+.bm-picker-title {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #f1f5f9 !important;
+  white-space: nowrap !important;
+}
+
+.bm-picker-hint {
+  font-size: 11.5px !important;
+  color: #94a3b8 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  white-space: nowrap !important;
+}
+
+.bm-picker-btn {
+  appearance: none !important;
+  border: none !important;
+  outline: none !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 5px 12px !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+}
+
+.bm-picker-btn * {
+  cursor: pointer !important;
+}
+
+.bm-picker-btn-undo {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #e2e8f0 !important;
+}
+
+.bm-picker-btn-undo:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
+.bm-picker-btn-undo:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+.bm-picker-btn-done {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4) !important;
+}
+
+.bm-picker-btn-done:hover {
+  background: #2563eb !important;
+  box-shadow: 0 3px 12px rgba(59, 130, 246, 0.55) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 선택 오버레이 하이라이트 박스 */
+.bm-picker-overlay {
+  position: fixed !important;
+  pointer-events: none !important;
+  z-index: 2147483645 !important;
+  border: 2px solid #3b82f6 !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35),
+              0 0 20px rgba(59, 130, 246, 0.55),
+              inset 0 0 14px rgba(59, 130, 246, 0.16) !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-radius: 4px !important;
+  transition: top 0.08s ease-out, left 0.08s ease-out, width 0.08s ease-out, height 0.08s ease-out !important;
+  box-sizing: border-box !important;
+}
+
+/* 오버레이 툴팁 태그 배지 */
+.bm-picker-badge {
+  position: absolute !important;
+  bottom: calc(100% + 5px) !important;
+  left: 0 !important;
+  background: #0f172a !important;
+  color: #38bdf8 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35) !important;
+  letter-spacing: -0.2px !important;
+}
+
+.bm-picker-badge.is-below {
+  bottom: auto !important;
+  top: calc(100% + 5px) !important;
+}
+
+/* 파티클 캔버스 */
+#bm-particle-canvas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none !important;
+  z-index: 2147483646 !important;
+}
+
+/* 사파리 스타일 분해 소멸 애니메이션 클래스 */
+.bm-dissolving {
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+              filter 0.35s ease,
+              opacity 0.32s ease !important;
+  transform: scale(0.93) !important;
+  filter: blur(6px) saturate(50%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 영구 은닉 요소 */
+.bm-element-hidden,
+[data-bm-hidden="true"] {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+

@@ -410,11 +410,11 @@ async function setupContextMenus(lang) {
 
   // Remove existing menus to prevent ID duplication
   chrome.contextMenus.removeAll(() => {
-    // 1. Root Menu (No shield emoji)
+    // 1. Root Menu (모든 웹 영역에서 우클릭 가능하도록 'all' 설정)
     chrome.contextMenus.create({
       id: 'banman_root',
       title: t('ctx_root', lang),
-      contexts: CONTEXT_TARGETS
+      contexts: ['all']
     });
 
     // 2. Direct 1-click Actions (URL/Media)
@@ -482,6 +482,21 @@ async function setupContextMenus(lang) {
       parentId: 'banman_root',
       title: t('ctx_remove', lang),
       contexts: CONTEXT_TARGETS
+    });
+
+    // 5. Separator & Element Picker (사파리 스타일 화면 요소 선택 가리기)
+    chrome.contextMenus.create({
+      id: 'banman_sep_picker',
+      parentId: 'banman_root',
+      type: 'separator',
+      contexts: CONTEXT_TARGETS
+    });
+
+    chrome.contextMenus.create({
+      id: 'banman_pick_element',
+      parentId: 'banman_root',
+      title: t('ctx_element_picker', lang),
+      contexts: ['all']
     });
   });
 }
@@ -561,6 +576,14 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         targetTab = tabs && tabs[0];
       } catch (e) {}
+    }
+
+    // 사파리 스타일 화면 요소 선택 모드 시작 요청 처리
+    if (menuItemId === 'banman_pick_element') {
+      if (targetTab?.id) {
+        chrome.tabs.sendMessage(targetTab.id, { type: 'START_ELEMENT_PICKER' }).catch(() => {});
+      }
+      return;
     }
 
     let rawLinkUrl = (info.linkUrl || info.srcUrl || info.frameUrl || '').trim();
