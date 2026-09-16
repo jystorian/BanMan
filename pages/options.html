@@ -54,6 +54,10 @@
           <span class="stat-num" id="highlightCount">0</span>
           <span class="stat-label"><span class="stat-icon">✨</span> <span data-i18n="stat_highlight">강조</span></span>
         </div>
+        <div class="stat-card element-hide" id="elementStatCard" style="cursor: pointer;" title="요소 가리기 규칙 관리">
+          <span class="stat-num" id="elementCount">0</span>
+          <span class="stat-label"><span class="stat-icon">🎯</span> <span data-i18n="stat_element_hide">요소 가리기</span></span>
+        </div>
       </section>
 
       <!-- 수동 규칙 추가 카드 -->
@@ -157,6 +161,7 @@
               <button class="tab-btn" data-filter="warn" data-i18n="filter_warn">주의</button>
               <button class="tab-btn" data-filter="hide" data-i18n="filter_hide">숨김</button>
               <button class="tab-btn" data-filter="highlight" data-i18n="filter_highlight">강조</button>
+              <button class="tab-btn tab-btn-elements" data-filter="elements" data-i18n="tab_element_rules">🎯 요소 가리기 규칙</button>
             </div>
           </div>
         </div>
@@ -164,7 +169,7 @@
         <div class="table-container">
           <table class="rules-table">
             <thead>
-              <tr>
+              <tr id="rulesTableHeadRow">
                 <th class="col-target" data-i18n="th_target">대상 및 유형</th>
                 <th class="col-action" data-i18n="th_action">액션</th>
                 <th class="col-memo" data-i18n="th_memo">기록된 사유 메모</th>
@@ -178,7 +183,7 @@
           </table>
           <div id="emptyMsg" class="empty-msg" style="display: none;">
             <img src="../resources/ban_mobile.png" class="empty-van-img" alt="Ban-Mobile">
-            <p data-i18n="empty_rules">크롬 시티가 평화롭습니다. 등록된 지뢰 사이트 규칙이 없습니다.</p>
+            <p id="emptyRulesText" data-i18n="empty_rules">크롬 시티가 평화롭습니다. 등록된 지뢰 사이트 규칙이 없습니다.</p>
           </div>
         </div>
 

@@ -341,4 +341,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.close();
     }, 400);
   });
+
+  // 사파리 스타일 화면 요소 가리기 모드 실행
+  const startElementPickerBtn = document.getElementById('startElementPickerBtn');
+  if (startElementPickerBtn) {
+    startElementPickerBtn.addEventListener('click', async () => {
+      if (detectedType === 'system' || !tab?.id) {
+        statusMsg.style.color = '#dc2626';
+        statusMsg.textContent = t('status_system_page', currentLang);
+        return;
+      }
+      try {
+        await chrome.tabs.sendMessage(tab.id, { type: 'START_ELEMENT_PICKER' });
+      } catch (e) {
+        console.warn('START_ELEMENT_PICKER 전달 실패:', e);
+      }
+      window.close();
+    });
+  }
 });
+

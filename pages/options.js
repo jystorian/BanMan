@@ -72,7 +72,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const PAGE_SIZE = 50;
   let currentPage = 1;
 
+  const elementCountEl = document.getElementById('elementCount');
+  const elementStatCard = document.getElementById('elementStatCard');
+  const rulesTableHeadRow = document.getElementById('rulesTableHeadRow');
+  const emptyRulesText = document.getElementById('emptyRulesText');
+
   let currentRules = {};
+  let currentElementRules = {};
   let currentFilter = 'all';
   let searchQuery = '';
 
@@ -88,6 +94,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadDriveState();
     render();
   });
+
+  if (elementStatCard) {
+    elementStatCard.addEventListener('click', () => {
+      filterTabs.forEach(t => t.classList.remove('active'));
+      const elTab = document.querySelector('.tab-btn[data-filter="elements"]');
+      if (elTab) elTab.classList.add('active');
+      currentFilter = 'elements';
+      currentPage = 1;
+      render();
+    });
+  }
 
   // 웹스토어 확장 프로그램 제목 캐시 및 서비스 워커 경유 비동기 조회 (CORS 제약 없음)
   const webstoreTitleCache = {};
@@ -184,8 +201,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 1. 규칙 로드 및 통계 갱신
   async function loadData() {
-    const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
+    const { blacklist_rules = {}, element_hide_rules = {} } = await chrome.storage.local.get(['blacklist_rules', 'element_hide_rules']);
     currentRules = blacklist_rules;
+    currentElementRules = element_hide_rules;
     render();
     enrichWebstoreTitles();
   }
@@ -195,6 +213,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (areaName === 'local') {
       if (changes.blacklist_rules) {
         currentRules = changes.blacklist_rules.newValue || {};
+        render();
+      }
+      if (changes.element_hide_rules) {
+        currentElementRules = changes.element_hide_rules.newValue || {};
         render();
       }
       if (changes.app_lang) {
@@ -224,11 +246,127 @@ document.addEventListener('DOMContentLoaded', async () => {
       else if (rule.action === 'highlight') highlight++;
     });
 
+    let elementTotal = 0;
+    for (const d in currentElementRules) {
+      if (Array.isArray(currentElementRules[d])) {
+        elementTotal += currentElementRules[d].length;
+      }
+    }
+
     totalCountEl.textContent = total;
     blockCountEl.textContent = block;
     warnCountEl.textContent = warn;
     hideCountEl.textContent = hide;
     if (highlightCountEl) highlightCountEl.textContent = highlight;
+    if (elementCountEl) elementCountEl.textContent = elementTotal;
+
+    // 요소 가리기 규칙 탭인 경우 전용 렌더링
+    if (currentFilter === 'elements') {
+      if (rulesTableHeadRow) {
+        rulesTableHeadRow.innerHTML = `
+          <th class="col-target" data-i18n="th_element_domain">${t('th_element_domain', currentLang)}</th>
+          <th class="col-action" data-i18n="th_element_selector">${t('th_element_selector', currentLang)}</th>
+          <th class="col-memo" data-i18n="th_element_preview">${t('th_element_preview', currentLang)}</th>
+          <th class="col-date" data-i18n="th_date">${t('th_date', currentLang)}</th>
+          <th class="col-manage" data-i18n="th_manage">${t('th_manage', currentLang)}</th>
+        `;
+      }
+      if (emptyRulesText) {
+        emptyRulesText.textContent = t('empty_element_rules', currentLang);
+      }
+
+      const elementItems = [];
+      for (const [dom, list] of Object.entries(currentElementRules)) {
+        if (Array.isArray(list)) {
+          for (const item of list) {
+            elementItems.push({ domain: dom, rule: item });
+          }
+        }
+      }
+
+      const q = searchQuery.toLowerCase();
+      const filteredElements = elementItems.filter(item => {
+        if (!q) return true;
+        return item.domain.toLowerCase().includes(q) ||
+               (item.rule.selector || '').toLowerCase().includes(q) ||
+               (item.rule.summary || '').toLowerCase().includes(q);
+      });
+
+      filteredElements.sort((a, b) => {
+        const dateA = a.rule.createdAt || '';
+        const dateB = b.rule.createdAt || '';
+        return dateB.localeCompare(dateA);
+      });
+
+      const totalPages = Math.max(1, Math.ceil(filteredElements.length / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = (currentPage - 1) * PAGE_SIZE;
+      const pageItems = filteredElements.slice(startIndex, startIndex + PAGE_SIZE);
+
+      if (filteredElements.length > PAGE_SIZE) {
+        paginationBar.style.display = 'flex';
+        pageInfoText.textContent = t('pagination_page_info', currentLang, {
+          current: currentPage,
+          total: totalPages,
+          count: filteredElements.length
+        });
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= totalPages;
+      } else {
+        paginationBar.style.display = 'none';
+      }
+
+      rulesTableBody.innerHTML = '';
+
+      if (filteredElements.length === 0) {
+        emptyMsg.style.display = 'block';
+      } else {
+        emptyMsg.style.display = 'none';
+        pageItems.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <div class="target-card-cell">
+                <div class="target-info-wrap">
+                  <div class="target-title-row">
+                    <span class="target-name" style="font-weight: 700; color: #0284c7;">🌐 ${escapeHtml(item.domain)}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <code class="selector-code-badge" title="${escapeHtml(item.rule.selector)}">${escapeHtml(item.rule.selector)}</code>
+            </td>
+            <td class="memo-cell">${escapeHtml(item.rule.summary || '-')}</td>
+            <td class="date-cell">${formatDateStacked(item.rule.createdAt)}</td>
+            <td class="col-manage">
+              <button type="button" class="btn-restore" data-domain="${escapeHtml(item.domain)}" data-id="${escapeHtml(item.rule.id)}" title="${t('btn_restore_element', currentLang)}">
+                <span>↩</span>
+                <span>${t('btn_restore_element', currentLang)}</span>
+              </button>
+            </td>
+          `;
+          rulesTableBody.appendChild(tr);
+        });
+      }
+      return;
+    }
+
+    // 일반 URL 필터 탭인 경우 헤더 복원
+    if (rulesTableHeadRow) {
+      rulesTableHeadRow.innerHTML = `
+        <th class="col-target" data-i18n="th_target">${t('th_target', currentLang)}</th>
+        <th class="col-action" data-i18n="th_action">${t('th_action', currentLang)}</th>
+        <th class="col-memo" data-i18n="th_memo">${t('th_memo', currentLang)}</th>
+        <th class="col-date" data-i18n="th_date">${t('th_date', currentLang)}</th>
+        <th class="col-manage" data-i18n="th_manage">${t('th_manage', currentLang)}</th>
+      `;
+    }
+    if (emptyRulesText) {
+      emptyRulesText.textContent = t('empty_rules', currentLang);
+    }
 
     // 필터링 및 검색 적용
     const filtered = entries.filter(([key, rule]) => {
@@ -707,8 +845,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // 8. 테이블 내 수정(모달 열기) 및 삭제 이벤트 위임
+  // 8. 테이블 내 수정(모달 열기), 삭제, 복원 이벤트 위임
   rulesTableBody.addEventListener('click', async (e) => {
+    // 요소 가리기 규칙 복원(삭제) 버튼
+    const restoreBtn = e.target.closest('.btn-restore');
+    if (restoreBtn) {
+      const domain = restoreBtn.getAttribute('data-domain');
+      const ruleId = restoreBtn.getAttribute('data-id');
+      if (domain && ruleId && currentElementRules[domain]) {
+        if (confirm(t('confirm_restore_element', currentLang))) {
+          currentElementRules[domain] = currentElementRules[domain].filter(r => r.id !== ruleId);
+          if (currentElementRules[domain].length === 0) {
+            delete currentElementRules[domain];
+          }
+          await chrome.storage.local.set({ element_hide_rules: currentElementRules });
+          render();
+        }
+      }
+      return;
+    }
+
     const delBtn = e.target.closest('.delete-btn');
     if (delBtn) {
       const key = delBtn.getAttribute('data-key');
@@ -733,9 +889,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // 7. JSON 내보내기 (Export)
+  // 7. JSON 내보내기 (Export - URL 규칙 및 요소 가리기 규칙 포함)
   exportBtn.addEventListener('click', () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentRules, null, 2));
+    const exportPayload = {
+      blacklist_rules: currentRules,
+      element_hide_rules: currentElementRules,
+      version: '1.4.0',
+      exportedAt: new Date().toISOString()
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportPayload, null, 2));
     const downloadAnchor = document.createElement('a');
     const today = new Date().toISOString().slice(0, 10);
     downloadAnchor.setAttribute("href", dataStr);
@@ -745,7 +907,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     downloadAnchor.remove();
   });
 
-  // 8. JSON 가져오기 (Import)
+  // 8. JSON 가져오기 (Import - 하위 호환 지원)
   importFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -759,12 +921,39 @@ document.addEventListener('DOMContentLoaded', async () => {
           return;
         }
 
+        let rulesToImport = importedData;
+        let elementRulesToImport = null;
+
+        // 신규 복합 포맷 감지
+        if (importedData.blacklist_rules && typeof importedData.blacklist_rules === 'object') {
+          rulesToImport = importedData.blacklist_rules;
+          if (importedData.element_hide_rules && typeof importedData.element_hide_rules === 'object') {
+            elementRulesToImport = importedData.element_hide_rules;
+          }
+        }
+
         const isOverwrite = confirm(t('import_confirm', currentLang));
 
         if (isOverwrite) {
-          currentRules = importedData;
+          currentRules = rulesToImport;
+          if (elementRulesToImport) {
+            currentElementRules = elementRulesToImport;
+            await chrome.storage.local.set({ element_hide_rules: currentElementRules });
+          }
         } else {
-          currentRules = { ...currentRules, ...importedData };
+          currentRules = { ...currentRules, ...rulesToImport };
+          if (elementRulesToImport) {
+            for (const [dom, list] of Object.entries(elementRulesToImport)) {
+              if (!currentElementRules[dom]) currentElementRules[dom] = [];
+              const existingIds = new Set(currentElementRules[dom].map(r => r.id || r.selector));
+              for (const r of list) {
+                if (!existingIds.has(r.id || r.selector)) {
+                  currentElementRules[dom].push(r);
+                }
+              }
+            }
+            await chrome.storage.local.set({ element_hide_rules: currentElementRules });
+          }
         }
 
         await chrome.storage.local.set({ blacklist_rules: currentRules });
@@ -1051,6 +1240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rawData = {
       version: 1,
       rules: rules,
+      elementRules: currentElementRules,
       exportedAt: new Date().toISOString()
     };
 
@@ -1064,6 +1254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         version: 1,
         encrypted: false,
         rules: rules,
+        elementRules: currentElementRules,
         updatedAt: new Date().toISOString()
       };
     }
@@ -1071,19 +1262,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 원격 데이터 수신 및 복호화 해석
   async function resolveRemoteRules(rawRemote) {
+    let resolvedData = rawRemote;
     if (rawRemote.encrypted) {
       const { drive_passphrase } = await chrome.storage.local.get('drive_passphrase');
       if (drive_passphrase) {
         try {
-          const decrypted = await CryptoHelper.decryptData(rawRemote, drive_passphrase);
-          return decrypted.rules || decrypted;
+          resolvedData = await CryptoHelper.decryptData(rawRemote, drive_passphrase);
         } catch (e) {
-          // 비밀번호 불일치 시 모달로 재입력 요청
+          resolvedData = await requestDecryptionPassphrase(rawRemote);
         }
+      } else {
+        resolvedData = await requestDecryptionPassphrase(rawRemote);
       }
-      return await requestDecryptionPassphrase(rawRemote);
     }
-    return rawRemote.rules || rawRemote;
+
+    if (resolvedData && resolvedData.elementRules) {
+      currentElementRules = resolvedData.elementRules;
+      await chrome.storage.local.set({ element_hide_rules: currentElementRules });
+    }
+
+    return resolvedData.rules || resolvedData;
   }
 
   // ⬆️ 드라이브로 백업
