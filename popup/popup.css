@@ -257,35 +257,35 @@ body {
   flex-shrink: 0;
 }
 
-/* 강조 세그먼트 개별 활성화 테마 (Green, Blue, Purple) */
+/* 강조 세그먼트 개별 활성화 테마 (Red, Yellow, Pink) */
 .seg-pin input:checked + span {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #10b981;
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #ef4444;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2);
 }
 .seg-pin .hl-svg-icon {
-  color: #10b981;
+  color: #ef4444;
 }
 
 .seg-bookmark input:checked + span {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #3b82f6;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #f59e0b;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
 }
 .seg-bookmark .hl-svg-icon {
-  color: #2563eb;
+  color: #f59e0b;
 }
 
 .seg-heart input:checked + span {
-  background: #f5f3ff;
-  color: #6d28d9;
-  border: 1px solid #8b5cf6;
-  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.2);
+  background: #fdf2f8;
+  color: #be185d;
+  border: 1px solid #ec4899;
+  box-shadow: 0 1px 3px rgba(236, 72, 153, 0.2);
 }
 .seg-heart .hl-svg-icon {
-  color: #8b5cf6;
+  color: #ec4899;
 }
 
 /* Action Grid */

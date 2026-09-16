@@ -301,13 +301,13 @@
 
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     if (type === 'pin') {
-      // 샤프한 모던 푸시핀 (Green)
+      // 샤프한 모던 푸시핀 (Red)
       path.setAttribute('d', 'M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1.03 2 1.03-2v-7H19v-2c-1.66 0-3-1.34-3-3z');
-    } else if (type === 'bookmark') {
-      // 정돈된 리본 북마크 (Blue)
-      path.setAttribute('d', 'M17 3H7c-1.1 0-2 .9-2 2v16l7-4.5 7 4.5V5c0-1.1-.9-2-2-2z');
+    } else if (type === 'bookmark' || type === 'star' || type === 'custom') {
+      // 눈부신 황금 별표 (Yellow Star)
+      path.setAttribute('d', 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z');
     } else {
-      // 세련된 플랫 하트 (Purple)
+      // 세련된 플랫 하트 (Pink Heart)
       path.setAttribute('d', 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z');
     }
     svg.appendChild(path);
@@ -412,7 +412,7 @@
       }
     } else if (rule.action === 'highlight') {
       let hlType = rule.highlightType || 'pin';
-      if (hlType === 'star') hlType = 'heart';
+      if (hlType === 'star') hlType = 'bookmark';
       if (hlType === 'custom') hlType = 'bookmark';
 
       link.classList.add('cb-link-highlight', `cb-highlight-${hlType}`);
