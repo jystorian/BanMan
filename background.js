@@ -483,12 +483,27 @@ async function setupContextMenus(lang) {
         });
       });
 
-      // 2. chrome.runtime.lastError를 항시 점검하여 Unchecked 에러를 원천 차단하는 안전한 생성 래퍼
+      // 2. chrome.runtime.lastError를 항시 점검하여 Unchecked 에러를 원천 차단하고
+      // 이미 존재하는 항목이 있다면 update로 새 title/contexts를 강제 갱신하는 안전한 생성 래퍼
       const safeCreate = (properties) => {
         return new Promise((resolve) => {
           chrome.contextMenus.create(properties, () => {
             if (chrome.runtime.lastError) {
-              // 중복 생성이나 이미 존재하는 항목 에러를 안전하게 점검/억제하여 크롬 에러 콘솔 오염 방지
+              // 크롬 내부 캐시로 인해 이미 존재하는 경우 update로 최신 제목/속성 강제 반영
+              try {
+                const updateProps = {};
+                if (properties.title !== undefined) updateProps.title = properties.title;
+                if (properties.contexts !== undefined) updateProps.contexts = properties.contexts;
+                if (properties.parentId !== undefined) updateProps.parentId = properties.parentId;
+                if (properties.type !== undefined) updateProps.type = properties.type;
+                chrome.contextMenus.update(properties.id, updateProps, () => {
+                  if (chrome.runtime.lastError) {
+                    // 무시
+                  }
+                  resolve();
+                });
+                return;
+              } catch (e) {}
             }
             resolve();
           });
@@ -525,7 +540,7 @@ async function setupContextMenus(lang) {
         contexts: CONTEXT_TARGETS
       });
 
-      // 3-3. Highlight Submenu & Actions (검토 📌, 보관 🔖, 좋아요 ❤️)
+      // 3-3. Highlight Submenu & Actions (🟢 📌 검토, 🔵 🔖 보관, 💜 좋아요)
       await safeCreate({
         id: 'banman_highlight',
         parentId: 'banman_root',
