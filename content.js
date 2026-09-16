@@ -59,7 +59,7 @@
         // 기존 적용 표식 및 인라인 display/컨테이너 초기화
         document.querySelectorAll('[data-cb-annotated]').forEach(el => {
           el.removeAttribute('data-cb-annotated');
-          el.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block', 'cb-link-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
+          el.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block', 'cb-link-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom', 'cb-highlight-bookmark', 'cb-highlight-heart');
           el.style.display = '';
           el.title = '';
         });
@@ -69,7 +69,7 @@
           c.style.display = '';
         });
         document.querySelectorAll('.cb-container-highlight').forEach(c => {
-          c.classList.remove('cb-container-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
+          c.classList.remove('cb-container-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom', 'cb-highlight-bookmark', 'cb-highlight-heart');
         });
         document.querySelectorAll('.cb-badge').forEach(b => b.remove());
         processAllLinks();
@@ -267,7 +267,7 @@
   function clearRuleFromElement(link) {
     if (!link) return;
     link.removeAttribute('data-cb-annotated');
-    link.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block', 'cb-link-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
+    link.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block', 'cb-link-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom', 'cb-highlight-bookmark', 'cb-highlight-heart');
     link.style.display = '';
     link.title = '';
 
@@ -285,9 +285,57 @@
         container.style.display = '';
       }
       if (container.classList.contains('cb-container-highlight')) {
-        container.classList.remove('cb-container-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
+        container.classList.remove('cb-container-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom', 'cb-highlight-bookmark', 'cb-highlight-heart');
       }
     }
+  }
+
+  // 모던 플랫 SVG 아이콘 생성 함수 (3D 느낌 탈피, 고가시성 벡터)
+  function createHighlightSvg(type) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '12');
+    svg.setAttribute('height', '12');
+    svg.setAttribute('fill', 'currentColor');
+    svg.classList.add('cb-hl-svg', type);
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    if (type === 'pin') {
+      // 샤프한 모던 푸시핀 (Green)
+      path.setAttribute('d', 'M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1.03 2 1.03-2v-7H19v-2c-1.66 0-3-1.34-3-3z');
+    } else if (type === 'bookmark') {
+      // 정돈된 리본 북마크 (Blue)
+      path.setAttribute('d', 'M17 3H7c-1.1 0-2 .9-2 2v16l7-4.5 7 4.5V5c0-1.1-.9-2-2-2z');
+    } else {
+      // 세련된 플랫 하트 (Purple)
+      path.setAttribute('d', 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z');
+    }
+    svg.appendChild(path);
+    return svg;
+  }
+
+  // 배지 우측 1-클릭 즉시 등록 해제 버튼 생성 함수
+  function createBadgeRemoveBtn(targetKey, elementToClear) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cb-badge-remove-btn';
+    btn.title = '이 링크의 규칙 등록 해제';
+    btn.setAttribute('aria-label', '등록 해제');
+    btn.innerHTML = '&times;';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // 화면에서 즉각 제거 (0ms)
+      clearRuleFromElement(elementToClear);
+
+      // 백그라운드 스토리지 영구 삭제 요청
+      chrome.runtime.sendMessage({
+        type: 'DIRECT_REMOVE_RULE',
+        target: targetKey
+      }).catch(() => {});
+    }, true);
+    return btn;
   }
 
   // 단일 링크에 규칙 스타일 및 배지 적용 (스마트 컨테이너 숨김 및 강조 포함)
@@ -322,6 +370,9 @@
         badge.appendChild(document.createTextNode(` [${rule.memo.trim()}]`));
       }
 
+      const targetKey = rule.target || href || link.href;
+      badge.appendChild(createBadgeRemoveBtn(targetKey, link));
+
       if (link.nextSibling) {
         link.parentNode.insertBefore(badge, link.nextSibling);
       } else {
@@ -351,6 +402,9 @@
       const blockMemo = hasMemo ? ` [차단: ${rule.memo.trim()}]` : ' [차단]';
       badge.appendChild(document.createTextNode(blockMemo));
 
+      const targetKey = rule.target || href || link.href;
+      badge.appendChild(createBadgeRemoveBtn(targetKey, link));
+
       if (link.nextSibling) {
         link.parentNode.insertBefore(badge, link.nextSibling);
       } else {
@@ -378,10 +432,7 @@
       badge.className = `cb-badge cb-badge-highlight cb-badge-${hlType}`;
       badge.title = hasMemo ? `[BanMan ${labelText}] ${rule.memo.trim()}` : `[BanMan ${labelText}]`;
 
-      const iconText = hlType === 'pin' ? '📌' : (hlType === 'bookmark' ? '🔖' : '❤️');
-      const hlIcon = document.createElement('span');
-      hlIcon.className = 'cb-highlight-icon';
-      hlIcon.textContent = iconText;
+      const hlIcon = createHighlightSvg(hlType);
       badge.appendChild(hlIcon);
 
       if (hasMemo) {
@@ -389,6 +440,9 @@
       } else {
         badge.appendChild(document.createTextNode(` [${labelText}]`));
       }
+
+      const targetKey = rule.target || href || link.href;
+      badge.appendChild(createBadgeRemoveBtn(targetKey, link));
 
       if (link.nextSibling) {
         link.parentNode.insertBefore(badge, link.nextSibling);

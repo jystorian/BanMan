@@ -43,22 +43,22 @@
 
 .cb-link-highlight.cb-highlight-pin {
   color: #047857 !important;
-  background-color: rgba(209, 250, 229, 0.45) !important;
+  background-color: rgba(16, 185, 129, 0.12) !important;
   text-decoration: underline wavy #10b981 1.5px !important;
 }
 
 .cb-link-highlight.cb-highlight-bookmark,
 .cb-link-highlight.cb-highlight-custom {
-  color: #b45309 !important;
-  background-color: rgba(254, 243, 199, 0.45) !important;
-  text-decoration: underline wavy #f59e0b 1.5px !important;
+  color: #1d4ed8 !important;
+  background-color: rgba(37, 99, 235, 0.12) !important;
+  text-decoration: underline wavy #2563eb 1.5px !important;
 }
 
 .cb-link-highlight.cb-highlight-heart,
 .cb-link-highlight.cb-highlight-star {
-  color: #be123c !important;
-  background-color: rgba(255, 228, 230, 0.5) !important;
-  text-decoration: underline wavy #f43f5e 1.5px !important;
+  color: #6d28d9 !important;
+  background-color: rgba(139, 92, 246, 0.12) !important;
+  text-decoration: underline wavy #8b5cf6 1.5px !important;
 }
 
 .cb-link-highlight:hover {
@@ -79,16 +79,16 @@
 
 .cb-container-highlight.cb-highlight-bookmark,
 .cb-container-highlight.cb-highlight-custom {
-  outline: 2px solid #f59e0b !important;
+  outline: 2px solid #2563eb !important;
   outline-offset: 2px !important;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.28) !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.28) !important;
 }
 
 .cb-container-highlight.cb-highlight-heart,
 .cb-container-highlight.cb-highlight-star {
-  outline: 2px solid #f43f5e !important;
+  outline: 2px solid #8b5cf6 !important;
   outline-offset: 2px !important;
-  box-shadow: 0 0 12px rgba(244, 63, 94, 0.28) !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.28) !important;
 }
 
 /* 인라인 메모 배지 스타일 */
@@ -130,34 +130,78 @@
 }
 
 .cb-badge-highlight.cb-badge-pin {
-  background-color: #d1fae5 !important;
-  color: #065f46 !important;
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
   border: 1px solid #a7f3d0 !important;
   box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2) !important;
 }
 
 .cb-badge-highlight.cb-badge-bookmark,
 .cb-badge-highlight.cb-badge-custom {
-  background-color: #fef3c7 !important;
-  color: #92400e !important;
-  border: 1px solid #fde68a !important;
-  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2) !important;
+  background-color: #eff6ff !important;
+  color: #1e40af !important;
+  border: 1px solid #bfdbfe !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2) !important;
 }
 
 .cb-badge-highlight.cb-badge-heart,
 .cb-badge-highlight.cb-badge-star {
-  background-color: #ffe4e6 !important;
-  color: #9f1239 !important;
-  border: 1px solid #fecdd3 !important;
-  box-shadow: 0 1px 3px rgba(244, 63, 94, 0.2) !important;
+  background-color: #f5f3ff !important;
+  color: #5b21b6 !important;
+  border: 1px solid #ddd6fe !important;
+  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.2) !important;
 }
 
-.cb-highlight-icon {
+.cb-hl-svg {
+  display: inline-block !important;
+  vertical-align: -1.5px !important;
+  margin-right: 3px !important;
+  flex-shrink: 0 !important;
+}
+
+.cb-hl-svg.pin {
+  color: #059669 !important;
+}
+
+.cb-hl-svg.bookmark {
+  color: #2563eb !important;
+}
+
+.cb-hl-svg.heart {
+  color: #7c3aed !important;
+}
+
+/* 배지 1-클릭 즉시 해제 버튼 */
+.cb-badge-remove-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 11.5px !important;
-  margin-right: 3px !important;
+  width: 13px !important;
+  height: 13px !important;
+  margin-left: 4px !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 50% !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  opacity: 0.55 !important;
+  transition: all 0.15s ease !important;
+  color: inherit !important;
+  vertical-align: middle !important;
+}
+
+.cb-badge-remove-btn:hover {
+  opacity: 1 !important;
+  background-color: rgba(0, 0, 0, 0.14) !important;
+  color: #e11d48 !important;
+  transform: scale(1.15) !important;
+}
+
+.cb-badge-remove-btn:active {
+  transform: scale(0.95) !important;
 }
 
 .cb-flag-icon, .cb-cowl-icon {
