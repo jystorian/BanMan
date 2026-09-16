@@ -783,30 +783,30 @@ input[type="text"]:focus, select:focus {
   flex-shrink: 0;
 }
 .hl-type-badge.pin {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
 }
 .hl-type-badge.pin .hl-svg-icon {
-  color: #10b981;
+  color: #ef4444;
 }
 
-.hl-type-badge.bookmark, .hl-type-badge.custom {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+.hl-type-badge.bookmark, .hl-type-badge.star, .hl-type-badge.custom {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
 }
-.hl-type-badge.bookmark .hl-svg-icon, .hl-type-badge.custom .hl-svg-icon {
-  color: #2563eb;
+.hl-type-badge.bookmark .hl-svg-icon, .hl-type-badge.star .hl-svg-icon, .hl-type-badge.custom .hl-svg-icon {
+  color: #f59e0b;
 }
 
-.hl-type-badge.heart, .hl-type-badge.star {
-  background: #f5f3ff;
-  color: #6d28d9;
-  border: 1px solid #ddd6fe;
+.hl-type-badge.heart {
+  background: #fdf2f8;
+  color: #be185d;
+  border: 1px solid #fbcfe8;
 }
-.hl-type-badge.heart .hl-svg-icon, .hl-type-badge.star .hl-svg-icon {
-  color: #8b5cf6;
+.hl-type-badge.heart .hl-svg-icon {
+  color: #ec4899;
 }
 
 .selector-code-badge {
@@ -1298,30 +1298,30 @@ input[type="text"]:focus, select:focus {
 }
 
 .modal-hl-option.pin input:checked + span {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #10b981;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #ef4444;
 }
 .modal-hl-option.pin .hl-svg-icon {
-  color: #10b981;
+  color: #ef4444;
 }
 
 .modal-hl-option.bookmark input:checked + span {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #3b82f6;
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #f59e0b;
 }
 .modal-hl-option.bookmark .hl-svg-icon {
-  color: #2563eb;
+  color: #f59e0b;
 }
 
 .modal-hl-option.heart input:checked + span {
-  background: #f5f3ff;
-  color: #6d28d9;
-  border: 1px solid #8b5cf6;
+  background: #fdf2f8;
+  color: #be185d;
+  border: 1px solid #ec4899;
 }
 .modal-hl-option.heart .hl-svg-icon {
-  color: #8b5cf6;
+  color: #ec4899;
 }
 
 .modal-input {
