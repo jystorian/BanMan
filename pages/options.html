@@ -23,11 +23,6 @@
           <option value="en">🇺🇸 English</option>
           <option value="ja">🇯🇵 日本語</option>
         </select>
-        <button id="exportBtn" class="btn btn-outline" data-i18n="export_json">📥 JSON 내보내기</button>
-        <label class="btn btn-outline file-label">
-          <span data-i18n="import_json">📤 JSON 가져오기</span>
-          <input type="file" id="importFileInput" accept=".json" style="display: none;">
-        </label>
       </div>
     </header>
 
@@ -102,6 +97,23 @@
             </div>
           </div>
         </form>
+      </section>
+
+      <!-- 로컬 JSON 파일 백업 및 복원 카드 -->
+      <section class="card backup-card">
+        <div class="card-header card-header-row">
+          <div class="card-title-group">
+            <h2 class="card-title" data-i18n="backup_card_title">로컬 파일 백업 및 복원</h2>
+            <p class="card-subtitle" data-i18n="backup_card_desc">차단 규칙 및 요소 가리기 규칙을 JSON 파일로 안전하게 내보내거나 가져옵니다.</p>
+          </div>
+          <div class="backup-actions">
+            <button type="button" id="exportBtn" class="btn btn-outline backup-btn" data-i18n="export_json">📥 JSON 내보내기</button>
+            <label class="btn btn-outline backup-btn file-label">
+              <span data-i18n="import_json">📤 JSON 가져오기</span>
+              <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            </label>
+          </div>
+        </div>
       </section>
 
       <!-- 구글 드라이브 클라우드 동기화 카드 (선택) -->
