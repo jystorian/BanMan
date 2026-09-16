@@ -259,6 +259,41 @@ body {
   color: #1d4ed8;
 }
 
+/* 로컬 백업 및 복원 카드 스타일 */
+.backup-card {
+  border-left: 4px solid #3b82f6;
+}
+
+.backup-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backup-btn {
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 1.5px solid #0f172a;
+  font-weight: 700;
+  border-radius: 8px;
+  height: 38px;
+  padding: 8px 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.backup-btn:hover {
+  background-color: #1e293b;
+  color: #facc15;
+  border-color: #fbbf24;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
 .stat-label {
   font-size: 12px;
   font-weight: 600;
@@ -536,11 +571,13 @@ input[type="text"]:focus, select:focus {
 
 /* 테이블 */
 .table-container {
-  overflow-x: auto;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .rules-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
@@ -559,6 +596,7 @@ input[type="text"]:focus, select:focus {
   border-bottom: 1px solid #edf2f7;
   font-size: 13px;
   vertical-align: middle;
+  overflow: hidden;
 }
 
 .rules-table tr:hover {
@@ -569,6 +607,8 @@ input[type="text"]:focus, select:focus {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  width: 100%;
 }
 
 .target-thumb-wrap {
@@ -607,12 +647,15 @@ input[type="text"]:focus, select:focus {
   gap: 4px;
   min-width: 0;
   flex: 1;
+  overflow: hidden;
 }
 
 .target-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  width: 100%;
 }
 
 .target-name {
@@ -622,14 +665,17 @@ input[type="text"]:focus, select:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 420px;
+  min-width: 0;
+  flex: 1;
 }
 
 .target-meta-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .target-domain-badge {
@@ -642,6 +688,7 @@ input[type="text"]:focus, select:focus {
   border-radius: 4px;
   line-height: 1.2;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .target-url-sub {
@@ -651,7 +698,8 @@ input[type="text"]:focus, select:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 320px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .target-ext-link,
@@ -665,6 +713,7 @@ input[type="text"]:focus, select:focus {
   transition: opacity 0.15s ease, transform 0.15s ease;
   line-height: 1;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .target-ext-link:hover,
@@ -680,6 +729,8 @@ input[type="text"]:focus, select:focus {
   border-radius: 3px;
   display: inline-block;
   width: fit-content;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .type-tag.domain { background: #e6fffa; color: #234e52; }
@@ -707,37 +758,49 @@ input[type="text"]:focus, select:focus {
   display: inline-block;
   white-space: nowrap;
   line-height: 1.2;
+  flex-shrink: 0;
 }
 .hl-type-badge.star { background: #fef3c7; color: #b45309; }
 .hl-type-badge.pin { background: #e0e7ff; color: #4338ca; }
 .hl-type-badge.custom { background: #f3e8ff; color: #7e22ce; }
 
-/* 테이블 컬럼 너비 분배 - 대상 및 유형 컬럼에 최대 폭 집중 할당 */
+.selector-code-badge {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  border: 1px solid #cbd5e1;
+  vertical-align: middle;
+}
+
+/* 테이블 컬럼 너비 분배 - 고정 레이아웃으로 가로 스크롤 완벽 차단 */
 .col-target {
-  width: 41%;
-  min-width: 250px;
+  width: 38%;
 }
 
 .col-action {
-  width: 110px;
-  min-width: 105px;
+  width: 115px;
 }
 
 .col-memo {
-  width: 25%;
-  min-width: 130px;
+  width: auto;
 }
 
 .col-date {
-  width: 115px;
-  min-width: 110px;
+  width: 105px;
   text-align: center;
   white-space: nowrap;
 }
 
 .col-manage {
   width: 75px;
-  min-width: 70px;
   text-align: center;
   white-space: nowrap;
 }
@@ -749,7 +812,11 @@ input[type="text"]:focus, select:focus {
 
 .memo-cell {
   color: #4a5568;
-  word-break: break-word;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
 }
 
 /* 등록일 날짜/시간 2줄 스택 스타일 - 줄바꿈 없이 깔끔한 고정폭 */
