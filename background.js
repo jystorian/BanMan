@@ -322,6 +322,60 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // 웹페이지 인라인 배지에서 1-클릭 즉시 등록 해제 요청 처리
+  if (message.type === 'DIRECT_REMOVE_RULE') {
+    (async () => {
+      const target = (message.target || '').trim();
+      if (!target) return;
+
+      const { blacklist_rules = {} } = await chrome.storage.local.get('blacklist_rules');
+      let removed = false;
+      let removeKey = target;
+
+      if (blacklist_rules[target]) {
+        delete blacklist_rules[target];
+        removed = true;
+      } else {
+        try {
+          const parsed = new URL(target.startsWith('http') ? target : 'https://' + target);
+          const host = parsed.hostname.toLowerCase();
+          if (blacklist_rules[host]) {
+            delete blacklist_rules[host];
+            removed = true;
+            removeKey = host;
+          } else if (blacklist_rules[target]) {
+            delete blacklist_rules[target];
+            removed = true;
+            removeKey = target;
+          }
+        } catch (e) {}
+      }
+
+      if (removed) {
+        await chrome.storage.local.set({ blacklist_rules });
+
+        const lang = await getAppLanguage();
+        const displayRemoveKey = formatDisplayUrl(removeKey, 42);
+        const msg = t('toast_removed', lang, { target: displayRemoveKey });
+        notifyUser(sender.tab?.id, msg, 'info');
+
+        // 다른 모든 열린 탭에도 실시간 반영
+        chrome.tabs.query({}, (tabs) => {
+          for (const t of tabs) {
+            chrome.tabs.sendMessage(t.id, {
+              type: 'APPLY_LINK_ACTION',
+              target: target,
+              linkUrl: target,
+              action: 'remove'
+            }).catch(() => {});
+          }
+        });
+      }
+      sendResponse({ success: removed });
+    })();
+    return true;
+  }
+
   if (message.type === 'GET_RULES') {
     chrome.storage.local.get('blacklist_rules').then(({ blacklist_rules = {} }) => {
       sendResponse({ rules: blacklist_rules });
@@ -745,8 +799,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const msg = t('toast_removed', lang, { target: displayRemoveKey });
       notifyUser(targetTab?.id, msg, 'info');
     } else {
-      const displayTarget = formatDisplayUrl(target, 42);
-      notifyUser(targetTab?.id, `[BanMan] '${displayTarget}' 등록된 규칙을 찾을 수 없습니다.`, 'info');
+      notifyUser(targetTab?.id, t('toast_no_rule_found', lang) || '[BanMan] 선택한 링크는 등록된 규칙이 없습니다.', 'info');
     }
     return;
   }
