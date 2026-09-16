@@ -357,11 +357,14 @@
         link.parentNode.appendChild(badge);
       }
     } else if (rule.action === 'highlight') {
-      const hlType = rule.highlightType || 'star';
+      let hlType = rule.highlightType || 'pin';
+      if (hlType === 'star') hlType = 'heart';
+      if (hlType === 'custom') hlType = 'bookmark';
+
       link.classList.add('cb-link-highlight', `cb-highlight-${hlType}`);
 
       const hasMemo = !!(rule.memo && rule.memo.trim());
-      const labelText = hlType === 'pin' ? '검토' : (hlType === 'star' ? '추천' : '강조');
+      const labelText = hlType === 'pin' ? '검토' : (hlType === 'bookmark' ? '보관' : '좋아요');
       link.title = `[BanMan ${labelText}]${hasMemo ? ' ' + rule.memo.trim() : ''}`;
 
       // 스마트 컨테이너(카드/아이템 등)가 있을 경우 테두리 네온 강조
@@ -375,7 +378,7 @@
       badge.className = `cb-badge cb-badge-highlight cb-badge-${hlType}`;
       badge.title = hasMemo ? `[BanMan ${labelText}] ${rule.memo.trim()}` : `[BanMan ${labelText}]`;
 
-      const iconText = hlType === 'pin' ? '📌' : (hlType === 'star' ? '⭐' : '✨');
+      const iconText = hlType === 'pin' ? '📌' : (hlType === 'bookmark' ? '🔖' : '❤️');
       const hlIcon = document.createElement('span');
       hlIcon.className = 'cb-highlight-icon';
       hlIcon.textContent = iconText;
@@ -1027,9 +1030,11 @@
 
   // 4. 요소 선택기 라이프사이클
   async function startElementPicker() {
+    // 툴바 및 오버레이는 오직 최상위 메인 프레임에서만 기동 (iframe 내부 고립 및 잔여물 완벽 방지)
+    if (window !== window.top) return;
     if (isPickerActive) return;
     isPickerActive = true;
-    document.body.classList.add('bm-picker-active');
+    document.body?.classList.add('bm-picker-active');
 
     const lang = await getPickerLang();
 
@@ -1039,7 +1044,7 @@
     pickerBadge = document.createElement('div');
     pickerBadge.className = 'bm-picker-badge';
     pickerOverlay.appendChild(pickerBadge);
-    document.documentElement.appendChild(pickerOverlay);
+    (document.body || document.documentElement).appendChild(pickerOverlay);
 
     // 2) 상단 플로팅 툴바 생성
     pickerToolbar = document.createElement('div');
@@ -1050,16 +1055,18 @@
         <span class="bm-picker-title">${escapeHtml(tr('picker_bar_title'))}</span>
         <span class="bm-picker-hint">${escapeHtml(tr('picker_bar_hint'))}</span>
       </div>
-      <button type="button" class="bm-picker-btn bm-picker-btn-undo" id="bmPickerUndoBtn" disabled>
-        <span>↩</span>
-        <span>${escapeHtml(tr('picker_bar_undo'))}</span>
-      </button>
-      <button type="button" class="bm-picker-btn bm-picker-btn-done" id="bmPickerDoneBtn">
-        <span>✓</span>
-        <span>${escapeHtml(tr('picker_bar_done'))}</span>
-      </button>
+      <div class="bm-picker-btn-group">
+        <button type="button" class="bm-picker-btn bm-picker-btn-undo" id="bmPickerUndoBtn" disabled>
+          <span>↩</span>
+          <span>${escapeHtml(tr('picker_bar_undo'))}</span>
+        </button>
+        <button type="button" class="bm-picker-btn bm-picker-btn-done" id="bmPickerDoneBtn">
+          <span>✓</span>
+          <span>${escapeHtml(tr('picker_bar_done'))}</span>
+        </button>
+      </div>
     `;
-    document.documentElement.appendChild(pickerToolbar);
+    (document.body || document.documentElement).appendChild(pickerToolbar);
 
     const undoBtn = pickerToolbar.querySelector('#bmPickerUndoBtn');
     const doneBtn = pickerToolbar.querySelector('#bmPickerDoneBtn');
@@ -1081,10 +1088,10 @@
   }
 
   function stopElementPicker() {
-    if (!isPickerActive) return;
     isPickerActive = false;
-    document.body.classList.remove('bm-picker-active');
+    document.body?.classList.remove('bm-picker-active');
 
+    // 1) 오버레이 & 배지 정리
     if (pickerOverlay) {
       pickerOverlay.remove();
       pickerOverlay = null;
@@ -1094,6 +1101,16 @@
       pickerToolbar.remove();
       pickerToolbar = null;
     }
+
+    // 2) DOM에 혹시 남아있을 수 있는 모든 선택기 관련 툴바, 배지, 오버레이, 캔버스 전수 제거
+    try {
+      document.querySelectorAll('.bm-picker-toolbar, .bm-picker-overlay, #bm-particle-canvas').forEach(el => el.remove());
+    } catch (e) {}
+
+    // 3) 화면에 남아있는 모든 토스트 메시지 잔여물 즉시 완전 제거
+    try {
+      document.querySelectorAll('.cb-toast-container').forEach(c => c.remove());
+    } catch (e) {}
 
     document.removeEventListener('mouseover', onPickerMouseOver, true);
     document.removeEventListener('click', onPickerClick, true);
@@ -1277,15 +1294,22 @@
   }
 
   function showToast(message, level = 'info') {
+    if (window !== window.top) return;
+
     let container = document.querySelector('.cb-toast-container');
     if (!container) {
       container = document.createElement('div');
       container.className = 'cb-toast-container';
-      document.body.appendChild(container);
+      (document.body || document.documentElement).appendChild(container);
     }
+
+    // 이전 토스트가 있으면 즉시 정리하여 화면에 메시지가 계속 쌓여 남아있지 않도록 처리
+    container.innerHTML = '';
 
     const toast = document.createElement('div');
     toast.className = 'cb-toast';
+    toast.style.cursor = 'pointer';
+    toast.title = '클릭하면 즉시 닫힙니다';
     if (level === 'success') {
       toast.style.borderLeftColor = '#3b82f6';
     } else if (level === 'error') {
@@ -1301,20 +1325,33 @@
       </div>
     `;
 
+    // 클릭 시 즉시 닫기 지원
+    toast.addEventListener('click', () => {
+      toast.remove();
+      if (container && container.children.length === 0) container.remove();
+    });
+
     container.appendChild(toast);
 
+    // 1.8초 후 부드럽게 자동 소멸 (화면에 오래 남지 않도록 조정)
     setTimeout(() => {
-      toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      if (!toast.isConnected) return;
+      toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(-10px)';
-      setTimeout(() => toast.remove(), 300);
-    }, 3200);
+      setTimeout(() => {
+        toast.remove();
+        if (container && container.children.length === 0) container.remove();
+      }, 250);
+    }, 1800);
   }
 
   // 5. 런타임 메시지 수신 리스너
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'START_ELEMENT_PICKER') {
-      startElementPicker();
+      if (window === window.top) {
+        startElementPicker();
+      }
       sendResponse({ success: true });
       return true;
     }
@@ -1324,7 +1361,9 @@
       return true;
     }
     if (message.type === 'SHOW_TOAST') {
-      showToast(message.message || '', message.level || 'info');
+      if (window === window.top) {
+        showToast(message.message || '', message.level || 'info');
+      }
       sendResponse({ success: true });
       return true;
     }
