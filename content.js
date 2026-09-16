@@ -42,34 +42,40 @@
       processAllLinks();
       processAllIframes();
       processAllVideos();
+      await loadElementHideRules();
     } catch (e) {
       console.error('규칙 로드 실패:', e);
     }
   }
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.blacklist_rules) {
-      cachedRules = changes.blacklist_rules.newValue || {};
-      ruleIndex = buildRuleIndex(cachedRules);
-      // 기존 적용 표식 및 인라인 display/컨테이너 초기화
-      document.querySelectorAll('[data-cb-annotated]').forEach(el => {
-        el.removeAttribute('data-cb-annotated');
-        el.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block', 'cb-link-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
-        el.style.display = '';
-        el.title = '';
-      });
-      document.querySelectorAll('.cb-container-hidden').forEach(c => {
-        c.classList.remove('cb-container-hidden');
-        c.removeAttribute('data-cb-hidden-for');
-        c.style.display = '';
-      });
-      document.querySelectorAll('.cb-container-highlight').forEach(c => {
-        c.classList.remove('cb-container-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
-      });
-      document.querySelectorAll('.cb-badge').forEach(b => b.remove());
-      processAllLinks();
-      processAllIframes();
-      processAllVideos();
+    if (areaName === 'local') {
+      if (changes.element_hide_rules) {
+        applyElementHideRules(changes.element_hide_rules.newValue || {});
+      }
+      if (changes.blacklist_rules) {
+        cachedRules = changes.blacklist_rules.newValue || {};
+        ruleIndex = buildRuleIndex(cachedRules);
+        // 기존 적용 표식 및 인라인 display/컨테이너 초기화
+        document.querySelectorAll('[data-cb-annotated]').forEach(el => {
+          el.removeAttribute('data-cb-annotated');
+          el.classList.remove('cb-link-hidden', 'cb-link-warn', 'cb-link-block', 'cb-link-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
+          el.style.display = '';
+          el.title = '';
+        });
+        document.querySelectorAll('.cb-container-hidden').forEach(c => {
+          c.classList.remove('cb-container-hidden');
+          c.removeAttribute('data-cb-hidden-for');
+          c.style.display = '';
+        });
+        document.querySelectorAll('.cb-container-highlight').forEach(c => {
+          c.classList.remove('cb-container-highlight', 'cb-highlight-star', 'cb-highlight-pin', 'cb-highlight-custom');
+        });
+        document.querySelectorAll('.cb-badge').forEach(b => b.remove());
+        processAllLinks();
+        processAllIframes();
+        processAllVideos();
+      }
     }
   });
 
@@ -745,8 +751,593 @@
     } catch (err) {}
   }, true);
 
+  // ==========================================================================
+  // Safari-style Distraction Control / Element Picker Engine
+  // ==========================================================================
+
+  let isPickerActive = false;
+  let pickerHoverTarget = null;
+  let pickerSelectedElement = null;
+  let pickerOverlay = null;
+  let pickerBadge = null;
+  let pickerToolbar = null;
+  let pickerUndoStack = [];
+  let cachedAppLang = 'ko';
+
+  async function getPickerLang() {
+    try {
+      if (typeof getAppLanguage === 'function') {
+        cachedAppLang = await getAppLanguage();
+      } else {
+        const res = await chrome.storage.local.get('app_lang');
+        if (res && res.app_lang) cachedAppLang = res.app_lang;
+      }
+    } catch (e) {}
+    return cachedAppLang;
+  }
+
+  function tr(key, params = {}) {
+    if (typeof t === 'function') {
+      return t(key, cachedAppLang, params);
+    }
+    return key;
+  }
+
+  function escapeHtml(str) {
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // 1. 도메인별 영구 은닉 CSS 동적 생성 및 인젝션
+  function applyElementHideRules(allRules = {}) {
+    const hostname = window.location.hostname.toLowerCase();
+    const activeSelectors = new Set();
+
+    let currHost = hostname;
+    while (currHost) {
+      if (allRules[currHost] && Array.isArray(allRules[currHost])) {
+        for (const r of allRules[currHost]) {
+          if (r && r.selector) activeSelectors.add(r.selector);
+        }
+      }
+      const dotIdx = currHost.indexOf('.');
+      if (dotIdx === -1) break;
+      currHost = currHost.slice(dotIdx + 1);
+    }
+
+    let styleTag = document.getElementById('bm-element-hide-styles');
+
+    if (activeSelectors.size === 0) {
+      if (styleTag) styleTag.textContent = '';
+      return;
+    }
+
+    const cssText = Array.from(activeSelectors).join(',\n') + ` {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}`;
+
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = 'bm-element-hide-styles';
+      (document.head || document.documentElement).appendChild(styleTag);
+    }
+
+    styleTag.textContent = cssText;
+  }
+
+  async function loadElementHideRules() {
+    try {
+      const { element_hide_rules = {} } = await chrome.storage.local.get('element_hide_rules');
+      applyElementHideRules(element_hide_rules);
+    } catch (e) {
+      console.error('요소 숨김 규칙 로드 실패:', e);
+    }
+  }
+
+  // 2. 안정적인 CSS 선택자 생성기 (무작위 해시 배제 + 시맨틱 클래스 + 계층 구조)
+  function generateStableSelector(element) {
+    if (!element || element === document.body || element === document.documentElement) {
+      return '';
+    }
+
+    // 1) 고유 ID 검사
+    if (element.id && typeof element.id === 'string') {
+      const id = element.id.trim();
+      const isDynamicId = /^(:|ember|react|__)/.test(id) || /[a-f0-9]{8,}/i.test(id) || /^\d+$/.test(id);
+      if (!isDynamicId) {
+        const escapedId = '#' + CSS.escape(id);
+        try {
+          if (document.querySelectorAll(escapedId).length === 1) {
+            return escapedId;
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 2) 고유 data-* 속성 검사 (광고 및 주요 위젯용)
+    const candidateAttrs = ['data-ad-unit', 'data-ad-slot', 'data-ad-client', 'data-ad-area', 'data-widget-id', 'data-component', 'data-module', 'data-adfit'];
+    for (const attr of candidateAttrs) {
+      if (element.hasAttribute(attr)) {
+        const val = element.getAttribute(attr);
+        if (val) {
+          const attrSelector = `${element.tagName.toLowerCase()}[${attr}="${CSS.escape(val)}"]`;
+          try {
+            if (document.querySelectorAll(attrSelector).length === 1) {
+              return attrSelector;
+            }
+          } catch (e) {}
+        }
+      }
+    }
+
+    // 3) 안정적인 클래스명 필터링 및 계층 경로 결합
+    function getCleanClasses(el) {
+      if (!el.className || typeof el.className !== 'string') return [];
+      return el.className.split(/\s+/)
+        .map(c => c.trim())
+        .filter(c => {
+          if (!c) return false;
+          if (c.startsWith('bm-') || c.startsWith('cb-')) return false;
+          if (c.length < 3) return false;
+          if (/^[a-z0-9_-]{12,}$/i.test(c)) return false;
+          if (/^(css|style)_[a-z0-9]+/i.test(c)) return false;
+          return true;
+        });
+    }
+
+    const pathParts = [];
+    let curr = element;
+
+    while (curr && curr !== document.body && curr !== document.documentElement && pathParts.length < 5) {
+      let part = curr.tagName.toLowerCase();
+
+      if (curr.id && typeof curr.id === 'string') {
+        const id = curr.id.trim();
+        const isDynamicId = /^(:|ember|react|__)/.test(id) || /[a-f0-9]{8,}/i.test(id) || /^\d+$/.test(id);
+        if (!isDynamicId) {
+          part = '#' + CSS.escape(id);
+          pathParts.unshift(part);
+          break;
+        }
+      }
+
+      const cleanCls = getCleanClasses(curr);
+      if (cleanCls.length > 0) {
+        part += '.' + cleanCls.slice(0, 2).map(c => CSS.escape(c)).join('.');
+      }
+
+      if (curr.parentElement) {
+        const siblings = Array.from(curr.parentElement.children).filter(ch => ch.tagName === curr.tagName);
+        if (siblings.length > 1) {
+          const idx = siblings.indexOf(curr) + 1;
+          part += `:nth-of-type(${idx})`;
+        }
+      }
+
+      pathParts.unshift(part);
+
+      const testSelector = pathParts.join(' > ');
+      try {
+        if (document.querySelectorAll(testSelector).length === 1) {
+          return testSelector;
+        }
+      } catch (e) {}
+
+      curr = curr.parentElement;
+    }
+
+    return pathParts.join(' > ');
+  }
+
+  // 3. 사파리 시그니처 파티클 분해 소멸 애니메이션 ("Poof")
+  function triggerPoofAnimation(rect) {
+    if (!rect || rect.width === 0 || rect.height === 0) return;
+
+    let canvas = document.getElementById('bm-particle-canvas');
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'bm-particle-canvas';
+      document.documentElement.appendChild(canvas);
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const particles = [];
+    const particleCount = Math.min(60, Math.max(28, Math.round((rect.width * rect.height) / 3800)));
+    const colors = ['#60a5fa', '#38bdf8', '#93c5fd', '#fde047', '#f8fafc', '#cbd5e1'];
+
+    for (let i = 0; i < particleCount; i++) {
+      const px = rect.left + Math.random() * rect.width;
+      const py = rect.top + Math.random() * rect.height;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 5 + 1.5;
+
+      particles.push({
+        x: px,
+        y: py,
+        vx: Math.cos(angle) * speed + (px - (rect.left + rect.width / 2)) * 0.03,
+        vy: Math.sin(angle) * speed - Math.random() * 3.5 - 1.5,
+        size: Math.random() * 4.5 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: 1,
+        decay: Math.random() * 0.026 + 0.02,
+        rotation: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 0.2
+      });
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      let alive = false;
+
+      for (const p of particles) {
+        if (p.alpha > 0) {
+          alive = true;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.12;
+          p.vx *= 0.98;
+          p.alpha -= p.decay;
+          p.rotation += p.spin;
+
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 6;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      if (alive) {
+        requestAnimationFrame(render);
+      } else {
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        if (canvas && canvas.parentNode) {
+          canvas.remove();
+        }
+      }
+    }
+
+    render();
+  }
+
+  // 4. 요소 선택기 라이프사이클
+  async function startElementPicker() {
+    if (isPickerActive) return;
+    isPickerActive = true;
+    document.body.classList.add('bm-picker-active');
+
+    const lang = await getPickerLang();
+
+    // 1) 오버레이 & 배지 생성
+    pickerOverlay = document.createElement('div');
+    pickerOverlay.className = 'bm-picker-overlay';
+    pickerBadge = document.createElement('div');
+    pickerBadge.className = 'bm-picker-badge';
+    pickerOverlay.appendChild(pickerBadge);
+    document.documentElement.appendChild(pickerOverlay);
+
+    // 2) 상단 플로팅 툴바 생성
+    pickerToolbar = document.createElement('div');
+    pickerToolbar.className = 'bm-picker-toolbar';
+    pickerToolbar.innerHTML = `
+      <div class="bm-picker-title-group">
+        <span class="bm-picker-icon">🎯</span>
+        <span class="bm-picker-title">${escapeHtml(tr('picker_bar_title'))}</span>
+        <span class="bm-picker-hint">${escapeHtml(tr('picker_bar_hint'))}</span>
+      </div>
+      <button type="button" class="bm-picker-btn bm-picker-btn-undo" id="bmPickerUndoBtn" disabled>
+        <span>↩</span>
+        <span>${escapeHtml(tr('picker_bar_undo'))}</span>
+      </button>
+      <button type="button" class="bm-picker-btn bm-picker-btn-done" id="bmPickerDoneBtn">
+        <span>✓</span>
+        <span>${escapeHtml(tr('picker_bar_done'))}</span>
+      </button>
+    `;
+    document.documentElement.appendChild(pickerToolbar);
+
+    const undoBtn = pickerToolbar.querySelector('#bmPickerUndoBtn');
+    const doneBtn = pickerToolbar.querySelector('#bmPickerDoneBtn');
+
+    undoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      undoLastHiddenElement();
+    });
+
+    doneBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      stopElementPicker();
+    });
+
+    // 3) 이벤트 등록 (캡처 단계)
+    document.addEventListener('mouseover', onPickerMouseOver, true);
+    document.addEventListener('click', onPickerClick, true);
+    document.addEventListener('keydown', onPickerKeyDown, true);
+  }
+
+  function stopElementPicker() {
+    if (!isPickerActive) return;
+    isPickerActive = false;
+    document.body.classList.remove('bm-picker-active');
+
+    if (pickerOverlay) {
+      pickerOverlay.remove();
+      pickerOverlay = null;
+      pickerBadge = null;
+    }
+    if (pickerToolbar) {
+      pickerToolbar.remove();
+      pickerToolbar = null;
+    }
+
+    document.removeEventListener('mouseover', onPickerMouseOver, true);
+    document.removeEventListener('click', onPickerClick, true);
+    document.removeEventListener('keydown', onPickerKeyDown, true);
+  }
+
+  function onPickerMouseOver(e) {
+    if (!isPickerActive) return;
+    const target = e.target;
+    if (!target || target === document.body || target === document.documentElement) return;
+    if (target.closest('.bm-picker-toolbar') || target.closest('.bm-picker-overlay') || target.id === 'bm-particle-canvas') {
+      return;
+    }
+
+    const smart = getSmartContainer(target);
+    pickerHoverTarget = smart || target;
+    pickerSelectedElement = pickerHoverTarget;
+    updatePickerOverlay(pickerSelectedElement);
+  }
+
+  function onPickerKeyDown(e) {
+    if (!isPickerActive) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      stopElementPicker();
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (pickerSelectedElement && pickerSelectedElement.parentElement && pickerSelectedElement.parentElement !== document.body && pickerSelectedElement.parentElement !== document.documentElement) {
+        pickerSelectedElement = pickerSelectedElement.parentElement;
+        updatePickerOverlay(pickerSelectedElement);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (pickerSelectedElement && pickerSelectedElement.firstElementChild) {
+        pickerSelectedElement = pickerSelectedElement.firstElementChild;
+        updatePickerOverlay(pickerSelectedElement);
+      }
+      return;
+    }
+  }
+
+  function updatePickerOverlay(element) {
+    if (!pickerOverlay || !element) return;
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    pickerOverlay.style.top = `${rect.top}px`;
+    pickerOverlay.style.left = `${rect.left}px`;
+    pickerOverlay.style.width = `${rect.width}px`;
+    pickerOverlay.style.height = `${rect.height}px`;
+
+    let tagDesc = element.tagName.toLowerCase();
+    if (element.id && typeof element.id === 'string' && !/^[0-9a-f]{8,}$/i.test(element.id)) {
+      tagDesc += `#${element.id.slice(0, 16)}`;
+    } else if (element.classList && element.classList.length > 0) {
+      const firstCls = Array.from(element.classList).find(c => !c.startsWith('bm-') && !c.startsWith('cb-'));
+      if (firstCls) tagDesc += `.${firstCls.slice(0, 16)}`;
+    }
+    const dims = `${Math.round(rect.width)}×${Math.round(rect.height)}`;
+
+    if (pickerBadge) {
+      pickerBadge.textContent = `${tagDesc} (${dims})`;
+      if (rect.top < 36) {
+        pickerBadge.classList.add('is-below');
+      } else {
+        pickerBadge.classList.remove('is-below');
+      }
+    }
+  }
+
+  async function onPickerClick(e) {
+    if (!isPickerActive) return;
+    if (e.target.closest('.bm-picker-toolbar')) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const target = pickerSelectedElement || e.target;
+    if (!target || target === document.body || target === document.documentElement) return;
+
+    const rect = target.getBoundingClientRect();
+
+    // 1. 파티클 분해 소멸 애니메이션 발사
+    triggerPoofAnimation(rect);
+
+    // 2. 타겟 블러 축소 페이드아웃
+    target.classList.add('bm-dissolving');
+
+    if (pickerOverlay) {
+      pickerOverlay.style.width = '0px';
+      pickerOverlay.style.height = '0px';
+    }
+
+    // 3. 선택자 생성 및 규칙 저장
+    const selector = generateStableSelector(target);
+    const hostname = window.location.hostname.toLowerCase();
+
+    const ruleId = `el_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    let tagSummary = target.tagName.toLowerCase();
+    if (target.id) tagSummary += `#${target.id}`;
+    else if (target.className && typeof target.className === 'string') {
+      const cl = target.className.split(/\s+/).filter(c => !c.startsWith('bm-') && !c.startsWith('cb-'))[0];
+      if (cl) tagSummary += `.${cl}`;
+    }
+    tagSummary += ` (${Math.round(rect.width)}×${Math.round(rect.height)})`;
+
+    const newRule = {
+      id: ruleId,
+      selector: selector,
+      summary: tagSummary,
+      createdAt: new Date().toISOString().replace('T', ' ').slice(0, 19)
+    };
+
+    try {
+      const { element_hide_rules = {} } = await chrome.storage.local.get('element_hide_rules');
+      if (!element_hide_rules[hostname]) {
+        element_hide_rules[hostname] = [];
+      }
+      element_hide_rules[hostname].push(newRule);
+      await chrome.storage.local.set({ element_hide_rules });
+
+      pickerUndoStack.push({
+        ruleId,
+        selector,
+        hostname,
+        element: target
+      });
+
+      const undoBtn = pickerToolbar?.querySelector('#bmPickerUndoBtn');
+      if (undoBtn) undoBtn.disabled = false;
+
+      applyElementHideRules(element_hide_rules);
+      showToast(tr('picker_toast_hidden'), 'success');
+    } catch (err) {
+      console.error('요소 숨김 규칙 저장 실패:', err);
+    }
+
+    setTimeout(() => {
+      target.classList.remove('bm-dissolving');
+      target.classList.add('bm-element-hidden');
+      target.setAttribute('data-bm-hidden', 'true');
+    }, 330);
+  }
+
+  async function undoLastHiddenElement() {
+    const last = pickerUndoStack.pop();
+    if (!last) {
+      showToast(tr('picker_toast_no_undo'), 'info');
+      return;
+    }
+
+    try {
+      const { element_hide_rules = {} } = await chrome.storage.local.get('element_hide_rules');
+      if (element_hide_rules[last.hostname]) {
+        element_hide_rules[last.hostname] = element_hide_rules[last.hostname].filter(r => r.id !== last.ruleId);
+        await chrome.storage.local.set({ element_hide_rules });
+        applyElementHideRules(element_hide_rules);
+      }
+
+      if (last.element) {
+        last.element.classList.remove('bm-element-hidden');
+        last.element.removeAttribute('data-bm-hidden');
+        last.element.style.display = '';
+      }
+
+      const undoBtn = pickerToolbar?.querySelector('#bmPickerUndoBtn');
+      if (undoBtn) undoBtn.disabled = (pickerUndoStack.length === 0);
+
+      showToast(tr('picker_toast_undone'), 'info');
+    } catch (err) {
+      console.error('되돌리기 실패:', err);
+    }
+  }
+
+  function showToast(message, level = 'info') {
+    let container = document.querySelector('.cb-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'cb-toast-container';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'cb-toast';
+    if (level === 'success') {
+      toast.style.borderLeftColor = '#3b82f6';
+    } else if (level === 'error') {
+      toast.style.borderLeftColor = '#ef4444';
+    } else {
+      toast.style.borderLeftColor = '#64748b';
+    }
+
+    toast.innerHTML = `
+      <div class="cb-toast-title" style="color: ${level === 'success' ? '#2563eb' : (level === 'error' ? '#dc2626' : '#334155')}">
+        <span>${level === 'success' ? '🎯' : (level === 'error' ? '🚫' : 'ℹ️')}</span>
+        <span>${escapeHtml(message)}</span>
+      </div>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-10px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3200);
+  }
+
+  // 5. 런타임 메시지 수신 리스너
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'START_ELEMENT_PICKER') {
+      startElementPicker();
+      sendResponse({ success: true });
+      return true;
+    }
+    if (message.type === 'STOP_ELEMENT_PICKER') {
+      stopElementPicker();
+      sendResponse({ success: true });
+      return true;
+    }
+    if (message.type === 'SHOW_TOAST') {
+      showToast(message.message || '', message.level || 'info');
+      sendResponse({ success: true });
+      return true;
+    }
+    if (message.type === 'APPLY_LINK_ACTION') {
+      loadRules();
+      sendResponse({ success: true });
+      return true;
+    }
+  });
+
   // 초기 시작
   loadRules();
+  loadElementHideRules();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
