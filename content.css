@@ -56,9 +56,9 @@
 }
 
 .cb-link-highlight.cb-highlight-heart {
-  color: #be185d !important;
-  background-color: rgba(236, 72, 153, 0.12) !important;
-  text-decoration: underline wavy #ec4899 1.5px !important;
+  color: #6d28d9 !important;
+  background-color: rgba(139, 92, 246, 0.12) !important;
+  text-decoration: underline wavy #8b5cf6 1.5px !important;
 }
 
 .cb-link-highlight:hover {
@@ -86,9 +86,9 @@
 }
 
 .cb-container-highlight.cb-highlight-heart {
-  outline: 2px solid #ec4899 !important;
+  outline: 2px solid #8b5cf6 !important;
   outline-offset: 2px !important;
-  box-shadow: 0 0 12px rgba(236, 72, 153, 0.28) !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.28) !important;
 }
 
 /* 인라인 메모 배지 스타일 */
@@ -146,10 +146,10 @@
 }
 
 .cb-badge-highlight.cb-badge-heart {
-  background-color: #fdf2f8 !important;
-  color: #be185d !important;
-  border: 1px solid #fbcfe8 !important;
-  box-shadow: 0 1px 3px rgba(236, 72, 153, 0.2) !important;
+  background-color: #f5f3ff !important;
+  color: #5b21b6 !important;
+  border: 1px solid #ddd6fe !important;
+  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.2) !important;
 }
 
 .cb-hl-svg {
@@ -170,7 +170,7 @@
 }
 
 .cb-hl-svg.heart {
-  color: #ec4899 !important;
+  color: #7c3aed !important;
 }
 
 /* 배지 1-클릭 즉시 해제 버튼 */

@@ -279,13 +279,13 @@ body {
 }
 
 .seg-heart input:checked + span {
-  background: #fdf2f8;
-  color: #be185d;
-  border: 1px solid #ec4899;
-  box-shadow: 0 1px 3px rgba(236, 72, 153, 0.2);
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #8b5cf6;
+  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.2);
 }
 .seg-heart .hl-svg-icon {
-  color: #ec4899;
+  color: #8b5cf6;
 }
 
 /* Action Grid */
