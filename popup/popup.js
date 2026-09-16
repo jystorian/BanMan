@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (existing.action === 'highlight') {
         highlightTypeGroup.style.display = 'block';
         let hlType = existing.highlightType || 'pin';
-        if (hlType === 'star') hlType = 'heart';
+        if (hlType === 'star') hlType = 'bookmark';
         if (hlType === 'custom') hlType = 'bookmark';
         const hlRadio = document.querySelector(`input[name="highlightType"][value="${hlType}"]`);
         if (hlRadio) hlRadio.checked = true;

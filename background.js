@@ -714,7 +714,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     else if (menuItemId === 'banman_hl_pin') { action = 'highlight'; highlightType = 'pin'; }
     else if (menuItemId === 'banman_hl_bookmark') { action = 'highlight'; highlightType = 'bookmark'; }
     else if (menuItemId === 'banman_hl_heart') { action = 'highlight'; highlightType = 'heart'; }
-    else if (menuItemId === 'banman_hl_star') { action = 'highlight'; highlightType = 'heart'; }
+    else if (menuItemId === 'banman_hl_star') { action = 'highlight'; highlightType = 'bookmark'; }
     else if (menuItemId === 'banman_hl_custom') { action = 'highlight'; highlightType = 'bookmark'; }
     else if (menuItemId === 'banman_remove') action = 'remove';
 
@@ -865,7 +865,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   };
 
   if (action === 'highlight') {
-    newRule.highlightType = highlightType || 'star';
+    newRule.highlightType = highlightType || 'pin';
   }
 
   if (rawLinkUrl && rawLinkUrl !== target) {
