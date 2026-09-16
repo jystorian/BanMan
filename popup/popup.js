@@ -86,7 +86,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (existing.action === 'highlight') {
         highlightTypeGroup.style.display = 'block';
-        const hlRadio = document.querySelector(`input[name="highlightType"][value="${existing.highlightType || 'star'}"]`);
+        let hlType = existing.highlightType || 'pin';
+        if (hlType === 'star') hlType = 'heart';
+        if (hlType === 'custom') hlType = 'bookmark';
+        const hlRadio = document.querySelector(`input[name="highlightType"][value="${hlType}"]`);
         if (hlRadio) hlRadio.checked = true;
       } else {
         highlightTypeGroup.style.display = 'none';
@@ -272,7 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     if (action === 'highlight') {
-      ruleObj.highlightType = document.querySelector('input[name="highlightType"]:checked')?.value || 'star';
+      ruleObj.highlightType = document.querySelector('input[name="highlightType"]:checked')?.value || 'pin';
     }
 
     // 웹스토어 확장 프로그램 이름이 있는 경우 함께 저장
@@ -352,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
       try {
-        await chrome.tabs.sendMessage(tab.id, { type: 'START_ELEMENT_PICKER' });
+        await chrome.tabs.sendMessage(tab.id, { type: 'START_ELEMENT_PICKER' }, { frameId: 0 });
       } catch (e) {
         console.warn('START_ELEMENT_PICKER 전달 실패:', e);
       }
