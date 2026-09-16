@@ -162,11 +162,11 @@ const I18N_DICTIONARY = {
     ctx_warn: '⚠️ 주의 표시',
     ctx_hide: '👁️‍🗨️ 숨기기',
     ctx_highlight: '✨ 강조',
-    ctx_hl_pin: '🟢 검토 (핀)',
-    ctx_hl_bookmark: '🔵 보관 (북마크)',
-    ctx_hl_heart: '💜 좋아요 (하트)',
-    ctx_hl_star: '💜 좋아요 (하트)',
-    ctx_hl_custom: '🔵 보관 (북마크)',
+    ctx_hl_pin: '📌 검토',
+    ctx_hl_bookmark: '🔖 보관',
+    ctx_hl_heart: '💜 좋아요',
+    ctx_hl_star: '💜 좋아요',
+    ctx_hl_custom: '🔖 보관',
     ctx_remove: '🗑️ 등록 해제',
     toast_registered: '[BanMan] {action} 등록 완료: {target}',
     toast_removed: '[BanMan] 등록 해제 완료: {target}',
@@ -197,8 +197,8 @@ const I18N_DICTIONARY = {
     th_element_selector: 'CSS 선택자',
     th_element_preview: '대상 요약',
     empty_element_rules: '등록된 요소 가림 규칙이 없습니다. 웹페이지에서 직접 가리기를 사용해보세요!',
-    btn_restore_element: '복원',
-    confirm_restore_element: '이 요소를 복원하시겠습니까? 다음 페이지 접속 시 다시 표시됩니다.'
+    btn_restore_element: '삭제',
+    confirm_restore_element: '이 요소 가림 규칙을 삭제하시겠습니까?\n{target}'
   },
 
   en: {
@@ -362,11 +362,11 @@ const I18N_DICTIONARY = {
     ctx_warn: '⚠️ Caution',
     ctx_hide: '👁️‍🗨️ Hide',
     ctx_highlight: '✨ Highlight',
-    ctx_hl_pin: '🟢 Review (Pin)',
-    ctx_hl_bookmark: '🔵 Save (Bookmark)',
-    ctx_hl_heart: '💜 Like (Heart)',
-    ctx_hl_star: '💜 Like (Heart)',
-    ctx_hl_custom: '🔵 Save (Bookmark)',
+    ctx_hl_pin: '📌 Review',
+    ctx_hl_bookmark: '🔖 Save',
+    ctx_hl_heart: '💜 Like',
+    ctx_hl_star: '💜 Like',
+    ctx_hl_custom: '🔖 Save',
     ctx_remove: '🗑️ Remove',
     toast_registered: '[BanMan] {action} registered: {target}',
     toast_removed: '[BanMan] Removed: {target}',
@@ -397,8 +397,8 @@ const I18N_DICTIONARY = {
     th_element_selector: 'CSS Selector',
     th_element_preview: 'Summary',
     empty_element_rules: 'No element hiding rules registered yet. Try using the picker on any webpage!',
-    btn_restore_element: 'Restore',
-    confirm_restore_element: 'Restore this element? It will be visible again on next visit.'
+    btn_restore_element: 'Delete',
+    confirm_restore_element: 'Delete this element rule?\n{target}'
   },
 
   ja: {
@@ -562,11 +562,11 @@ const I18N_DICTIONARY = {
     ctx_warn: '⚠️ 注意表示',
     ctx_hide: '👁️‍🗨️ 非表示',
     ctx_highlight: '✨ 強調',
-    ctx_hl_pin: '🟢 検討 (ピン)',
-    ctx_hl_bookmark: '🔵 保存 (ブックマーク)',
-    ctx_hl_heart: '💜 いいね (ハート)',
-    ctx_hl_star: '💜 いいね (ハート)',
-    ctx_hl_custom: '🔵 保存 (ブックマーク)',
+    ctx_hl_pin: '📌 検討',
+    ctx_hl_bookmark: '🔖 保存',
+    ctx_hl_heart: '💜 いいね',
+    ctx_hl_star: '💜 いいね',
+    ctx_hl_custom: '🔖 保存',
     ctx_remove: '🗑️ 登録解除',
     toast_registered: '[BanMan] {action} 登録完了: {target}',
     toast_removed: '[BanMan] 解除完了: {target}',
@@ -597,8 +597,8 @@ const I18N_DICTIONARY = {
     th_element_selector: 'CSS セレクタ',
     th_element_preview: '対象の概要',
     empty_element_rules: '登録された要素非表示ルールはありません。Webページで直接選択してみてください！',
-    btn_restore_element: '復元',
-    confirm_restore_element: 'この要素を復元しますか？次回アクセス時に再表示されます。'
+    btn_restore_element: '削除',
+    confirm_restore_element: 'この要素非表示ルールを削除しますか？\n{target}'
   }
 };
 
