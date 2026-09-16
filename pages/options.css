@@ -801,12 +801,12 @@ input[type="text"]:focus, select:focus {
 }
 
 .hl-type-badge.heart {
-  background: #fdf2f8;
-  color: #be185d;
-  border: 1px solid #fbcfe8;
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
 }
 .hl-type-badge.heart .hl-svg-icon {
-  color: #ec4899;
+  color: #8b5cf6;
 }
 
 .selector-code-badge {
@@ -1316,12 +1316,12 @@ input[type="text"]:focus, select:focus {
 }
 
 .modal-hl-option.heart input:checked + span {
-  background: #fdf2f8;
-  color: #be185d;
-  border: 1px solid #ec4899;
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #8b5cf6;
 }
 .modal-hl-option.heart .hl-svg-icon {
-  color: #ec4899;
+  color: #8b5cf6;
 }
 
 .modal-input {
