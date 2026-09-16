@@ -116,18 +116,27 @@
     <!-- 강조 서브타입 선택 (강조 액션 선택 시 노출) -->
     <div id="highlightTypeGroup" class="form-group" style="display: none;">
       <label class="form-label" data-i18n="hl_type_label">강조 분류:</label>
-      <div class="segmented-control">
-        <label class="segment">
+      <div class="segmented-control hl-segmented">
+        <label class="segment seg-pin">
           <input type="radio" name="highlightType" value="pin" checked>
-          <span data-i18n="hl_type_pin">📌 검토</span>
+          <span>
+            <svg class="hl-svg-icon pin" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1.03 2 1.03-2v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>
+            <span data-i18n="hl_type_pin">검토</span>
+          </span>
         </label>
-        <label class="segment">
+        <label class="segment seg-bookmark">
           <input type="radio" name="highlightType" value="bookmark">
-          <span data-i18n="hl_type_bookmark">🔖 보관</span>
+          <span>
+            <svg class="hl-svg-icon bookmark" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-4.5 7 4.5V5c0-1.1-.9-2-2-2z"/></svg>
+            <span data-i18n="hl_type_bookmark">보관</span>
+          </span>
         </label>
-        <label class="segment">
+        <label class="segment seg-heart">
           <input type="radio" name="highlightType" value="heart">
-          <span data-i18n="hl_type_heart">❤️ 좋아요</span>
+          <span>
+            <svg class="hl-svg-icon heart" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <span data-i18n="hl_type_heart">좋아요</span>
+          </span>
         </label>
       </div>
     </div>

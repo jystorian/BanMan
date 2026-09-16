@@ -751,18 +751,48 @@ input[type="text"]:focus, select:focus {
 .action-badge.highlight { background: #f5f3ff; color: #7c3aed; }
 
 .hl-type-badge {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 3px;
-  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   white-space: nowrap;
   line-height: 1.2;
   flex-shrink: 0;
 }
-.hl-type-badge.pin { background: #e0e7ff; color: #4338ca; }
-.hl-type-badge.bookmark, .hl-type-badge.custom { background: #fef3c7; color: #b45309; }
-.hl-type-badge.heart, .hl-type-badge.star { background: #ffe4e6; color: #be123c; }
+.hl-type-badge .hl-svg-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.hl-type-badge.pin {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.hl-type-badge.pin .hl-svg-icon {
+  color: #10b981;
+}
+
+.hl-type-badge.bookmark, .hl-type-badge.custom {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.hl-type-badge.bookmark .hl-svg-icon, .hl-type-badge.custom .hl-svg-icon {
+  color: #2563eb;
+}
+
+.hl-type-badge.heart, .hl-type-badge.star {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+.hl-type-badge.heart .hl-svg-icon, .hl-type-badge.star .hl-svg-icon {
+  color: #8b5cf6;
+}
 
 .selector-code-badge {
   display: inline-block;
@@ -1232,7 +1262,11 @@ input[type="text"]:focus, select:focus {
 }
 
 .modal-hl-option span {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
   padding: 6px 4px;
   font-size: 12px;
   font-weight: 600;
@@ -1244,9 +1278,35 @@ input[type="text"]:focus, select:focus {
 
 .modal-hl-option input:checked + span {
   background: #ffffff;
-  color: #7c3aed;
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.modal-hl-option.pin input:checked + span {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #10b981;
+}
+.modal-hl-option.pin .hl-svg-icon {
+  color: #10b981;
+}
+
+.modal-hl-option.bookmark input:checked + span {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #3b82f6;
+}
+.modal-hl-option.bookmark .hl-svg-icon {
+  color: #2563eb;
+}
+
+.modal-hl-option.heart input:checked + span {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #8b5cf6;
+}
+.modal-hl-option.heart .hl-svg-icon {
+  color: #8b5cf6;
 }
 
 .modal-input {
